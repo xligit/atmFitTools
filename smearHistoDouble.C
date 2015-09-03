@@ -1,12 +1,12 @@
-#include "TH1F.h"
+#include "TH1D.h"
 
 using namespace std;
 
 //Integral of box function
-float B(float x,float a, float b){
+double B(double x,double a, double b){
   if (x<=a) return 0.;
   if (x>=b) return 1.;
-  float slope = 1./(b-a);
+  double slope = 1./(b-a);
   return (x-a)/(b-a);
 }
 
@@ -15,19 +15,19 @@ float B(float x,float a, float b){
 //h -> Initial histo
 //spread -> Factor to determine width smearing. <1 will shrink histo, >1 will stretch
 //bias -> Adds bias to histogram 
-TH1F* smearIt(TH1F* h,float spread, float bias=0.){
-  TH1F* hsmear = (TH1F*)h->Clone("hsmear");
+TH1D* smearIt(TH1D* h,double spread, double bias=0.){
+  TH1D* hsmear = (TH1D*)h->Clone("hsmear");
   hsmear->Reset();
   int nbins=hsmear->GetNbinsX();
-  float sum;
-  float weight;
-  float xmin;
-  float xmax;
-  float ymin;
-  float ymax;
-  float smear = 1./spread;
-  float mean = h->GetMean();
-  float shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
+  double sum;
+  double weight;
+  double xmin;
+  double xmax;
+  double ymin;
+  double ymax;
+  double smear = 1./spread;
+  double mean = h->GetMean();
+  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
   for (int newbin=1;newbin<=nbins;newbin++){
     sum = 0.;
     ymin = ((hsmear->GetBinLowEdge(newbin)-bias)*smear) - shift;

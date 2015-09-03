@@ -14,6 +14,7 @@
 class histoManager{
   public:
   histoManager(int nsampl,int nbins,int ncomp,const char* name=""); //constructor
+  histoManager(const char* rootname);
   TTree* dataTree;
   TTree* mcTree; 
   fQreader* fqData;
@@ -51,6 +52,11 @@ class histoManager{
   void saveToFile();
   void readFromFile(const char* rootename);
 };
+
+histoManager::histoManager(const char* rootname){
+  readFromFile(rootname);
+  return;
+}
 
 void histoManager::readFromFile(const char* rootname){
   TString filename = rootname;
