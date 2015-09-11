@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Mon Aug 31 14:38:27 2015 by ROOT version 5.28/00c
+// Fri Sep  4 11:28:11 2015 by ROOT version 5.28/00c
 // from TTree h1/DST
-// found on file: stopmu_mc_1390_for_atmnu_test_064994.001_stmusel_005_141224_fQ.root
+// found on file: jan14sk4_skdetsim13p90_neut532.reduc.081_fQv4r0.root
 //////////////////////////////////////////////////////////
 
 #ifndef fqReader_h
@@ -166,10 +166,6 @@ public :
    Float_t         flxh06[3];
    Float_t         flxh11[3];
    Int_t           scan[2];
-   Float_t         stmuent[3];
-   Float_t         stmudir[3];
-   Float_t         stmugood;
-   Float_t         stmuqent;
    Int_t           nuceff_version;
    Int_t           charge_exchange;
    Int_t           absorbed;
@@ -219,6 +215,29 @@ public :
    Int_t           Numatom;
    Int_t           Ibound;
    Int_t           Neutinpmt;
+   Int_t           Nvert;
+   Float_t         Posvert[300][3];   //[Nvert]
+   Int_t           Iflgvert[300];   //[Nvert]
+   Int_t           Nvcvert;
+   Float_t         Dirvert[900][3];   //[Nvcvert]
+   Float_t         Abspvert[900];   //[Nvcvert]
+   Float_t         Abstpvert[900];   //[Nvcvert]
+   Int_t           Ipvert[900];   //[Nvcvert]
+   Int_t           Iverti[900];   //[Nvcvert]
+   Int_t           Ivertf[900];   //[Nvcvert]
+   Float_t         Fsiprob;
+   Float_t         Fsivarwt[24];
+   Int_t           Nvertsk;
+   Float_t         Posvertsk[300][3];   //[Nvertsk]
+   Int_t           Iflgvertsk[300];   //[Nvertsk]
+   Int_t           Nvcvertsk;
+   Float_t         Dirvertsk[900][3];   //[Nvcvertsk]
+   Float_t         Abspvertsk[900];   //[Nvcvertsk]
+   Float_t         Abstpvertsk[900];   //[Nvcvertsk]
+   Int_t           Ipvertsk[900];   //[Nvcvertsk]
+   Int_t           Ivertisk[900];   //[Nvcvertsk]
+   Int_t           Ivertfsk[900];   //[Nvcvertsk]
+   Float_t         Fsiprobsk;
    Float_t         trgoff;
    Int_t           fqntwnd;
    Int_t           fqtwnd_iclstr[10];   //[fqntwnd]
@@ -294,6 +313,15 @@ public :
    Float_t         prid_plike;
    Float_t         prid_mlike;
    Int_t           prid_nused;
+   Int_t           nn;
+   Int_t           trgtype;
+   Int_t           n200m;
+   Float_t         t200m;
+   Float_t         lasthit;
+   Float_t         ntime[1000];   //[nn]
+   Float_t         ngood[1000];   //[nn]
+   Float_t         nvx[1000][3];   //[nn]
+   Float_t         bvx[1000][3];   //[nn]
    Float_t         dirtotepi[3];
    Float_t         dirtotenpi[3];
    Float_t         dirtotmue[3];
@@ -526,10 +554,6 @@ public :
    TBranch        *b_flxh06;   //!
    TBranch        *b_flxh11;   //!
    TBranch        *b_scan;   //!
-   TBranch        *b_stmuent;   //!
-   TBranch        *b_stmudir;   //!
-   TBranch        *b_stmugood;   //!
-   TBranch        *b_stmuqent;   //!
    TBranch        *b_nuceff_version;   //!
    TBranch        *b_charge_exchange;   //!
    TBranch        *b_absorbed;   //!
@@ -579,6 +603,29 @@ public :
    TBranch        *b_Numatom;   //!
    TBranch        *b_Ibound;   //!
    TBranch        *b_Neutinpmt;   //!
+   TBranch        *b_Nvert;   //!
+   TBranch        *b_Posvert;   //!
+   TBranch        *b_Iflgvert;   //!
+   TBranch        *b_Nvcvert;   //!
+   TBranch        *b_Dirvert;   //!
+   TBranch        *b_Abspvert;   //!
+   TBranch        *b_Abstpvert;   //!
+   TBranch        *b_Ipvert;   //!
+   TBranch        *b_Iverti;   //!
+   TBranch        *b_Ivertf;   //!
+   TBranch        *b_Fsiprob;   //!
+   TBranch        *b_Fsivarwt;   //!
+   TBranch        *b_Nvertsk;   //!
+   TBranch        *b_Posvertsk;   //!
+   TBranch        *b_Iflgvertsk;   //!
+   TBranch        *b_Nvcvertsk;   //!
+   TBranch        *b_Dirvertsk;   //!
+   TBranch        *b_Abspvertsk;   //!
+   TBranch        *b_Abstpvertsk;   //!
+   TBranch        *b_Ipvertsk;   //!
+   TBranch        *b_Ivertisk;   //!
+   TBranch        *b_Ivertfsk;   //!
+   TBranch        *b_Fsiprobsk;   //!
    TBranch        *b_trgoff;   //!
    TBranch        *b_fqntwnd;   //!
    TBranch        *b_fqtwnd_iclstr;   //!
@@ -654,6 +701,15 @@ public :
    TBranch        *b_prid_plike;   //!
    TBranch        *b_prid_mlike;   //!
    TBranch        *b_prid_nused;   //!
+   TBranch        *b_nn;   //!
+   TBranch        *b_trgtype;   //!
+   TBranch        *b_n200m;   //!
+   TBranch        *b_t200m;   //!
+   TBranch        *b_lasthit;   //!
+   TBranch        *b_ntime;   //!
+   TBranch        *b_ngood;   //!
+   TBranch        *b_nvx;   //!
+   TBranch        *b_bvx;   //!
    TBranch        *b_dirtotepi;   //!
    TBranch        *b_dirtotenpi;   //!
    TBranch        *b_dirtotmue;   //!
@@ -756,9 +812,9 @@ fqReader::fqReader(TTree *tree)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("stopmu_mc_1390_for_atmnu_test_064994.001_stmusel_005_141224_fQ.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("jan14sk4_skdetsim13p90_neut532.reduc.081_fQv4r0.root");
       if (!f) {
-         f = new TFile("stopmu_mc_1390_for_atmnu_test_064994.001_stmusel_005_141224_fQ.root");
+         f = new TFile("jan14sk4_skdetsim13p90_neut532.reduc.081_fQv4r0.root");
       }
       tree = (TTree*)gDirectory->Get("h1");
 
@@ -957,10 +1013,6 @@ void fqReader::Init(TTree *tree)
    fChain->SetBranchAddress("flxh06", flxh06, &b_flxh06);
    fChain->SetBranchAddress("flxh11", flxh11, &b_flxh11);
    fChain->SetBranchAddress("scan", scan, &b_scan);
-   fChain->SetBranchAddress("stmuent", stmuent, &b_stmuent);
-   fChain->SetBranchAddress("stmudir", stmudir, &b_stmudir);
-   fChain->SetBranchAddress("stmugood", &stmugood, &b_stmugood);
-   fChain->SetBranchAddress("stmuqent", &stmuqent, &b_stmuqent);
    fChain->SetBranchAddress("nuceff_version", &nuceff_version, &b_nuceff_version);
    fChain->SetBranchAddress("charge_exchange", &charge_exchange, &b_charge_exchange);
    fChain->SetBranchAddress("absorbed", &absorbed, &b_absorbed);
@@ -1010,6 +1062,29 @@ void fqReader::Init(TTree *tree)
    fChain->SetBranchAddress("Numatom", &Numatom, &b_Numatom);
    fChain->SetBranchAddress("Ibound", &Ibound, &b_Ibound);
    fChain->SetBranchAddress("Neutinpmt", &Neutinpmt, &b_Neutinpmt);
+   fChain->SetBranchAddress("Nvert", &Nvert, &b_Nvert);
+   fChain->SetBranchAddress("Posvert", Posvert, &b_Posvert);
+   fChain->SetBranchAddress("Iflgvert", Iflgvert, &b_Iflgvert);
+   fChain->SetBranchAddress("Nvcvert", &Nvcvert, &b_Nvcvert);
+   fChain->SetBranchAddress("Dirvert", Dirvert, &b_Dirvert);
+   fChain->SetBranchAddress("Abspvert", Abspvert, &b_Abspvert);
+   fChain->SetBranchAddress("Abstpvert", Abstpvert, &b_Abstpvert);
+   fChain->SetBranchAddress("Ipvert", Ipvert, &b_Ipvert);
+   fChain->SetBranchAddress("Iverti", Iverti, &b_Iverti);
+   fChain->SetBranchAddress("Ivertf", Ivertf, &b_Ivertf);
+   fChain->SetBranchAddress("Fsiprob", &Fsiprob, &b_Fsiprob);
+   fChain->SetBranchAddress("Fsivarwt", Fsivarwt, &b_Fsivarwt);
+   fChain->SetBranchAddress("Nvertsk", &Nvertsk, &b_Nvertsk);
+   fChain->SetBranchAddress("Posvertsk", Posvertsk, &b_Posvertsk);
+   fChain->SetBranchAddress("Iflgvertsk", Iflgvertsk, &b_Iflgvertsk);
+   fChain->SetBranchAddress("Nvcvertsk", &Nvcvertsk, &b_Nvcvertsk);
+   fChain->SetBranchAddress("Dirvertsk", Dirvertsk, &b_Dirvertsk);
+   fChain->SetBranchAddress("Abspvertsk", Abspvertsk, &b_Abspvertsk);
+   fChain->SetBranchAddress("Abstpvertsk", Abstpvertsk, &b_Abstpvertsk);
+   fChain->SetBranchAddress("Ipvertsk", Ipvertsk, &b_Ipvertsk);
+   fChain->SetBranchAddress("Ivertisk", Ivertisk, &b_Ivertisk);
+   fChain->SetBranchAddress("Ivertfsk", Ivertfsk, &b_Ivertfsk);
+   fChain->SetBranchAddress("Fsiprobsk", &Fsiprobsk, &b_Fsiprobsk);
    fChain->SetBranchAddress("trgoff", &trgoff, &b_trgoff);
    fChain->SetBranchAddress("fqntwnd", &fqntwnd, &b_fqntwnd);
    fChain->SetBranchAddress("fqtwnd_iclstr", fqtwnd_iclstr, &b_fqtwnd_iclstr);
@@ -1085,6 +1160,15 @@ void fqReader::Init(TTree *tree)
    fChain->SetBranchAddress("prid_plike", &prid_plike, &b_prid_plike);
    fChain->SetBranchAddress("prid_mlike", &prid_mlike, &b_prid_mlike);
    fChain->SetBranchAddress("prid_nused", &prid_nused, &b_prid_nused);
+   fChain->SetBranchAddress("nn", &nn, &b_nn);
+   fChain->SetBranchAddress("trgtype", &trgtype, &b_trgtype);
+   fChain->SetBranchAddress("n200m", &n200m, &b_n200m);
+   fChain->SetBranchAddress("t200m", &t200m, &b_t200m);
+   fChain->SetBranchAddress("lasthit", &lasthit, &b_lasthit);
+   fChain->SetBranchAddress("ntime", ntime, &b_ntime);
+   fChain->SetBranchAddress("ngood", ngood, &b_ngood);
+   fChain->SetBranchAddress("nvx", nvx, &b_nvx);
+   fChain->SetBranchAddress("bvx", bvx, &b_bvx);
    fChain->SetBranchAddress("dirtotepi", dirtotepi, &b_dirtotepi);
    fChain->SetBranchAddress("dirtotenpi", dirtotenpi, &b_dirtotenpi);
    fChain->SetBranchAddress("dirtotmue", dirtotmue, &b_dirtotmue);

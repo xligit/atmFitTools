@@ -5,6 +5,7 @@
 #include "TTree.h"
 #include "fQreader.C"
 #include <iostream>
+#include "THStack.h"
 
 #define NSAMPMAX 5
 #define NCOMPMAX 20
@@ -14,7 +15,7 @@
 class histoManager{
   public:
   histoManager(int nsampl,int nbins,int ncomp,const char* name=""); //constructor
-  histoManager(const char* rootname);
+  histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int natt);
   TTree* dataTree;
   TTree* mcTree; 
   fQreader* fqData;
@@ -47,18 +48,139 @@ class histoManager{
   void setDataTree(TChain* ch);
   void setMCTree(TTree* tr);
   void setMCTree(TChain* ch);
+
+  //plotting
+  void showMCBreakdown(int isample,int ibin,int iatt);
+  THStack* showMCBreakdownStack(int isample,int ibin,int iatt);
+  TH1F* calcMCSum(int isample, int ibin, int iatt);
  
   //file management
   void saveToFile();
-  void readFromFile(const char* rootename);
+  void readFromFile(const char* rootename,int nsamp,int nbin,int ncomp,int natt);
 };
 
-histoManager::histoManager(const char* rootname){
-  readFromFile(rootname);
+TH1F*  histoManager::calcMCSum(int isample, int ibin, int iatt){
+  TH1F* hTot = (TH1F*)hMC[isample][ibin][0][iatt]->Clone("htot");
+  for (int i=1;i<nComponents;i++){
+    hTot->Add(hMC[isample][ibin][i][iatt]);
+  }
+  return hTot;
+}
+
+
+
+void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
+  int color[NCOMPMAX];
+  color[0] = 1;
+  color[1] = 4;
+  color[2] = 2;
+  color[3] = 4;
+  color[4] = 2;
+  color[5] = 7;
+  color[6] = 6;
+  color[7] = 15;
+  int style[NCOMPMAX];
+  style[0] = 1001;
+  style[1] = 1001;
+  style[2] = 1001;
+  style[3] = 3013;
+  style[4] = 3013;
+  style[5] = 1001;
+  style[6] = 1001;
+  style[7] = 1001;
+  float size[NCOMPMAX];
+  int hitolo[NCOMPMAX];
+  for (int i=0;i<nComponents;i++){
+    hMC[isample][ibin][i][iatt]->SetLineColor(color[i]);
+    hMC[isample][ibin][i][iatt]->SetFillColor(color[i]);
+    hMC[isample][ibin][i][iatt]->SetFillStyle(style[i]);
+    size[i] = hMC[isample][ibin][i][iatt]->Integral();
+    hitolo[i]=i;
+  }
+  int nswitch;
+  //slow and easy 
+  while (nswitch>0){
+    nswitch=0;
+    for (int ii=0;ii<(nComponents-1);ii++){
+      if (size[hitolo[ii]]<size[hitolo[ii+1]]){
+        nswitch = hitolo[ii];
+        hitolo[ii] = hitolo[ii+1];
+        hitolo[ii+1] = nswitch;
+        nswitch=1;
+      }
+    }
+  }
+
+  hMC[isample][ibin][hitolo[0]][iatt]->Draw();
+  for (int j=1;j<nComponents;j++){
+     hMC[isample][ibin][hitolo[j]][iatt]->Draw("same");
+  }
   return;
 }
 
-void histoManager::readFromFile(const char* rootname){
+THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
+  int color[NCOMPMAX];
+  color[0] = 1;
+  color[1] = 4;
+  color[2] = 2;
+  color[3] = 38;
+  color[4] = 45;
+  color[5] = 7;
+  color[6] = 6;
+  color[7] = 15;
+  int style[NCOMPMAX];
+  style[0] = 1001;
+  style[1] = 1001;
+  style[2] = 1001;
+  style[3] = 1001;
+  style[4] = 1001;
+  style[5] = 1001;
+  style[6] = 1001;
+  style[7] = 1001;
+  float size[NCOMPMAX];
+  int hitolo[NCOMPMAX];
+  for (int i=0;i<nComponents;i++){
+    hMC[isample][ibin][i][iatt]->SetLineColor(color[i]);
+    hMC[isample][ibin][i][iatt]->SetFillColor(color[i]);
+    hMC[isample][ibin][i][iatt]->SetFillStyle(style[i]);
+    size[i] = hMC[isample][ibin][i][iatt]->Integral();
+    hitolo[i]=i;
+  }
+  int nswitch;
+  //slow and easy 
+  while (nswitch>0){
+    nswitch=0;
+    for (int ii=0;ii<(nComponents-1);ii++){
+      if (size[hitolo[ii]]<size[hitolo[ii+1]]){
+        nswitch = hitolo[ii];
+        hitolo[ii] = hitolo[ii+1];
+        hitolo[ii+1] = nswitch;
+        nswitch=1;
+      }
+    }
+  }
+  THStack* hstack = new THStack("hstack","stack");
+  hstack->Add(hMC[isample][ibin][hitolo[0]][iatt]);
+  for (int j=1;j<nComponents;j++){
+     hstack->Add(hMC[isample][ibin][hitolo[j]][iatt]);
+  }
+  hstack->Draw();
+  hData[isample][ibin][iatt]->Draw("samee");
+  return hstack;
+}
+
+histoManager::histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int natt){
+  readFromFile(rootname,nsamp,nbin,ncomp,natt);
+  nameTag = "histManager_For_";
+  nameTag.Append(rootname);
+  return;
+}
+
+void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncomp,int natt){
+  nSamples = nsamp;
+  nBins    = nbin;
+  nComponents = ncomp;
+  nAttributes  = natt;
   TString filename = rootname;
   filename.Append(".root");
   fin = new TFile(filename.Data());
@@ -124,7 +246,7 @@ void histoManager::fillHistos(){
   int nevmc   = mcTree->GetEntries();
   //fill data histos
   for (int i=0;i<nevdata;i++){
-    if ((i%100)==0) cout<<"getting data event: "<<i<<endl;
+//    if ((i%100)==0) cout<<"getting data event: "<<i<<endl;
     dataTree->GetEntry(i);
     fillAttributesData();
     for (int iatt=0;iatt<nAttributes;iatt++){
@@ -132,7 +254,7 @@ void histoManager::fillHistos(){
    }
   }
   for (int j=0;j<nevmc;j++){
-    if ((j%100)==0) cout<<"getting mc event: "<<j<<endl;
+//    if ((j%100)==0) cout<<"getting mc event: "<<j<<endl;
     mcTree->GetEntry(j);
     fillAttributesMC();
     for (int jatt=0;jatt<nAttributes;jatt++){
@@ -157,12 +279,12 @@ void histoManager::fillAttributesMC(){
 
 TH1F* histoManager::getHistogram(int iatt, const char* thename){
   TH1F* hnew;
-  int nBinsNllEMu = 100;
+  int nBinsNllEMu = 200;
   if (iatt==0){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-10000,2000);
+     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
   }
   if (iatt==1){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-10000,2000);
+     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
   }
   return hnew;
 }

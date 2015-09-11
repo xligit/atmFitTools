@@ -64,9 +64,9 @@ void visRing::fillVisVarFV(){
   nvk=0;
   nvp=0;
 //  int nvisarr[MAXNVIS];
-//  for (int jpid=0;jpid<=50;jpid++){
-//    nvisarr[jpid]=0;
-//  }
+  for (int jpid=0;jpid<=50;jpid++){
+    nvisarr[jpid]=0;
+  }
   for (int i=0;i<fqfv->npar;i++){
     ipid=(int)fqfv->ipv[i];
     beta = getbeta(ipid,fqfv->pmomv[i]);
@@ -75,12 +75,14 @@ void visRing::fillVisVarFV(){
       visindx[nvis]=i;
       vispid[nvis]=ipid;
       nvis++;
-//      nvisarr[ipid]++;
-     // if ((ipid==5)||(ipid==6)) nvmu++;
-     // if ((ipid==2)||(ipid==3)) nve++;
-     // if ((ipid==9)||(ipid==8)) nvpip++;
-     // if ((ipid==7)) nvpi0++;
-     // if (ipid==1) nvgam++;
+      nvisarr[ipid]++;
+      if ((ipid==5)||(ipid==6)) nvmu++;
+      if ((ipid==2)||(ipid==3)) nve++;
+      if ((ipid==9)||(ipid==8)) nvpip++;
+      if ((ipid==11)||(ipid==12)) nvk++;
+      if ((ipid==14)||(ipid==15)) nvp++;
+      if ((ipid==7)) nvpi0++;
+      if (ipid==1) nvgam++;
     }
   }
 //  nvmu = nvisarr[5]+nvisarr[6];
