@@ -54,28 +54,29 @@ int sift::getSample(){
 int sift::getComponent(){
   absmode = TMath::Abs(fq->mode);
   int absnu   = TMath::Abs(fq->ipnu[0]);
-//  if ((vis->nve==1)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 1; //single e
-//  if ((vis->nve==0)&&(vis->nvmu==1)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 2; //single mu
-//  if ((vis->nve==1)&&(vis->nvmu==0)&&((vis->nvpi0>0)||(vis->nvpip>0))) return 3; //e + other
-//  if ((vis->nve==0)&&(vis->nvmu==1)&&((vis->nvpi0>0)||(vis->nvpip>0))) return 4; //mu + other
-//  if ((vis->nve==0)&&(vis->nvmu==0)&&(vis->nvpi0>0)&&(vis->nvpip==0)) return 5;  //single pi0
-//  if ((vis->nvpi0>0)||(vis->nvpip>0)||(vis->nvk>0)) return 6;  //MR
-//  return 7;
+  if ((vis->nve==1)&&((vis->nvk==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 0; //single e
+  if ((vis->nvmu==1)&&((vis->nvk==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 1; //single mu
+  if ((vis->nve==1)&&(vis->nvmu==0)&&((vis->nvpi0>0)||(vis->nvpip>0)||(vis->nvk>0))) return 2; //e + other
+  if ((vis->nve==0)&&(vis->nvmu==1)&&((vis->nvpi0>0)||(vis->nvpip>0)||(vis->nvk>0))) return 3; //mu + other
+  if ((vis->nve==0)&&(vis->nvmu==0)&&(vis->nvpi0>0)&&(vis->nvpip==0)) return 4;  //single pi0
+  if ((vis->nve==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip>0)) return 5;  //single pip
+ // if ((vis->nvpi0>0)||(vis->nvpip>0)||(vis->nvk>0)) return 6;  //OTHER
+  return 6;
 
 
-  if ((absmode)<30){
-     if ((absmode==1)&&(absnu==14)) return 1;
-     if ((absmode==1)&&(absnu==12)) return 0;
+//  if ((absmode)<30){
+//     if ((absmode==1)&&(absnu==14)) return 1;
+//     if ((absmode==1)&&(absnu==12)) return 0;
   //   if ((vis->nvpip==0)&&(vis->nvpip+vis->nvpi0+vis->nvk)==0) return 1; //CC1e
  //    if ((vis->nvmu==1)&&(vis->nvpip+vis->nvpi0+vis->nvk)==0) return 2; //CC1mu
-     if (TMath::Abs((int)fq->ipnu[0])==14) return 3; //CCmuOther
-     if (TMath::Abs((int)fq->ipnu[0])==12) return 2; //CCeOther
-  }
-  else{
-     if ((vis->nvpi0==1)&&(vis->nvpip==0)) return 4;
-     return 5;
-   }
-  return 6;
+//     if (TMath::Abs((int)fq->ipnu[0])==14) return 3; //CCmuOther
+//     if (TMath::Abs((int)fq->ipnu[0])==12) return 2; //CCeOther
+//  }
+//  else{
+//     if ((vis->nvpi0==1)&&(vis->nvpip==0)) return 4;
+//     return 5;
+//   }
+//  return 6;
 }
 
 void sift::siftIt(const char* fname){
@@ -88,7 +89,7 @@ void sift::siftIt(const char* fname){
     vis->fillVisVar();
     //sort event
     ncomponent=getComponent();
-    if (ncomponent==1) fq->fq1rnll[0][1]-=50.;
+    if (ncomponent==3) fq->fq1rnll[0][1]-=100.;
  //   if (ncomponent==2) fq->fq1rnll[0][2]+=(-1*25.);
     nsample=getSample();
     nbin=getBin();

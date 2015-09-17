@@ -6,6 +6,7 @@
 #include "fQreader.C"
 #include <iostream>
 #include "THStack.h"
+#include "TLegend.h"
 
 #define NSAMPMAX 5
 #define NCOMPMAX 20
@@ -29,6 +30,7 @@ class histoManager{
   int nBins;  //number of bins in data
   TH1F* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //array of all MC histograms
   TH1F* hData[NSAMPMAX][NBINMAX][NATTMAX];  //array of all Data histograms
+  TLegend* Leg;
   float att[NATTMAX]; //array of all attribute values
   TString attNames[NATTMAX];  //array of attribute names
   TString attType[NATTMAX];  //array of attribute type codes
@@ -71,68 +73,19 @@ TH1F*  histoManager::calcMCSum(int isample, int ibin, int iatt){
 
 void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   int color[NCOMPMAX];
-  color[0] = 1;
-  color[1] = 4;
-  color[2] = 2;
-  color[3] = 4;
-  color[4] = 2;
-  color[5] = 7;
-  color[6] = 6;
-  color[7] = 15;
+  color[0] = 4;
+  color[1] = 2;
+  color[2] = 9;
+  color[3] = 46;
+  color[4] = 7;
+  color[5] = 5;
+  color[6] = 15;
+  color[7] = 1;
   int style[NCOMPMAX];
   style[0] = 1001;
   style[1] = 1001;
-  style[2] = 1001;
-  style[3] = 3013;
-  style[4] = 3013;
-  style[5] = 1001;
-  style[6] = 1001;
-  style[7] = 1001;
-  float size[NCOMPMAX];
-  int hitolo[NCOMPMAX];
-  for (int i=0;i<nComponents;i++){
-    hMC[isample][ibin][i][iatt]->SetLineColor(color[i]);
-    hMC[isample][ibin][i][iatt]->SetFillColor(color[i]);
-    hMC[isample][ibin][i][iatt]->SetFillStyle(style[i]);
-    size[i] = hMC[isample][ibin][i][iatt]->Integral();
-    hitolo[i]=i;
-  }
-  int nswitch;
-  //slow and easy 
-  while (nswitch>0){
-    nswitch=0;
-    for (int ii=0;ii<(nComponents-1);ii++){
-      if (size[hitolo[ii]]<size[hitolo[ii+1]]){
-        nswitch = hitolo[ii];
-        hitolo[ii] = hitolo[ii+1];
-        hitolo[ii+1] = nswitch;
-        nswitch=1;
-      }
-    }
-  }
-
-  hMC[isample][ibin][hitolo[0]][iatt]->Draw();
-  for (int j=1;j<nComponents;j++){
-     hMC[isample][ibin][hitolo[j]][iatt]->Draw("same");
-  }
-  return;
-}
-
-THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
-  int color[NCOMPMAX];
-  color[0] = 1;
-  color[1] = 4;
-  color[2] = 2;
-  color[3] = 38;
-  color[4] = 45;
-  color[5] = 7;
-  color[6] = 6;
-  color[7] = 15;
-  int style[NCOMPMAX];
-  style[0] = 1001;
-  style[1] = 1001;
-  style[2] = 1001;
-  style[3] = 1001;
+  style[2] = 3001;
+  style[3] = 3001;
   style[4] = 1001;
   style[5] = 1001;
   style[6] = 1001;
@@ -140,7 +93,7 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
   float size[NCOMPMAX];
   int hitolo[NCOMPMAX];
   for (int i=0;i<nComponents;i++){
-    hMC[isample][ibin][i][iatt]->SetLineColor(color[i]);
+//    hMC[isample][ibin][i][iatt]->SetLineColor(color[i]);
     hMC[isample][ibin][i][iatt]->SetFillColor(color[i]);
     hMC[isample][ibin][i][iatt]->SetFillStyle(style[i]);
     size[i] = hMC[isample][ibin][i][iatt]->Integral();
@@ -159,13 +112,88 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
       }
     }
   }
+  float norm = 0.;
+  if ((float)mcTree->GetEntries()>0) norm = (float)dataTree->GetEntries()/(float)mcTree->GetEntries();
+  hMC[isample][ibin][hitolo[0]][iatt]->Draw();
+  for (int j=0;j<nComponents;j++){
+     hMC[isample][ibin][hitolo[j]][iatt]->Draw("same");
+  }
+  Leg = new TLegend(0.7,0.6,0.9,0.9);
+  Leg->AddEntry(hMC[isample][ibin][0][iatt],"CC1e","F");
+  Leg->AddEntry(hMC[isample][ibin][1][iatt],"CC1#mu","F");
+  Leg->AddEntry(hMC[isample][ibin][2][iatt],"CCeOth","F");
+  Leg->AddEntry(hMC[isample][ibin][3][iatt],"CC#muOth","F");
+  Leg->AddEntry(hMC[isample][ibin][4][iatt],"Single #pi^{0}","F");
+  Leg->AddEntry(hMC[isample][ibin][5][iatt],"Single #pi^{+}","F");
+  Leg->AddEntry(hMC[isample][ibin][6][iatt],"Other","F");
+  Leg->Draw("same");
+
+  return;
+}
+
+THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
+  int color[NCOMPMAX];
+  color[0] = 4;
+  color[1] = 2;
+  color[2] = 9;
+  color[3] = 46;
+  color[4] = 7;
+  color[5] = 5;
+  color[6] = 15;
+  color[7] = 1;
+  int style[NCOMPMAX];
+  style[0] = 1001;
+  style[1] = 1001;
+  style[2] = 3001;
+  style[3] = 3001;
+  style[4] = 1001;
+  style[5] = 1001;
+  style[6] = 1001;
+  style[7] = 1001;
+  float size[NCOMPMAX];
+  int hitolo[NCOMPMAX];
+  for (int i=0;i<nComponents;i++){
+ //   hMC[isample][ibin][i][iatt]->SetLineColor(color[i]);
+    hMC[isample][ibin][i][iatt]->SetFillColor(color[i]);
+    hMC[isample][ibin][i][iatt]->SetFillStyle(style[i]);
+    size[i] = hMC[isample][ibin][i][iatt]->Integral();
+    hitolo[i]=i;
+  }
+  int nswitch;
+  //slow and easy 
+  while (nswitch>0){
+    nswitch=0;
+    for (int ii=0;ii<(nComponents-1);ii++){
+      if (size[hitolo[ii]]<size[hitolo[ii+1]]){
+        nswitch = hitolo[ii];
+        hitolo[ii] = hitolo[ii+1];
+        hitolo[ii+1] = nswitch;
+        nswitch=1;
+      }
+    }
+  }
+  float norm = 0.;
+  if ((float)mcTree->GetEntries()>0) norm = (float)dataTree->GetEntries()/(float)mcTree->GetEntries();
   THStack* hstack = new THStack("hstack","stack");
   hstack->Add(hMC[isample][ibin][hitolo[0]][iatt]);
   for (int j=1;j<nComponents;j++){
      hstack->Add(hMC[isample][ibin][hitolo[j]][iatt]);
   }
   hstack->Draw();
+  hData[isample][ibin][iatt]->Scale(1./norm);
+  hData[isample][ibin][iatt]->SetMarkerStyle(8);
   hData[isample][ibin][iatt]->Draw("samee");
+  hData[isample][ibin][iatt]->Scale(norm);
+  Leg = new TLegend(0.7,0.6,0.9,0.9);
+  Leg->AddEntry(hMC[isample][ibin][0][iatt],"CC1e","F");
+  Leg->AddEntry(hMC[isample][ibin][1][iatt],"CC1#mu","F");
+  Leg->AddEntry(hMC[isample][ibin][2][iatt],"CCeOth","F");
+  Leg->AddEntry(hMC[isample][ibin][3][iatt],"CC#muOth","F");
+  Leg->AddEntry(hMC[isample][ibin][4][iatt],"Single #pi^{0}","F");
+  Leg->AddEntry(hMC[isample][ibin][5][iatt],"Single #pi^{+}","F");
+  Leg->AddEntry(hMC[isample][ibin][6][iatt],"Other","F");
+  Leg->AddEntry(hData[isample][ibin][iatt],"Data","P");
+  Leg->Draw("same");
   return hstack;
 }
 
@@ -279,7 +307,7 @@ void histoManager::fillAttributesMC(){
 
 TH1F* histoManager::getHistogram(int iatt, const char* thename){
   TH1F* hnew;
-  int nBinsNllEMu = 200;
+  int nBinsNllEMu = 100;
   if (iatt==0){
      hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
   }

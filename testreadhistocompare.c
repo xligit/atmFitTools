@@ -28,16 +28,17 @@
  //hpiddat->Add(hpiddatmu);
 
  histoCompare* hc = new histoCompare("comptest");
- hc->readFromFile("hManageratmos",3,1,6,1);
+ hc->readFromFile("hManagertest1",3,1,7,1);
  hc->getTotSumSq();
- hc->setBinName(0,"global");
+ hc->setBinName(0,"");
  hc->setCompName(0,"CC1e");
- hc->setCompName(1,"CC1mu");
- hc->setCompName(2,"CCeOther");
- hc->setCompName(3,"CCmuOther");
- hc->setCompName(4,"NCpi0");
- hc->setCompName(5,"NCOther");
- hc->setAttName(0,"Lemu");
+ hc->setCompName(1,"CC1#mu");
+ hc->setCompName(2,"CCeOth");
+ hc->setCompName(3,"CC#muOth");
+ hc->setCompName(4,"#pi0");
+ hc->setCompName(5,"#pi+");
+ hc->setAttName(0,"Other");
+ hc->LnLFit();
 // hc->addHistogram(hpidmc,0);
 // hc->addHistogram(hpidmcmu,0);
 // hc->addHistogram(hpiddat,1);

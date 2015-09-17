@@ -28,6 +28,7 @@ class histoCompare{
   float Par[NBINMAX][NCOMPMAX][NATTMAX][2];
   float fixPar[NBINMAX][NCOMPMAX][NATTMAX][2];
   float bestPar[NBINMAX][NCOMPMAX][NATTMAX][2];
+  float errPar[NBINMAX][NCOMPMAX][NATTMAX][2];
   TString parName[NBINMAX][NCOMPMAX][NATTMAX][2];
   TString binName[NBINMAX];
   TString compName[NCOMPMAX];
@@ -37,6 +38,8 @@ class histoCompare{
   void setAttName(int iatt, const char* name){attName[iatt]=name;}
   void showFitHisto(int isamp,int ibin,int icomp,int iatt);
   void showFitEffect(int isamp,int ibin,int icomp,int iatt);
+  void showFitResult(int isamp,int ibin,int iatt);
+  void showFitPars(int ibin,int iatt,int imod);
  // TH1F* hMod[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
 
   //tools for adding histogram directly..for debugging
@@ -45,6 +48,8 @@ class histoCompare{
   TH1F* hMC[10];
   TH1F* hModDebug;
   TH1F* hMod;
+  TH1F* hPar;
+  TH1F* showSmear(TH1F* h, float smear, float bias);
   void showMod(int imchist);
   TH1F* hTot;
   int nDataHist;
@@ -67,6 +72,8 @@ class histoCompare{
   void minSumSqDebug();
   void minSumSq();
   void sumSqPrefit();
+  void LnLFit();
+  void LnLPreFit();
   void drawResult(int ihist);
 
   //staticthis for fits
@@ -75,9 +82,54 @@ class histoCompare{
 
 histoCompare* histoCompare::staticthis;
 
+void histoCompare::showFitPars(int ibin,int iatt,int imod){
+  int nbinstot = nComp;
+  hPar  = new TH1F("hpar","hpar",nbinstot,0,nbinstot);
+  for (int icomp=0;icomp<nComp;icomp++){
+    hPar->SetBinContent(icomp+1,bestPar[ibin][icomp][iatt][imod]);
+    hPar->GetXaxis()->SetBinLabel(icomp+1,parName[ibin][icomp][iatt][imod].Data());
+  }
+  hPar->Draw();
+  return;
+}
+
+
+TH1F* histoCompare::showSmear(TH1F* h, float smear, float bias){
+  TH1F* hh = smearIt(h,smear,bias);
+  return hh;
+}
+
+
+void histoCompare::showFitResult(int isamp,int ibin,int iatt){
+  //sum up mc components
+  float smear = bestPar[ibin][0][iatt][0];
+  float bias = bestPar[ibin][0][iatt][1];
+  hMod = smearIt(hManager->hMC[isamp][ibin][0][iatt],smear,bias);
+  hTot = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("htot");
+  for (int jcomp=1;jcomp<nComp;jcomp++){
+    hTot->Add(hManager->hMC[isamp][ibin][jcomp][iatt]);
+    smear = bestPar[ibin][jcomp][iatt][0];
+    bias  = bestPar[ibin][jcomp][iatt][1];
+    hMod->Add(smearIt(hManager->hMC[isamp][ibin][jcomp][iatt],smear,bias));
+  }
+  hTot->SetLineColor(kRed);
+  hTot->Scale(Norm);
+  hMod->SetLineColor(kBlue);
+  hMod->Scale(Norm);
+  hTot->Draw();
+  hMod->Draw("same");
+  hManager->hData[isamp][ibin][iatt]->SetMarkerStyle(8);
+  hManager->hData[isamp][ibin][iatt]->Draw("samee");
+  return;
+}
+
 void histoCompare::showFitEffect(int isamp,int ibin,int icomp,int iatt){
   //sum up mc components
-  hMod = smearIt(hManager->hMC[isamp][ibin][icomp][iatt],bestPar[ibin][icomp][iatt][0],bestPar[ibin][icomp][iatt][1]);
+  float smear = bestPar[ibin][icomp][iatt][0];
+  float bias  = bestPar[ibin][icomp][iatt][1];
+  cout<<"SMEAR: "<<smear<<endl;
+  cout<<"BIAS:  "<<bias<<endl;
+  hMod = smearIt(hManager->hMC[isamp][ibin][icomp][iatt],smear,bias);
   hTot = (TH1F*)hManager->hMC[isamp][ibin][icomp][iatt]->Clone("htot");
   for (int jcomp=0;jcomp<nComp;jcomp++){
     if (jcomp!=icomp){
@@ -87,21 +139,288 @@ void histoCompare::showFitEffect(int isamp,int ibin,int icomp,int iatt){
   }
   hTot->SetLineColor(kRed);
   hTot->Scale(Norm);
-  hMod->SetLineColor(kMagenta);
+  hMod->SetLineColor(kBlue);
   hMod->Scale(Norm);
   hTot->Draw();
   hMod->Draw("same");
+  hManager->hData[isamp][ibin][iatt]->SetMarkerStyle(8);
   hManager->hData[isamp][ibin][iatt]->Draw("samee");
   return;
 }
 
 void histoCompare::showFitHisto(int isamp,int ibin,int icomp,int iatt){
-  hMod = smearIt(hManager->hMC[isamp][ibin][icomp][iatt],bestPar[ibin][icomp][iatt][0],bestPar[ibin][icomp][iatt][1]);
+  float smear = bestPar[ibin][icomp][iatt][0];
+  float bias  = bestPar[ibin][icomp][iatt][1];
+  cout<<"SMEAR: "<<smear<<endl;
+  cout<<"BIAS:  "<<bias<<endl;
+  hMod = smearIt(hManager->hMC[isamp][ibin][icomp][iatt],smear,bias);
+  hManager->hMC[isamp][ibin][icomp][iatt]->SetLineColor(kRed);
   hManager->hMC[isamp][ibin][icomp][iatt]->Draw();
-  hMod->SetLineColor(kMagenta);
+  hMod->SetLineColor(kBlue);
   hMod->Draw("same");
   return;
 }
+
+void histoCompare::LnLPreFit(){
+  //setup static this so wrapper doesn't segfault
+  staticthis = this;
+
+  //threshold to determine if a parameter is fit or not
+  //if the MC histograms for this parameter have a size less than this value,
+  //don't bother fitting them!
+  float nthresh = 50.;
+
+  //sets the precision of the fits
+  double parerr = 0.05;  
+  
+  //individually fit each parameter
+  int parindex =0;
+  int parindextmp;
+  //parameter name container
+  TString parnametmp;  
+
+  float  parinit; //container to temporarily store initial values 
+
+  //total number of parameters to be fit
+  int npars = nBin*nComp*nAtt*2;
+
+  cout<<"$$$$$$$$$$$$$$$ LNL PRE FIT $$$$$$$$$$$$$$$"<<endl;
+  cout<<"  ---------------------------------------- "<<endl;
+  cout<<"  NUMBER OF PARAMETERS: "<<npars<<endl;
+  cout<<"  PRECISION:            "<<parerr<<endl;
+  cout<<"  ---------------------------------------  "<<endl;
+
+  //fix parameters with too few events to be fit
+  parindex = 0;
+  for (int ibin=0;ibin<nBin;ibin++){
+    for (int iatt=0;iatt<nAtt;iatt++){
+      for (int icomp=0;icomp<nComp;icomp++){
+        //name parameters
+        parnametmp = Form("par_%d_",parindex);
+        parnametmp.Append(binName[ibin].Data());
+        parnametmp.Append("_");
+        parnametmp.Append(compName[icomp].Data());
+        parnametmp.Append("_");
+        parnametmp.Append(attName[iatt].Data());
+        parnametmp.Append("_");
+        parnametmp.Append("smear");
+        parName[ibin][icomp][iatt][0]=parnametmp.Data();
+        parnametmp = Form("par_%d_",(parindex+1));
+        parnametmp.Append(binName[ibin].Data());
+        parnametmp.Append("_");
+        parnametmp.Append(compName[icomp].Data());
+        parnametmp.Append("_");
+        parnametmp.Append(attName[iatt].Data());
+        parnametmp.Append("_");
+        parnametmp.Append("bias");
+        parName[ibin][icomp][iatt][1]=parnametmp.Data();
+        //get summed histogram
+        hTot = (TH1F*)hManager->hMC[0][ibin][icomp][iatt]->Clone("htot");
+        for (int isamp=0;isamp<nSamp;isamp++){
+          hTot->Add(hManager->hMC[isamp][ibin][icomp][iatt]);
+        }
+        //check to make sure histogram is above fitting threshold
+        if (hTot->GetEntries()<nthresh){
+          cout<<"  FIXING PARAMETER:  "<<parName[ibin][icomp][iatt][0].Data()<<" (ENTRIES TOO LOW!) "<<endl; 
+          fixPar[ibin][icomp][iatt][0]=1;
+          cout<<"  FIXING PARAMETER:  "<<parName[ibin][icomp][iatt][1].Data()<<" (ENTRIES TOO LOW!) "<<endl; 
+          fixPar[ibin][icomp][iatt][1]=1;
+        }
+        parindex+=2;
+      }
+    }
+  }
+  cout<<"  ----------------------------------------  "<<endl;
+
+  //setup the fitter!
+  TFitter* fit = new TFitter(npars);
+  //shut fitter up
+  {
+    double pp = 1;
+    fit->ExecuteCommand("SET PRINTOUT",&pp,1);
+  }
+  //specify function to be fit
+  fit->SetFCN(lnLWrapper);
+
+  //set parameters to inital values
+  parindex = 0;
+  for (int kbin=0;kbin<nBin;kbin++){
+    for (int katt=0;katt<nAtt;katt++){
+      for (int kcomp=0;kcomp<nComp;kcomp++){
+        bestPar[kbin][kcomp][katt][0] = Par[kbin][kcomp][katt][0];
+        fit->SetParameter(parindex,parName[kbin][kcomp][katt][0].Data(),Par[kbin][kcomp][katt][0],parerr,0,0);
+        parindex++;
+        bestPar[kbin][kcomp][katt][1] = Par[kbin][kcomp][katt][1];
+        fit->SetParameter(parindex,parName[kbin][kcomp][katt][1].Data(),Par[kbin][kcomp][katt][1],parerr,0,0);
+        parindex++;
+      }
+    }
+  }
+
+  //fix all parameters
+  for (int jpar=0;jpar<npars;jpar++){
+    fit->FixParameter(jpar);
+  }
+
+  parindex = 0;
+  //run individual fits
+  for (int jbin=0;jbin<nBin;jbin++){
+    for (int jatt=0;jatt<nAtt;jatt++){
+      for (int jcomp=0;jcomp<nComp;jcomp++){
+        //fix all other variables
+        //release parameter to be fit
+        parindex++;
+        fit->ReleaseParameter(parindex);
+        fit->ExecuteCommand("SIMPLEX",0,0);
+        fit->FixParameter(parindex);
+        bestPar[jbin][jcomp][jatt][1] = fit->GetParameter(parindex); 
+        parindex++;
+      }
+    }
+  }
+
+  //print final results
+  
+  for (int pbin=0;pbin<nBin;pbin++){
+    for (int patt=0;patt<nAtt;patt++){
+      for (int pcomp=0;pcomp<nComp;pcomp++){
+        for (int pmod=0;pmod<2;pmod++){
+          cout<<"  PAR "<<parName[pbin][pcomp][patt][pmod].Data()<<" FIT RESULT: ";
+          cout<<bestPar[pbin][pcomp][patt][pmod]<<endl;
+        }
+      }
+    }
+  }
+
+  cout<<"$$$$$$$$$$$$$ END LNL PRE FIT $$$$$$$$$$$$$"<<endl;
+
+}
+
+void histoCompare::LnLFit(){
+  //setup static this so wrapper doesn't segfault
+  staticthis = this;
+
+  //threshold to determine if a parameter is fit or not
+  //if the MC histograms for this parameter have a size less than this value,
+  //don't bother fitting them!
+  float nthresh = 50.;
+
+  //sets the precision of the fits
+  double parerr = 0.001;  
+  
+  //individually fit each parameter
+  int parindex =0;
+
+  //parameter name container
+  TString parnametmp;  
+
+  float  parinit; //container to temporarily store initial values 
+
+  //total number of parameters to be fit
+  int npars = nBin*nComp*nAtt*2;
+
+  cout<<"$$$$$$$$$$$$$$$$$ LNL FIT $$$$$$$$$$$$$$$$$"<<endl;
+  cout<<"  ---------------------------------------- "<<endl;
+  cout<<"  NUMBER OF PARAMETERS: "<<npars<<endl;
+  cout<<"  PRECISION:            "<<parerr<<endl;
+  cout<<"  ---------------------------------------  "<<endl;
+
+  //run the prefit
+  LnLPreFit();
+
+  //setup the fitter!
+  TFitter* fit = new TFitter(npars);
+  //shut fitter up
+  {
+    double pp = 1;
+    fit->ExecuteCommand("SET PRINTOUT",&pp,1);
+  }
+  //specify function to be fit
+  fit->SetFCN(lnLWrapper);
+
+  //set parameters to inital values (from prefit)
+  parindex = 0;
+  for (int kbin=0;kbin<nBin;kbin++){
+    for (int katt=0;katt<nAtt;katt++){
+      for (int kcomp=0;kcomp<nComp;kcomp++){
+        fit->SetParameter(parindex,parName[kbin][kcomp][katt][0].Data(),bestPar[kbin][kcomp][katt][0],parerr,0,0);
+        parindex++;
+        fit->SetParameter(parindex,parName[kbin][kcomp][katt][1].Data(),bestPar[kbin][kcomp][katt][1],parerr,0,0);
+        parindex++;
+      }
+    }
+  }
+  
+  parindex = 0;
+  int parindextmp = 0;
+  //do individual fits
+  for (int jbin=0;jbin<nBin;jbin++){
+    for (int jatt=0;jatt<nAtt;jatt++){
+      //start of fit block
+      //fix all parameters
+      for (int jpar=0;jpar<npars;jpar++){
+        fit->FixParameter(jpar);
+      }
+      parindextmp = parindex;
+      //release bias parameters
+      for (int jcomp=0;jcomp<nComp;jcomp++){
+        //fill initial value to restore parameter array later
+        bestPar[jbin][jcomp][jatt][1] = Par[jbin][jcomp][jatt][1];
+        //fit a single parameter
+        fit->ReleaseParameter(parindex+1);   
+        parindex+=2;
+      }
+
+      //run fit
+      fit->ExecuteCommand("SIMPLEX",0,0); //run the fit for bias parameters
+      //release smear parameters
+      parindex = parindextmp;
+      for (int jcomp=0;jcomp<nComp;jcomp++){
+        //fill initial value to restore parameter array later
+        bestPar[jbin][jcomp][jatt][0] = Par[jbin][jcomp][jatt][0];
+        //fit a single parameter
+        fit->ReleaseParameter(parindex);   
+        parindex+=2;
+      }
+      fit->ExecuteCommand("SIMPLEX",0,0); //run the fit for ALL parameters
+
+      parindex = parindextmp;
+      //get results
+      for (int lcomp=0;lcomp<nComp;lcomp++){
+        for (int lmod=0;lmod<2;lmod++){
+          Par[jbin][lcomp][jatt][lmod] = bestPar[jbin][lcomp][jatt][lmod]; 
+          bestPar[jbin][lcomp][jatt][lmod] = fit->GetParameter(parindex); 
+          errPar[jbin][lcomp][jatt][lmod] = fit->GetParError(parindex);
+          parindex++;
+        }
+      }
+      //end of fit block
+    }
+  }
+
+  //print final results
+  cout<<"  ----------------------------------------  "<<endl;
+  for (int pbin=0;pbin<nBin;pbin++){
+    for (int patt=0;patt<nAtt;patt++){
+      for (int pcomp=0;pcomp<nComp;pcomp++){
+        for (int pmod=0;pmod<2;pmod++){
+          cout<<"  PAR "<<parName[pbin][pcomp][patt][pmod].Data()<<" FIT RESULT: ";
+          cout<<Par[pbin][pcomp][patt][pmod]<<" -> "<<bestPar[pbin][pcomp][patt][pmod]<<endl;
+    //      cout<<" +/- "<<errPar[pbin][pcomp][patt][pmod]<<endl;
+        }
+      }
+    }
+  }
+  //end
+  cout<<"  ----------------------------------------  "<<endl;
+  cout<<"$$$$$$$$        FIT  COMPLLETE      $$$$$$$$"<<endl;
+
+  return;
+
+
+}
+
+
 
 void histoCompare::sumSqPrefit(){
   //setup static this so wrapper doesn't segfault
@@ -537,6 +856,8 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
       for (int iatt=0;iatt<nAtt;iatt++){
         Par[ibin][icomp][iatt][0]=1.;  //smear parameter
         Par[ibin][icomp][iatt][1]=0.;  //bias parameter
+        bestPar[ibin][icomp][iatt][0]=1.;  //smear parameter
+        bestPar[ibin][icomp][iatt][1]=0.;  //bias parameter
       }
     }
   } 
