@@ -1,3 +1,6 @@
+#ifndef HISTOTRANSFORMS_C
+#define HISTOTRANSFORMS_C
+
 #include "TH1F.h"
 
 using namespace std;
@@ -101,4 +104,5 @@ TH1F* convolveHisto(TH1F* hh, float sig, float bias, const char* name=""){
 
 
 
+#endif
 

@@ -1,86 +1,33 @@
-#include "histoManager.C"
-#include "TMath.h"
-#include "TRandom2.h"
-#include "histoTransforms.C"
-#include "TFitter.h"
+#ifndef HISTOCOMPARE_C
+#define HISTOCOMPARE_C
 
-using namespace std;
-
-
-//class to compare histograms and evaluate likelihoods
-class histoCompare{
-  public:
-
-  //constructors//
-  histoCompare(const char* thename);  //standard constructor
-
-  //internal variables
-  TString nameTag;  //name associated with this instance
-  int nSamp;  //number of samples
-  int nBin;  //number of bins
-  int nComp;  //number of  components
-  int nAtt;  //nummboer of attributes
-  //tools for histogram manager management
-  //created histo manager from file
-  void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int natt);
-  histoManager* hManager;
-  float Norm;
-  float Par[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float fixPar[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float bestPar[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float errPar[NBINMAX][NCOMPMAX][NATTMAX][2];
-  TString parName[NBINMAX][NCOMPMAX][NATTMAX][2];
-  TString binName[NBINMAX];
-  TString compName[NCOMPMAX];
-  TString attName[NCOMPMAX];
-  void setBinName(int ibin, const char* name){binName[ibin]=name;}
-  void setCompName(int icomp, const char* name){compName[icomp]=name;}
-  void setAttName(int iatt, const char* name){attName[iatt]=name;}
-  void showFitHisto(int isamp,int ibin,int icomp,int iatt);
-  void showFitEffect(int isamp,int ibin,int icomp,int iatt);
-  void showFitResult(int isamp,int ibin,int iatt);
-  void showFitPars(int ibin,int iatt,int imod);
- // TH1F* hMod[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
-
-  //tools for adding histogram directly..for debugging
-  void addHistogram(TH1F* h,int dataflg);
-  TH1F* hData[10];
-  TH1F* hMC[10];
-  TH1F* hModDebug;
-  TH1F* hMod;
-  TH1F* hPar;
-  TH1F* showSmear(TH1F* h, float smear, float bias);
-  void showMod(int imchist);
-  TH1F* hTot;
-  int nDataHist;
-  int nMCHist;
-  float parDebug[10][2];
-//  float getLDebug(); 
-  
-  //likelihood evaluateions
-  float getSumSq(TH1F* h1, TH1F* h2);
-  float getLnL(TH1F* h1, TH1F* h2);
-  float getNDiff();
-  float getTotSumSq();
-  float getTotLnL();
-  static void sumSqWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  static void lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  //for debuggint and play
-  float getTotSumSqDebug();
-  static void sumSqDebugWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  static void nDiffDebugWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  void minSumSqDebug();
-  void minSumSq();
-  void sumSqPrefit();
-  void LnLFit();
-  void LnLPreFit();
-  void drawResult(int ihist);
-
-  //staticthis for fits
-  static histoCompare* staticthis;
-};
+#include "histoCompare.h"
 
 histoCompare* histoCompare::staticthis;
+
+void histoCompare::profileL(int ibin, int icomp, int iatt, int imod, float range, int npts){
+  TString pname = "p";
+  pname.Append("_profile.png");
+  float bestpoint = Par[ibin][icomp][iatt][imod];
+  cout<<"best: "<<bestpoint<<endl;
+  float dx = range/(float)npts;
+  float xx = bestpoint - (range/2.);
+  float ll;
+  float lbest = getTotLnL();
+  if (hProf) hProf->Delete();
+  hProf = new TH1F("hprof","hprof",npts,xx,(xx+range));
+  for (int ipoint=0;ipoint<npts;ipoint++){
+    cout<<"filling point" <<ipoint<<endl;
+    Par[ibin][icomp][iatt][imod] = xx;
+    ll = getTotLnL();
+    hProf->SetBinContent(ipoint+1,ll-lbest);
+    xx+=dx;
+  } 
+  Par[ibin][icomp][iatt][imod] = bestpoint; 
+  hProf->Draw();
+  cc->Print(pname.Data());
+  return;
+}
 
 void histoCompare::showFitPars(int ibin,int iatt,int imod){
   int nbinstot = nComp;
@@ -93,12 +40,10 @@ void histoCompare::showFitPars(int ibin,int iatt,int imod){
   return;
 }
 
-
 TH1F* histoCompare::showSmear(TH1F* h, float smear, float bias){
   TH1F* hh = smearIt(h,smear,bias);
   return hh;
 }
-
 
 void histoCompare::showFitResult(int isamp,int ibin,int iatt){
   //sum up mc components
@@ -388,8 +333,8 @@ void histoCompare::LnLFit(){
       //get results
       for (int lcomp=0;lcomp<nComp;lcomp++){
         for (int lmod=0;lmod<2;lmod++){
-          Par[jbin][lcomp][jatt][lmod] = bestPar[jbin][lcomp][jatt][lmod]; 
-          bestPar[jbin][lcomp][jatt][lmod] = fit->GetParameter(parindex); 
+          bestPar[jbin][lcomp][jatt][lmod] = fit->GetParameter(parindex);
+          Par[jbin][lcomp][jatt][lmod] = bestPar[jbin][lcomp][jatt][lmod];  
           errPar[jbin][lcomp][jatt][lmod] = fit->GetParError(parindex);
           parindex++;
         }
@@ -765,13 +710,17 @@ float histoCompare::getTotSumSqDebug(){
 
 float histoCompare::getTotLnL(){
   float totL = 0.;
+  TH1F* hadd;
   for (int isamp=0;isamp<nSamp;isamp++){
     for (int ibin=0;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
          //get modfied MC prediction
+         if (hMod) hMod->Delete();
          hMod = smearIt(hManager->hMC[isamp][ibin][0][iatt],Par[ibin][0][iatt][0],Par[ibin][0][iatt][1]);      
          for (int icomp = 1;icomp<nComp;icomp++){
-           hMod->Add(smearIt(hManager->hMC[isamp][ibin][icomp][iatt],Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]));
+           hadd = smearIt(hManager->hMC[isamp][ibin][icomp][iatt],Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]);
+           hMod->Add(hadd);
+           hadd->Delete();
          }
          //add error to total
          hMod->Scale(Norm);
@@ -883,6 +832,7 @@ histoCompare::histoCompare(const char* thename){
   cout<<"created comparison object: "<<nameTag.Data()<<endl;
   //setup initial debug
   int jhist = 0;
+  cc = new TCanvas("cc","cc",700,600);
   while (jhist<10){
       parDebug[jhist][0] = 1.0;
       parDebug[jhist][1] = 0.0;
@@ -890,3 +840,4 @@ histoCompare::histoCompare(const char* thename){
   }
   return;
 }
+#endif
