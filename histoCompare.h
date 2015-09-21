@@ -55,6 +55,7 @@ class histoCompare{
   TH1F* hMC[10];
   TH1F* hModDebug;
   TH1F* hMod;
+  TH1F* hTmp; //temporary histogram container
   TH1F* hPar;
   TH1F* hProf;
   TH1F* showSmear(TH1F* h, float smear, float bias);

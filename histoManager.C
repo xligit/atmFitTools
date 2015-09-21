@@ -250,7 +250,7 @@ void histoManager::fillAttributesMC(){
 
 TH1F* histoManager::getHistogram(int iatt, const char* thename){
   TH1F* hnew;
-  int nBinsNllEMu = 30;
+  int nBinsNllEMu = 100;
   if (iatt==0){
      hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
   }

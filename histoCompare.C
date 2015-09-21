@@ -710,17 +710,18 @@ float histoCompare::getTotSumSqDebug(){
 
 float histoCompare::getTotLnL(){
   float totL = 0.;
-  TH1F* hadd;
   for (int isamp=0;isamp<nSamp;isamp++){
     for (int ibin=0;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
          //get modfied MC prediction
          if (hMod) hMod->Delete();
-         hMod = smearIt(hManager->hMC[isamp][ibin][0][iatt],Par[ibin][0][iatt][0],Par[ibin][0][iatt][1]);      
+         if (hTmp) hTmp->Delete();
+         hMod = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("hmodtmp");
+         hTmp = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("htmp");
+         smearHisto((*hManager->hMC[isamp][ibin][0][iatt]),(*hMod),Par[ibin][0][iatt][0],Par[ibin][0][iatt][1]);      
          for (int icomp = 1;icomp<nComp;icomp++){
-           hadd = smearIt(hManager->hMC[isamp][ibin][icomp][iatt],Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]);
-           hMod->Add(hadd);
-           hadd->Delete();
+           smearHisto((*hManager->hMC[isamp][ibin][icomp][iatt]),(*hTmp),Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]);
+           hMod->Add(hTmp);
          }
          //add error to total
          hMod->Scale(Norm);
@@ -773,6 +774,9 @@ float histoCompare::getLnL(TH1F* h1, TH1F* h2){
     c1 = h1->GetBinContent(ibin);
     c2 = h2->GetBinContent(ibin);
     diff = c1-c2;
+   // if (c1==0) return (c1-c2)*(c1-c2);
+    if (c2==0) return (c1-c2)*(c1-c2); 
+    if (c1==0) return (c1-c2)*(c1-c2); 
     term = c2*TMath::Log(c2/c1);
     lnL += (diff+term);
   }
