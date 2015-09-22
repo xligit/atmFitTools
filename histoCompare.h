@@ -7,7 +7,7 @@
 #include "histoTransforms.C"
 #include "TFitter.h"
 #include "TCanvas.h"
-
+#include "TGraphAsymmErrors.h"
 using namespace std;
 
 
@@ -64,6 +64,7 @@ class histoCompare{
   TH1F* hMod;
   TH1F* hTmp; //temporary histogram container
   TH1F* hPar; //for fit parameters
+  TGraphAsymmErrors* gPar;
   TH1F* hParErrLo;
   TH1F* hParErrHi;
   TH1F* hProf;

@@ -36,7 +36,7 @@ float histoCompare::getErrHi(int ibin,int icomp,int iatt,int imod){
     cout<<"Ldiff: "<<Ldiff<<endl;
     ntry++;
   }
-  loerr = Par[ibin][icomp][iatt][imod];
+  loerr = Par[ibin][icomp][iatt][imod]-parbest;
   Par[ibin][icomp][iatt][imod] = parbest;
   return loerr; 
 }
@@ -72,7 +72,7 @@ float histoCompare::getErrLo(int ibin,int icomp,int iatt,int imod){
     cout<<"Ldiff: "<<Ldiff<<endl;
     ntry++;
   }
-  loerr = Par[ibin][icomp][iatt][imod];
+  loerr = parbest-Par[ibin][icomp][iatt][imod];
   Par[ibin][icomp][iatt][imod] = parbest;
   return loerr; 
 }
@@ -102,23 +102,35 @@ void histoCompare::profileL(int ibin, int icomp, int iatt, int imod, float range
 }
 
 void histoCompare::showFitPars(int ibin,int iatt,int imod){
-  int nbinstot = nComp;
+  const int nbinstot = nComp;
+  double X[nbinstot];
+  double EXL[nbinstot];
+  double EXH[nbinstot];
+  double EYL[nbinstot];
+  double EYH[nbinstot];
+  double Y[nbinstot];
+  if (gPar) gPar->Delete();
   hPar  = new TH1F("hpar","hpar",nbinstot,0,nbinstot);
   hParErrLo = new TH1F("hparerrlo","hparerrlo",nbinstot,0,nbinstot);
   hParErrHi = new TH1F("hparerrhi","hparerrhi",nbinstot,0,nbinstot);
   for (int icomp=0;icomp<nComp;icomp++){
     hPar->SetBinContent(icomp+1,bestPar[ibin][icomp][iatt][imod]);
+    X[icomp]=(double)hPar->GetBinCenter(icomp+1);
+    Y[icomp]=(double)bestPar[ibin][icomp][iatt][imod];
     hPar->GetXaxis()->SetBinLabel(icomp+1,parName[ibin][icomp][iatt][imod].Data());
-    hParErrLo->SetBinContent(icomp+1,getErrLo(ibin,icomp,iatt,imod));
-    hParErrHi->SetBinContent(icomp+1,getErrHi(ibin,icomp,iatt,imod));
+    EYL[icomp]=(double)getErrLo(ibin,icomp,iatt,imod);
+    EYH[icomp]=(double)getErrHi(ibin,icomp,iatt,imod);
+    hParErrLo->SetBinContent(icomp+1,(float)EYL[icomp]);
+    hParErrHi->SetBinContent(icomp+1,(float)EYH[icomp]);
+    EXL[icomp]=0.4;
+    EXH[icomp]=0.4;
   }
-  hParErrHi->SetFillColor(6);
- // hParErrHi->SetLineColor(6);
-  hParErrLo->SetFillColor(6);
-//  hParErrLo->SetLineColor(6);
-  hParErrHi->Draw();
-  hParErrLo->Draw("same");
-  hPar->Draw("same");
+  gPar = new TGraphAsymmErrors(nbinstot,X,Y,EXL,EXH,EYL,EYH);
+  gPar->SetFillColor(6);
+  gPar->SetLineColor(6);
+  gPar->SetMarkerStyle(8);
+  gPar->Draw("a2");
+  gPar->Draw("p");
   return;
 }
 
