@@ -42,7 +42,7 @@ class histoManager{
   
   //histogram maker
   TH1F* getHistogram(int iatt,const char* thename); 
-  
+  TH1F* getHistogramData(int iatt,const char* thename); 
   //fill attribute variables
   void fillAttributesData();
   void fillAttributesMC();

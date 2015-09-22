@@ -26,8 +26,6 @@ TH1F* testBump(int nev,double sig=1.0,double mean=0.0){
   return h;
 }
 
-
-
 TH1F* convolveHisto(TH1F* hh, float sig, float bias, const char* name=""){
   //name setup
   TString hname = "convhist";
@@ -69,6 +67,45 @@ TH1F* convolveHisto(TH1F* hh, float sig, float bias, const char* name=""){
 //  hh->Draw("same");
   return hconv;
 }
+
+void convolveThisHisto(TH1F &hh, float sig, float bias){
+ 
+  //make convolved histogram;
+  TH1F* htmp;
+  htmp = (TH1F*)hh.Clone("tmphisto");
+
+  //vars for calculation
+  int nbinsx = hh.GetNbinsX();
+  float xx;
+  float area;
+  float bmin;
+  float bmax;
+  float binw = htmp->GetBinWidth(1);
+  float sqrt2 = sqrt(2.);
+  float gweight; //integral of gaussian in bin
+  for (int ibin=1;ibin<=nbinsx;ibin++){
+    //calculate area overlap for each bin:
+    xx = htmp->GetBinCenter(ibin);
+    area = 0.;
+    for (int jbin=1;jbin<=nbinsx;jbin++){
+      bmin = htmp->GetBinLowEdge(jbin);
+      bmax =  bmin+binw;
+      gweight = 1.;
+      gweight = TMath::Erf((bmax -(xx-bias))/(sig*sqrt2)) - TMath::Erf((bmin-(xx-bias))/(sig*sqrt2));
+      area+=gweight*htmp->GetBinContent(jbin);
+    }
+    hh.SetBinContent(ibin,area); 
+  }
+
+  //normalize
+  float norm = (float)htmp->Integral()/(float)hh.Integral();
+  hh.Scale(norm);
+//  hconv->SetLineColor(kRed);
+//  hconv->Draw();
+//  hh->Draw("same");
+  return;
+}
+
 
 
 

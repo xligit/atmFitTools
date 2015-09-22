@@ -59,7 +59,7 @@ void sift::siftIt(const char* fname){
     vis->fillVisVar();
     //sort event
     ncomponent=getComponent();
-    if (ncomponent==3) fq->fq1rnll[0][1]-=100.;
+  //  if (ncomponent==3) fq->fq1rnll[0][1]-=100.;
  //   if (ncomponent==2) fq->fq1rnll[0][2]+=(-1*25.);
     nsample=getSample();
     nbin=getBin();

@@ -32,7 +32,9 @@ class histoCompare{
   float Par[NBINMAX][NCOMPMAX][NATTMAX][2];
   float fixPar[NBINMAX][NCOMPMAX][NATTMAX][2];
   float bestPar[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float errPar[NBINMAX][NCOMPMAX][NATTMAX][2];
+//  float errParLo[NBINMAX][NCOMPMAX][NATTMAX][2];
+//  float errParHi[NBINMAX][NCOMPMAX][NATTMAX][2];
+
   TString parName[NBINMAX][NCOMPMAX][NATTMAX][2];
   TString binName[NBINMAX];
   TString compName[NCOMPMAX];
@@ -47,16 +49,23 @@ class histoCompare{
   void showFitEffect(int isamp,int ibin,int icomp,int iatt);
   void showFitResult(int isamp,int ibin,int iatt);
   void showFitPars(int ibin,int iatt,int imod);
+  void showModHiso(int isamp,int ibin, int icomp, int iatt, float smear, float bias);
+  float getErrLo(int ibin,int icomp,int iatt,int imod);
+  float getErrHi(int ibin,int icomp,int iatt, int imod);
  // TH1F* hMod[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
 
   //tools for adding histogram directly..for debugging
   void addHistogram(TH1F* h,int dataflg);
+  int  rebinFactor;
+  void setRebinFactor(int ifact){rebinFactor=ifact;}
   TH1F* hData[10];
   TH1F* hMC[10];
   TH1F* hModDebug;
   TH1F* hMod;
   TH1F* hTmp; //temporary histogram container
-  TH1F* hPar;
+  TH1F* hPar; //for fit parameters
+  TH1F* hParErrLo;
+  TH1F* hParErrHi;
   TH1F* hProf;
   TH1F* showSmear(TH1F* h, float smear, float bias);
   void showMod(int imchist);

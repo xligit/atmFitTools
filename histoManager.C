@@ -248,9 +248,24 @@ void histoManager::fillAttributesMC(){
 }
 
 
+TH1F* histoManager::getHistogramData(int iatt, const char* thename){
+  TH1F* hnew;
+  int nBinsNllEMu = 50;
+  if (iatt==0){
+     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
+  }
+  if (iatt==1){
+     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
+  }
+  return hnew;
+}
+
+
+
 TH1F* histoManager::getHistogram(int iatt, const char* thename){
   TH1F* hnew;
-  int nBinsNllEMu = 100;
+  int nBinsNllEMu = 150;
+  int nBinsNllEMuData = 50;
   if (iatt==0){
      hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
   }
@@ -276,7 +291,7 @@ void histoManager::init(){
          hname = "hdata_";
          hname.Append(Form("samp%d_bin%d_att%d",isamp,ibin,iatt));
          cout<<"Making histogram: "<<hname.Data()<<endl;
-         hData[isamp][ibin][iatt] = getHistogram(iatt,hname.Data()); //make taylored histo
+         hData[isamp][ibin][iatt] = getHistogramData(iatt,hname.Data()); //make taylored histo
       }
     }
   }
