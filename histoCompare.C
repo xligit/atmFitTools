@@ -87,7 +87,7 @@ float histoCompare::getErrHi(int ibin,int icomp,int iatt,int imod){
   float dpar = 1.;
   float loerr;
   int ntry = 0;
-  if (imod==0) dpar = 0.001;
+  if (imod==0) dpar = 0.005;
   if (imod==1) dpar = 10.;
   //course search
   while (Ldiff<1){
@@ -107,6 +107,17 @@ float histoCompare::getErrHi(int ibin,int icomp,int iatt,int imod){
   //  cout<<"Ldiff: "<<Ldiff<<endl;
     ntry++;
   }
+  Par[ibin][icomp][iatt][imod]-=dpar;
+  Ldiff = 0;
+  dpar*=0.1;
+  ntry=0;
+  while (Ldiff<1){
+    Par[ibin][icomp][iatt][imod]+=dpar; //modify parameter
+    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
+  //  cout<<"Ldiff: "<<Ldiff<<endl;
+    ntry++;
+  }
+
   loerr = Par[ibin][icomp][iatt][imod]-parbest;
   Par[ibin][icomp][iatt][imod] = parbest;
   return loerr; 
@@ -123,7 +134,7 @@ float histoCompare::getErrLo(int ibin,int icomp,int iatt,int imod){
   float dpar = 1.;
   float loerr;
   int ntry = 0;
-  if (imod==0) dpar = 0.001;
+  if (imod==0) dpar = 0.005;
   if (imod==1) dpar = 10.;
   //course search
   while (Ldiff<1){
@@ -136,6 +147,16 @@ float histoCompare::getErrLo(int ibin,int icomp,int iatt,int imod){
   Par[ibin][icomp][iatt][imod]+=dpar;
   Ldiff = 0;
   dpar*=0.2;
+  ntry=0;
+  while (Ldiff<1){
+    Par[ibin][icomp][iatt][imod]-=dpar; //modify parameter
+    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
+  //  cout<<"Ldiff: "<<Ldiff<<endl;
+    ntry++;
+  }
+  Par[ibin][icomp][iatt][imod]+=dpar;
+  Ldiff = 0;
+  dpar*=0.1;
   ntry=0;
   while (Ldiff<1){
     Par[ibin][icomp][iatt][imod]-=dpar; //modify parameter
@@ -203,6 +224,10 @@ void histoCompare::showFitPars(int ibin,int iatt,int imod){
   gPar->SetFillColor(6);
   gPar->SetLineColor(6);
   gPar->SetMarkerStyle(8);
+  //set axis labels
+//  for (int jcomp=0;jcomp<nComp;jcomp++){
+//    gPar->GetXaxis()->SetBinLabel(icomp+1,parName[ibin][icomp][iatt][imod].Data());
+//  }
   gPar->Draw("a2");
   gPar->Draw("p");
   return;
@@ -928,16 +953,19 @@ float histoCompare::getTotLnL(){
          if (hMod) hMod->Delete();
          if (hTmp) hTmp->Delete();
          hMod = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("hmodtmp");
+     //    hMod->Smooth(5);
          hTmp = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("htmp");
          smearHisto((*hManager->hMC[isamp][ibin][0][iatt]),(*hMod),Par[ibin][0][iatt][0],Par[ibin][0][iatt][1]);      
          for (int icomp = 1;icomp<nComp;icomp++){
+     //      hTmp->Smooth(1);
            smearHisto((*hManager->hMC[isamp][ibin][icomp][iatt]),(*hTmp),Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]);
+     //      hTmp->Smooth(5);
            hMod->Add(hTmp);
          }
          //add error to total
          hMod->Scale(Norm);
-       //  hMod->Smooth(5);
-         convolveThisHisto(*hMod,hMod->GetBinWidth(2),0.);
+         //hMod->Smooth(10);
+         convolveThisHisto(*hMod,hMod->GetBinWidth(2)*0.5,0.);
          hMod->Rebin(rebinFactor);
          totL+=getLnL(hMod,hManager->hData[isamp][ibin][iatt]);
       }

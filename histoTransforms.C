@@ -153,6 +153,7 @@ void smearThisHisto(TH1F &hh, float spread, float bias=0.){
     hh.SetBinContent(newbin,sum);
   }
   if (hh.Integral()>0.) hh.Scale(htmp->Integral()/hh.Integral());
+  htmp->Delete();
   return;
 }
 
@@ -183,6 +184,8 @@ void smearHisto(TH1F &hi,TH1F &hf,float spread, float bias=0.){
       xmax = (xmin+binw);
       weight = B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
       sum+=(weight*hi.GetBinContent(oldbin));
+     // sum+=(weight*(hi.GetBinContent(oldbin)+(hi.GetBinContent(oldbin-1)+hi.GetBinContent(oldbin+1))/3.));
+     
     }
     hf.SetBinContent(newbin,sum);
   }
