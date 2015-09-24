@@ -39,7 +39,7 @@
  hc->setCompName(5,"#pi+");
  hc->setAttName(0,"Other");
  hc->setRebinFactor(3);
- hc->LnLFit();
+// hc->LnLFit();
 // hc->addHistogram(hpidmc,0);
 // hc->addHistogram(hpidmcmu,0);
 // hc->addHistogram(hpiddat,1);

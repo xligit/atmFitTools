@@ -4,15 +4,22 @@
 #include <math.h>
 #include "TTree.h"
 #include <iostream>
+#include "TFile.h"
+
 #define NMCMCPARS 100
 
 using namespace std;
 
+#ifndef GLOBAL_RANDOM
+#define GLOBAL_RANDOM
 TRandom2* randy = new TRandom2();
+#endif
+
 
 class markovTools{
    public:
    markovTools(int npars);
+   TFile* fout;
    int nPars;
    int iStep;
    float oldPars[NMCMCPARS];
@@ -21,16 +28,22 @@ class markovTools{
    void setL(float value){oldL=value;}
    //proposal function
    float varPar[NMCMCPARS];
-   void setParVar(int ipar,float value){varPar[ipar]=value;}
+   void setParVar(int ipar,float value);
    void proposeStep(float* par);
    int acceptStep(float newL,float* par);
    int acceptStepLnL(float newL,float* par);
-
+   void savePath(const char* filename){pathTree->Write();}
    TTree* pathTree;
 
    void test(int itry);
    TH1F* htest;
 };
+
+void markovTools::setParVar(int ipar,float value){
+  varPar[ipar] = value;
+  cout<<"param "<<ipar<<" variance set to: "<<value<<endl;
+  return;
+}
 
 void markovTools::test(int ntry){
   nPars = 1;
@@ -60,8 +73,9 @@ int markovTools::acceptStepLnL(float newL,float* par){
   float alpha = (oldL-newL);
   float rand = randy->Rndm();
   int iaccept = 0;
+  //cout<<"delta L: "<<alpha<<endl;
   if (alpha>TMath::Log(rand)){
-    cout<<"accept"<<endl;
+  //  pathTree->SetBranchAddress("par",par);
     for (int i=0;i<nPars;i++){
       oldPars[i]=par[i];
     }
@@ -69,12 +83,12 @@ int markovTools::acceptStepLnL(float newL,float* par){
     iaccept = 1;
   } 
   else{
-    cout<<"reject"<<endl;
     for (int i=0;i<nPars;i++){
       par[i]=oldPars[i];
     }
   }
   iStep++;
+  if ((iStep%10)==0) cout<<"step: "<<iStep<<endl;
   return iaccept;
 }
 
@@ -105,19 +119,21 @@ int markovTools::acceptStep(float newL,float* par){
   return iaccept;
 }
 
+
 void markovTools::proposeStep(float* par){  
   for (int i=0;i<nPars;i++){
     //save current parameters
     oldPars[i] = par[i];
     //set new value
     par[i] = randy->Gaus(par[i],varPar[i]);
-    cout<<"par: "<<oldPars[i]<<endl;
-    cout<<"parnew: "<<par[i]<<endl;
+   // cout<<"par: "<<oldPars[i]<<endl;
+   // cout<<"parnew: "<<par[i]<<endl;
   }
   return;
 }
 
 markovTools::markovTools(int npars){
+  fout = new TFile("mcmctree.root","RECREATE");
   pathTree = new TTree("MCMCpath","MCMCpath");
   nPars = npars;
   iStep = 0;

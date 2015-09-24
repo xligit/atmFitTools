@@ -2,10 +2,81 @@
 #define HISTOCOMPARE_C
 
 #include "histoCompare.h"
+#include "markovTools.C"
+#include <time.h>
 
 histoCompare* histoCompare::staticthis;
 
+void histoCompare::timetest(int ntry){
+  clock_t t1,t2;
+  float par[100];
+  int parindex = 0;
+  for (int ibin=0;ibin<nBin;ibin++){
+    for (int icomp=0;icomp<nComp;icomp++){
+      for (int iatt=0;iatt<nAtt;iatt++){
+        for (int imod=0;imod<2;imod++){
+           par[parindex]=Par[ibin][icomp][iatt][imod];
+           parindex++;
+        }
+      }
+    }
+  }
+  float diff;
+  float result;
+  int itry=0;
+  t1=clock();
+  while (itry<ntry){
+    //getTotLnL1D(result,par); 
+    getTotLnL();
+    itry++;
+  }
+  t2=clock();
+  diff = ((float)t2-(float)t1)/(float)ntry;
+  cout<<"time 1: "<<diff<<endl;
+  itry=0;
+  t1=clock();
+  while (itry<ntry){
+    //getTotLnL1D(result,par); 
+    getTotLnL();
+    itry++;
+  }
+  t2=clock();
+  diff = ((float)t2-(float)t1)/(float)ntry;
+  cout<<"time 2: "<<diff<<endl;
+  return;
+}
 
+void histoCompare::runMCMC(int nsteps){
+  //setup mcmc tools
+  int npars = nBin*nComp*nAtt*2;
+  float par[100];
+  int parindex = 0;
+  float result = 0.;
+  markovTools* mc = new markovTools(npars);
+  for (int ibin=0;ibin<nBin;ibin++){
+    for (int icomp=0;icomp<nComp;icomp++){
+      for (int iatt=0;iatt<nAtt;iatt++){
+        for (int imod=0;imod<2;imod++){
+           par[parindex]=Par[ibin][icomp][iatt][imod];
+           mc->setParVar(parindex,0.11*(errParHi[ibin][icomp][iatt][imod]+errParLo[ibin][icomp][iatt][imod]));
+           parindex++;
+        }
+      }
+    }
+  }
+  //set initial state
+  getTotLnL1D(result, par);
+  mc->setL((float)result);
+  int currentstep=0;
+  while (currentstep<nsteps){
+    currentstep = mc->iStep;
+    mc->proposeStep(par); //fills par[] with proposed params
+    getTotLnL1D(result, par);   
+    mc->acceptStepLnL(result,par); //if step is accepted, istep++, and written to histo
+  }
+  mc->savePath("mcmctest.root");
+  return;
+}
 
 float histoCompare::getErrHi(int ibin,int icomp,int iatt,int imod){
   float thresh = 1.0;
@@ -22,18 +93,18 @@ float histoCompare::getErrHi(int ibin,int icomp,int iatt,int imod){
   while (Ldiff<1){
     Par[ibin][icomp][iatt][imod]+=dpar; //modify parameter
     Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-    cout<<"Ldiff: "<<Ldiff<<endl;
+  //  cout<<"Ldiff: "<<Ldiff<<endl;
     ntry++;
   }
-  cout<<"ntry: "<<ntry<<endl;
+ // cout<<"ntry: "<<ntry<<endl;
   Par[ibin][icomp][iatt][imod]-=dpar;
   Ldiff = 0;
-  dpar*=0.1;
+  dpar*=0.2;
   ntry=0;
   while (Ldiff<1){
     Par[ibin][icomp][iatt][imod]+=dpar; //modify parameter
     Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-    cout<<"Ldiff: "<<Ldiff<<endl;
+  //  cout<<"Ldiff: "<<Ldiff<<endl;
     ntry++;
   }
   loerr = Par[ibin][icomp][iatt][imod]-parbest;
@@ -58,18 +129,18 @@ float histoCompare::getErrLo(int ibin,int icomp,int iatt,int imod){
   while (Ldiff<1){
     Par[ibin][icomp][iatt][imod]-=dpar; //modify parameter
     Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-    cout<<"Ldiff: "<<Ldiff<<endl;
+  //  cout<<"Ldiff: "<<Ldiff<<endl;
     ntry++;
   }
-  cout<<"ntry: "<<ntry<<endl;
+ // cout<<"ntry: "<<ntry<<endl;
   Par[ibin][icomp][iatt][imod]+=dpar;
   Ldiff = 0;
-  dpar*=0.1;
+  dpar*=0.2;
   ntry=0;
   while (Ldiff<1){
     Par[ibin][icomp][iatt][imod]-=dpar; //modify parameter
     Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-    cout<<"Ldiff: "<<Ldiff<<endl;
+  //  cout<<"Ldiff: "<<Ldiff<<endl;
     ntry++;
   }
   loerr = parbest-Par[ibin][icomp][iatt][imod];
@@ -96,7 +167,8 @@ void histoCompare::profileL(int ibin, int icomp, int iatt, int imod, float range
     xx+=dx;
   } 
   Par[ibin][icomp][iatt][imod] = bestpoint; 
-  hProf->Draw();
+  hProf->SetLineColor(9);
+  hProf->Draw("c");
   cc->Print(pname.Data());
   return;
 }
@@ -118,8 +190,10 @@ void histoCompare::showFitPars(int ibin,int iatt,int imod){
     X[icomp]=(double)hPar->GetBinCenter(icomp+1);
     Y[icomp]=(double)bestPar[ibin][icomp][iatt][imod];
     hPar->GetXaxis()->SetBinLabel(icomp+1,parName[ibin][icomp][iatt][imod].Data());
-    EYL[icomp]=(double)getErrLo(ibin,icomp,iatt,imod);
-    EYH[icomp]=(double)getErrHi(ibin,icomp,iatt,imod);
+ //   EYL[icomp]=(double)getErrLo(ibin,icomp,iatt,imod);
+ //   EYH[icomp]=(double)getErrHi(ibin,icomp,iatt,imod);
+    EYL[icomp]=errParLo[ibin][icomp][iatt][imod];
+    EYH[icomp]= errParHi[ibin][icomp][iatt][imod];
     hParErrLo->SetBinContent(icomp+1,(float)EYL[icomp]);
     hParErrHi->SetBinContent(icomp+1,(float)EYH[icomp]);
     EXL[icomp]=0.4;
@@ -222,6 +296,7 @@ void histoCompare::showFitHisto(int isamp,int ibin,int icomp,int iatt){
   hManager->hMC[isamp][ibin][icomp][iatt]->SetLineColor(kRed);
   hManager->hMC[isamp][ibin][icomp][iatt]->Draw();
   hMod->SetLineColor(kBlue);
+  convolveThisHisto(*hMod,hMod->GetBinWidth(2)*0.5,0.);
   hMod->Draw("same");
   return;
 }
@@ -470,6 +545,8 @@ void histoCompare::LnLFit(){
         for (int pmod=0;pmod<2;pmod++){
           cout<<"  PAR "<<parName[pbin][pcomp][patt][pmod].Data()<<" FIT RESULT: ";
           cout<<Par[pbin][pcomp][patt][pmod]<<" -> "<<bestPar[pbin][pcomp][patt][pmod]<<endl;
+          errParLo[pbin][pcomp][patt][pmod] = getErrLo(pbin,pcomp,patt,pmod);
+          errParHi[pbin][pcomp][patt][pmod] = getErrHi(pbin,pcomp,patt,pmod);
         }
       }
     }
@@ -670,6 +747,22 @@ void histoCompare::drawResult(int ihist){
   return;
 }
 
+void histoCompare::getTotLnL1D(float& result, float par[]){
+  //index trix
+  int index=0;
+  for (int ibin=0;ibin<nBin;ibin++){
+    for (int icomp=0;icomp<nComp;icomp++){
+      for (int iatt=0;iatt<nAtt;iatt++){
+        Par[ibin][icomp][iatt][0] = par[index];
+        Par[ibin][icomp][iatt][1] = par[index+1]; 
+        index+=2;
+      }
+    }
+  }
+  result = getTotLnL();
+}
+
+
 void histoCompare::lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg){
   //index trix
   int index=0;
@@ -843,7 +936,8 @@ float histoCompare::getTotLnL(){
          }
          //add error to total
          hMod->Scale(Norm);
-         convolveThisHisto(*hMod,hMod->GetBinWidth(2)*1,0.);
+       //  hMod->Smooth(5);
+         convolveThisHisto(*hMod,hMod->GetBinWidth(2),0.);
          hMod->Rebin(rebinFactor);
          totL+=getLnL(hMod,hManager->hData[isamp][ibin][iatt]);
       }
