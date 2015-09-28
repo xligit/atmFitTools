@@ -965,7 +965,7 @@ float histoCompare::getTotLnL(){
          //add error to total
          hMod->Scale(Norm);
          //hMod->Smooth(10);
-         convolveThisHisto(*hMod,hMod->GetBinWidth(2)*0.5,0.);
+        // convolveThisHisto(*hMod,hMod->GetBinWidth(2)*0.5,0.);
          hMod->Rebin(rebinFactor);
          totL+=getLnL(hMod,hManager->hData[isamp][ibin][iatt]);
       }

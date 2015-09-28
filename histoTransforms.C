@@ -183,8 +183,8 @@ void smearHisto(TH1F &hi,TH1F &hf,float spread, float bias=0.){
       xmin = hi.GetBinLowEdge(oldbin);
       xmax = (xmin+binw);
       weight = B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
-      sum+=(weight*hi.GetBinContent(oldbin));
-     // sum+=(weight*(hi.GetBinContent(oldbin)+(hi.GetBinContent(oldbin-1)+hi.GetBinContent(oldbin+1))/3.));
+     // sum+=(weight*hi.GetBinContent(oldbin));
+      sum+=(weight*(hi.GetBinContent(oldbin)+(hi.GetBinContent(oldbin-1)+hi.GetBinContent(oldbin+1))/3.));
      
     }
     hf.SetBinContent(newbin,sum);
