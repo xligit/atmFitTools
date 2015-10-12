@@ -5,6 +5,16 @@
 
 
 int sift::getBin(){
+  //calculate fiducial volume variables
+  //use electron hypothesis
+  TVector3 vpos;
+  vpos.SetXYZ(fq->fq1rpos[0][1][0],fq->fq1rpos[0][1][1],fq->fq1rpos[0][1][2]);
+  TVector3 vdir;
+  vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][1][1],fq->fq1rdir[0][1][2]);
+  wall = calcWall(&vpos);
+  towall = calcToWall(&vpos,&vdir);
+  if ((wall<200.)&&(wall>50.)) return 1;
+  if (wall<50.) return 2;
   return 0;
 }
 
@@ -49,6 +59,7 @@ int sift::getComponent(){
 //  return 6;
 }
 
+//loop over all events and sort into bins, samples and components
 void sift::siftIt(const char* fname){
   int nev = tr->GetEntries();
   for (int i=0;i<nev;i++){
@@ -56,7 +67,7 @@ void sift::siftIt(const char* fname){
     if ((i%1000)==0) cout<<i<<endl;
     tr->GetEntry(i);
     if (!passCuts()) continue;
-    vis->fillVisVar();
+    vis->fillVisVar(); //get visible ring information
     //sort event
     ncomponent=getComponent();
   //  if (ncomponent==3) fq->fq1rnll[0][1]-=100.;
@@ -65,7 +76,6 @@ void sift::siftIt(const char* fname){
     nbin=getBin();
     trout->Fill();
   }
-
   TString name = fname;
   name.Append(".root");
   trout->SaveAs(name.Data());
@@ -97,6 +107,8 @@ void sift::setupNewTree(){
   trout->Branch("nvk",&vis->nvk,"nvk/I");
   trout->Branch("nvoth",&vis->nvoth,"nvoth/I");
   trout->Branch("vispid",vis->vispid,"vispid[100]/I");
+  trout->Branch("wall",&wall,"wall/F");
+  trout->Branch("towall",&towall,"towall/F");
   return;
 }
 

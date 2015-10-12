@@ -8,6 +8,7 @@
 #include "TChain.h"
 #include "TMath.h"
 #include "TString.h"
+#include "FVCalculators.C"
 
 
 
@@ -30,6 +31,9 @@ class sift{
   int ncomponent;
   int nsample;
   int nbin;
+  //new leaf variables
+  float towall;
+  float wall;
   //selections
   int absmode;
   int getComponent();

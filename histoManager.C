@@ -264,7 +264,7 @@ TH1F* histoManager::getHistogramData(int iatt, const char* thename){
 
 TH1F* histoManager::getHistogram(int iatt, const char* thename){
   TH1F* hnew;
-  int nBinsNllEMu = 150;
+  int nBinsNllEMu = 50;
   int nBinsNllEMuData = 50;
   if (iatt==0){
      hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
@@ -319,7 +319,7 @@ void histoManager::addAttribute(int iatt){
 }
 
 histoManager::histoManager(int nsampl,int nbins,int ncomp,const char* name){
-  nameTag = "hManager";
+  nameTag = "histos_";
   nameTag.Append(name);
   nSamples = nsampl;
   nComponents = ncomp;

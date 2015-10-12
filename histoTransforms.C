@@ -158,42 +158,6 @@ void smearThisHisto(TH1F &hh, float spread, float bias=0.){
 }
 
 
-
-void smearHisto(TH1F &hi,TH1F &hf,float spread, float bias=0.){
-  if (spread==0) return;
-  int nbins=hi.GetNbinsX();
-  float binw = hi.GetBinWidth(1);
-  float binedge;
-  float sum;
-  float weight;
-  float xmin;
-  float xmax;
-  float ymin;
-  float ymax;
-  float smear = 1./spread;
-  float mean = hi.GetMean() + (binw/2.);
-  float shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
-  for (int newbin=1;newbin<=nbins;newbin++){
-    sum = 0.;
-    binedge = hi.GetBinLowEdge(newbin);
-    ymin = ((binedge-bias)*smear) - shift;
-    ymax = ymin + (binw*smear);
-    //ymax = ((binedge+binw-bias)*smear) - shift;
-    for (int oldbin=1;oldbin<=nbins;oldbin++){
-      xmin = hi.GetBinLowEdge(oldbin);
-      xmax = (xmin+binw);
-      weight = B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
-     // sum+=(weight*hi.GetBinContent(oldbin));
-      sum+=(weight*(hi.GetBinContent(oldbin)+(hi.GetBinContent(oldbin-1)+hi.GetBinContent(oldbin+1))/3.));
-     
-    }
-    hf.SetBinContent(newbin,sum);
-  }
-  if (hf.Integral()>0.) hf.Scale(hi.Integral()/hf.Integral());
-  return;
-}
-
-
 void convolveThisHisto(TH1F &hh, float sig, float bias){
  
   //make convolved histogram;
@@ -243,6 +207,43 @@ void convolveThisHisto(TH1F &hh, float sig, float bias){
 
 
 
+
+void smearHisto(TH1F &hi,TH1F &hf,float spread, float bias=0.){
+  if (spread==0) return;
+  int nbins=hi.GetNbinsX();
+  float binw = hi.GetBinWidth(1);
+  float binedge;
+  float sum;
+  float weight;
+  float xmin;
+  float xmax;
+  float ymin;
+  float ymax;
+  float smear = 1./spread;
+  float mean = hi.GetMean() + (binw/2.);
+  float shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
+  for (int newbin=1;newbin<=nbins;newbin++){
+    sum = 0.;
+    binedge = hi.GetBinLowEdge(newbin);
+    ymin = ((binedge-bias)*smear) - shift;
+    ymax = ymin + (binw*smear);
+    //ymax = ((binedge+binw-bias)*smear) - shift;
+    for (int oldbin=1;oldbin<=nbins;oldbin++){
+      xmin = hi.GetBinLowEdge(oldbin);
+      xmax = (xmin+binw);
+      weight = B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
+    //  sum+=(weight*hi.GetBinContent(oldbin));
+      sum+=(weight*(hi.GetBinContent(oldbin)+((0.5)*(hi.GetBinContent(oldbin-1))+(0.5*hi.GetBinContent(oldbin+1)))));
+    }
+    hf.SetBinContent(newbin,sum);
+  }
+  if (hf.Integral()>0.) hf.Scale(hi.Integral()/hf.Integral());
+  return;
+}
+
+
+
+
 float testtime(){
   int ntry = 25000;
   clock_t t1,t2;
@@ -258,6 +259,7 @@ float testtime(){
   return diff;
   
 }
+
 
 
 #endif

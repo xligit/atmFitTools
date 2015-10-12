@@ -32,12 +32,20 @@ class markovTools{
    void proposeStep(float* par);
    int acceptStep(float newL,float* par);
    int acceptStepLnL(float newL,float* par);
-   void savePath(const char* filename){pathTree->Write();}
+   void savePath(const char* filename);
    TTree* pathTree;
 
    void test(int itry);
    TH1F* htest;
 };
+
+void markovTools::savePath(const char* filename){
+  pathTree->Write();
+ // fout->Close();
+  pathTree->SaveAs("mcmcpath.root");
+  fout->Close();
+  return;
+}
 
 void markovTools::setParVar(int ipar,float value){
   varPar[ipar] = value;
