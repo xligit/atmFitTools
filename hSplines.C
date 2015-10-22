@@ -51,7 +51,7 @@ void  hSplines::draw2D(int npts,int isyst){
   float parmax= theSpline[1][isyst]->GetXmax(); 
   float xx;
   float parval;
-  if (drawHisto) drawHisto->Delete();
+  if (drawHisto!=NULL) drawHisto->Delete();
   drawHisto= new TH2F("hdraw","hdraw",nBins,baseHisto->GetBinLowEdge(1),
                       (baseHisto->GetBinLowEdge(baseHisto->GetNbinsX()) + baseHisto->GetBinWidth(baseHisto->GetNbinsX())),
                       npts,parmin,parmax);

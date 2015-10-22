@@ -4,16 +4,16 @@
 #include "histoManager.h"
 
 
-TH1F*  histoManager::calcMCSum(int isample, int ibin, int iatt){
-  TH1F* hTot = (TH1F*)hMC[isample][ibin][0][iatt]->Clone("htot");
-  for (int i=1;i<nComponents;i++){
-    hTot->Add(hMC[isample][ibin][i][iatt]);
-  }
-  return hTot;
-}
+//TH1F*  histoManager::calcMCSum(int isample, int ibin, int iatt){
+//  TH1F* hTot = (TH1F*)hMC[isample][ibin][0][iatt]->Clone("htot");
+//  for (int i=1;i<nComponents;i++){
+//    hTot->Add(hMC[isample][ibin][i][iatt]);
+//  }
+//  return hTot;
+//}
 
 
-
+//Use this to see how each MC component contributes to the overall histogram
 void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   int color[NCOMPMAX];
   color[0] = 4;
@@ -55,12 +55,13 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
       }
     }
   }
-  float norm = 0.;
-  if ((float)mcTree->GetEntries()>0) norm = (float)dataTree->GetEntries()/(float)mcTree->GetEntries();
+  float norm = 1.;
+  //if ((float)mcTree->GetEntries()>0) norm = (float)dataTree->GetEntries()/(float)mcTree->GetEntries();
   hMC[isample][ibin][hitolo[0]][iatt]->Draw();
   for (int j=0;j<nComponents;j++){
      hMC[isample][ibin][hitolo[j]][iatt]->Draw("same");
   }
+  if (Leg) Leg->Delete();
   Leg = new TLegend(0.7,0.6,0.9,0.9);
   Leg->AddEntry(hMC[isample][ibin][0][iatt],"CC1e","F");
   Leg->AddEntry(hMC[isample][ibin][1][iatt],"CC1#mu","F");
@@ -70,10 +71,10 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   Leg->AddEntry(hMC[isample][ibin][5][iatt],"Single #pi^{+}","F");
   Leg->AddEntry(hMC[isample][ibin][6][iatt],"Other","F");
   Leg->Draw("same");
-
   return;
 }
 
+//stacks all MC histogram components to compare with data
 THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
   int color[NCOMPMAX];
   color[0] = 4;
@@ -115,8 +116,8 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
       }
     }
   }
-  float norm = 0.;
-  if ((float)mcTree->GetEntries()>0) norm = (float)dataTree->GetEntries()/(float)mcTree->GetEntries();
+  float norm = 1.;
+//  if ((float)mcTree->GetEntries()>0) norm = (float)dataTree->GetEntries()/(float)mcTree->GetEntries();
   THStack* hstack = new THStack("hstack","stack");
   hstack->Add(hMC[isample][ibin][hitolo[0]][iatt]);
   for (int j=1;j<nComponents;j++){
@@ -140,6 +141,7 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
   return hstack;
 }
 
+//constructor to re-created a histogram manager from a file
 histoManager::histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int natt){
   readFromFile(rootname,nsamp,nbin,ncomp,natt);
   nameTag = "histManager_For_";
@@ -147,6 +149,27 @@ histoManager::histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int
   return;
 }
 
+void histoManager::setHistogram(int isamp, int ibin, int icomp, int iatt, int dataflg, TH1F* h){
+  if (!dataflg){
+    hMC[isamp][ibin][icomp][iatt] = h; 
+  }
+  else{
+    hData[isamp][ibin][iatt] = h;
+  }
+  return;
+}
+
+void histoManager::fillHistogram(int isamp, int ibin, int icomp, int iatt, float value){
+  hMC[isamp][ibin][icomp][iatt]->Fill(value); 
+  return;
+}
+
+void histoManager::fillHistogramData(int isamp, int ibin, int iatt, float value){
+  hData[isamp][ibin][iatt]->Fill(value); 
+  return;
+}
+
+//reads histograms from file
 void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncomp,int natt){
   nSamples = nsamp;
   nBins    = nbin;
@@ -180,141 +203,6 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
       }
     }
   } 
-  return;
-}
-
-void histoManager::setMCTree(TChain* ch){
-  mcTree=(TTree*)ch;
-  fqMC = new fQreader(mcTree);
-  return;
-}
-
-void histoManager::setMCTree(TTree* tr){
-  mcTree=tr;
-  fqMC = new fQreader(mcTree);
-  return;
-}
-
-void histoManager::setDataTree(TChain* ch){
-  dataTree=(TTree*)ch;
-  fqData = new fQreader(dataTree);
-  return;
-}
-
-void histoManager::setDataTree(TTree* tr){
-  dataTree=tr;
-  fqData = new fQreader(dataTree);
-  return;
-}
-
-void histoManager::saveToFile(){
-  fout->Write();
-  return;
-}
-
-void histoManager::fillHistos(){
-  int nevdata = dataTree->GetEntries();
-  int nevmc   = mcTree->GetEntries();
-  //fill data histos
-  for (int i=0;i<nevdata;i++){
-//    if ((i%100)==0) cout<<"getting data event: "<<i<<endl;
-    dataTree->GetEntry(i);
-    fillAttributesData();
-    for (int iatt=0;iatt<nAttributes;iatt++){
-      hData[fqData->nsample][fqData->nbin][iatt]->Fill(att[iatt]);
-   }
-  }
-  for (int j=0;j<nevmc;j++){
-//    if ((j%100)==0) cout<<"getting mc event: "<<j<<endl;
-    mcTree->GetEntry(j);
-    fillAttributesMC();
-    for (int jatt=0;jatt<nAttributes;jatt++){
-      hMC[fqMC->nsample][fqMC->nbin][fqMC->ncomponent][jatt]->Fill(att[jatt]);
-    }
-  } 
-  return;
-}
-
-void histoManager::fillAttributesData(){
-  att[0] = fqData->fq1rnll[0][2]-fqData->fq1rnll[0][1];
-  att[1] = fqData->fq1rnll[1][2]-fqData->fq1rnll[1][1];
-  return;
-}
-
-void histoManager::fillAttributesMC(){
-  att[0] = fqMC->fq1rnll[0][2]-fqMC->fq1rnll[0][1];
-  att[1] = fqMC->fq1rnll[1][2]-fqMC->fq1rnll[1][1];
-  return;
-}
-
-
-TH1F* histoManager::getHistogramData(int iatt, const char* thename){
-  TH1F* hnew;
-  int nBinsNllEMu = 50;
-  if (iatt==0){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
-  }
-  if (iatt==1){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
-  }
-  return hnew;
-}
-
-
-
-TH1F* histoManager::getHistogram(int iatt, const char* thename){
-  TH1F* hnew;
-  int nBinsNllEMu = 50;
-  int nBinsNllEMuData = 50;
-  if (iatt==0){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
-  }
-  if (iatt==1){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
-  }
-  return hnew;
-}
-
-void histoManager::init(){
-  //call ONLY after all attributes are specified
-  TString fname = nameTag.Data();
-  fname.Append(".root");
-  fout = new TFile(fname.Data(),"RECREATE");
-  //setup attribute names
-  attNames[0]="fq1rnll_emu_subev0";
-  attNames[1]="fq1rnll_emu_subev1";
-  TString hname;
-  //setup data histos
-  for (int isamp=0;isamp<nSamples;isamp++){
-    for (int ibin=0;ibin<nBins;ibin++){
-      for (int iatt=0;iatt<nAttributes;iatt++){
-         hname = "hdata_";
-         hname.Append(Form("samp%d_bin%d_att%d",isamp,ibin,iatt));
-         cout<<"Making histogram: "<<hname.Data()<<endl;
-         hData[isamp][ibin][iatt] = getHistogramData(iatt,hname.Data()); //make taylored histo
-      }
-    }
-  }
-  //setup mc histos
-  for (int isamp=0;isamp<nSamples;isamp++){
-    for (int ibin=0;ibin<nBins;ibin++){
-      for (int icomp=0;icomp<nComponents;icomp++){
-        for (int iatt=0;iatt<nAttributes;iatt++){
-           hname = "hmc_";
-           hname.Append(Form("samp%d_bin%d_comp%d_att%d",isamp,ibin,icomp,iatt));
-           cout<<"Making histogram: "<<hname.Data()<<endl;
-           hMC[isamp][ibin][icomp][iatt] = getHistogram(iatt,hname.Data()); //make taylored histo
-        }
-      }
-    }
-  }
-  return;
-}
-
-
-void histoManager::addAttribute(int iatt){
-  attType[nAttributes]=iatt;
-  nAttributes++;
   return;
 }
 
