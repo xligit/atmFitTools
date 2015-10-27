@@ -176,7 +176,7 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
   nComponents = ncomp;
   nAttributes  = natt;
   TString filename = rootname;
-  filename.Append(".root");
+//  filename.Append(".root");
   fin = new TFile(filename.Data());
   TString hname;
   //setup data histos

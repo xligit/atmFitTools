@@ -1,5 +1,5 @@
 {
-gROOT->ProcessLine(".L histoManager.C++");
+gROOT->ProcessLine(".L histoFactory.C++");
 gROOT->ProcessLine(".x ~/style.c");
 //TChain chdat("h1");
 //TChain chmc("h1");
@@ -9,14 +9,12 @@ TFile fdata("nominal2.root");
 TFile fmc("nominal1.root");
 TTree* trdata = (TTree*)fdata.Get("h1");
 TTree* trmc   = (TTree*)fmc.Get("h1");
-//histoManager* hm = new histoManager(3,3,7,"test2"); 
-histoManager* hm = new histoManager("factoryOut_factorytest.root",3,3,7,1); 
-//hm->addAttribute(1);
-//hm->addAttribute(2);
-//hm->setDataTree(trdata);
-//hm->setMCTree(trmc);
-//hm->init();
+histoFactory* hfact = new histoFactory(3,3,7,"factorytest"); 
+hfact->addAttribute(1);
+hfact->setDataTree(trdata);
+hfact->setMCTree(trmc);
+hfact->init();
 //hm->readFromFile("hManager_atmos_emuratio");
-//hm->fillHistos();
-//hm->saveToFile();
+hfact->fillHistos();
+hfact->saveToFile();
 }
