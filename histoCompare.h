@@ -30,6 +30,9 @@ class histoCompare{
   histoManager* hManager;
   float Norm;
   float Par[NBINMAX][NCOMPMAX][NATTMAX][2];
+  float sysPar[NSYSPARMAX];
+  float sysParUnc[NSYSPARMAX];
+  
   float fixPar[NBINMAX][NCOMPMAX][NATTMAX][2];
   float bestPar[NBINMAX][NCOMPMAX][NATTMAX][2];
   float errParLo[NBINMAX][NCOMPMAX][NATTMAX][2];

@@ -1,5 +1,6 @@
 {
 gROOT->ProcessLine(".L histoManager.C++");
+gROOT->ProcessLine(".L hSplines.C+");
 gROOT->ProcessLine(".x ~/style.c");
 //TChain chdat("h1");
 //TChain chmc("h1");
@@ -11,6 +12,9 @@ TTree* trdata = (TTree*)fdata.Get("h1");
 TTree* trmc   = (TTree*)fmc.Get("h1");
 //histoManager* hm = new histoManager(3,3,7,"test2"); 
 histoManager* hm = new histoManager("factoryOut_factorytest.root",3,3,7,1); 
+hm->readSplinesFromFile("splineOut_debug.root");
+//hSplines* hs = hm->getSplines(0,0,0,0);
+
 //hm->addAttribute(1);
 //hm->addAttribute(2);
 //hm->setDataTree(trdata);

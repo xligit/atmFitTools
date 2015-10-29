@@ -10,6 +10,7 @@
 #include <iostream>
 #include "THStack.h"
 #include "TLegend.h"
+#include "hSplines.C"
 
 #define NSAMPMAX 5
 #define NCOMPMAX 20
@@ -31,6 +32,7 @@ class histoManager{
   int nAttributes; //number of attributes (fiTQun outputs)
   int nBins;  //number of bins in data
   TH1F* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //array of all MC histograms
+  hSplines* theSplines[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //splines for flux/xsec params
   TH1F* hData[NSAMPMAX][NBINMAX][NATTMAX];  //array of all Data histograms
   TLegend* Leg;  //for histogram drawing methods
 
@@ -42,11 +44,17 @@ class histoManager{
   //setters
   void setHistogram(int isamp, int ibin, int icomp, int iatt, int dataflg,TH1F* h);
 
+  //getters
+  TH1F* getHistogram(int isamp, int ibin, int icomp, int iatt){return hMC[isamp][ibin][icomp][iatt];}
+  TH1F* getHistogramData(int isamp, int ibin, int iatt){return hData[isamp][ibin][iatt];}
+  hSplines* getSplines(int isamp, int ibin, int icomp, int iatt){return theSplines[isamp][ibin][icomp][iatt];}
+
+
   //plotting
   void showMCBreakdown(int isample,int ibin,int iatt);
   THStack* showMCBreakdownStack(int isample,int ibin,int iatt);
   void readFromFile(const char* rootename,int nsamp,int nbin,int ncomp,int natt);
-
+  void readSplinesFromFile(const char* rootname);
 };
 
 #endif

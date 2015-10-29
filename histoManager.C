@@ -2,7 +2,7 @@
 #define HISTOMANAGER_C
 
 #include "histoManager.h"
-
+#include "splineParReader.C"
 
 //TH1F*  histoManager::calcMCSum(int isample, int ibin, int iatt){
 //  TH1F* hTot = (TH1F*)hMC[isample][ibin][0][iatt]->Clone("htot");
@@ -203,6 +203,43 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
       }
     }
   } 
+  return;
+}
+
+void histoManager::readSplinesFromFile(const char* fname){
+  TFile splineFile(fname);
+  TTree* splinePars = (TTree*)splineFile.Get("splinePars");
+  splineParReader* parReader = new splineParReader(splinePars);
+  splinePars->GetEntry(0);
+  int nsyspartot = parReader->nsyspartot;
+  TString splinename;
+  //make splines
+  for (int ibin=0;ibin<nBins;ibin++){
+    for (int isamp=0;isamp<nSamples;isamp++){
+      for (int icomp=0;icomp<nComponents;icomp++){
+        for (int iatt=0;iatt<nAttributes;iatt++){
+          splinename="splinefor_";
+          splinename.Append(hMC[isamp][ibin][icomp][iatt]->GetName());
+          theSplines[isamp][ibin][icomp][iatt]=new hSplines(hMC[isamp][ibin][icomp][iatt],nsyspartot,splinename.Data());
+        }
+      }
+    }
+  }
+  //build the splines
+  double Y[parReader->npoints];
+  double X[parReader->npoints];
+  for (int ispline=0;ispline<splinePars->GetEntries();ispline++){
+    splinePars->GetEntry(ispline);
+    for (int hbin=0;hbin<parReader->nhistobins;hbin++){
+      for (int ipt=0;ipt<parReader->npoints;ipt++){
+        Y[ipt] = parReader->binWeight[ipt][hbin];
+        X[ipt] = parReader->systParValues[ipt];
+      }
+      theSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nattribute]
+                  ->buildSpline(hbin,parReader->nsystpar,X,Y,parReader->npoints);
+    }
+  }
+//  */
   return;
 }
 

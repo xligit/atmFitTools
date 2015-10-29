@@ -34,14 +34,19 @@ int sift::getSample(){
 int sift::getComponent(){
   absmode = TMath::Abs(fq->mode);
   int absnu   = TMath::Abs(fq->ipnu[0]);
-  if ((vis->nve==1)&&((vis->nvk==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 0; //single e
-  if ((vis->nvmu==1)&&((vis->nvk==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 1; //single mu
-  if ((vis->nve==1)&&(vis->nvmu==0)&&((vis->nvpi0>0)||(vis->nvpip>0)||(vis->nvk>0))) return 2; //e + other
-  if ((vis->nve==0)&&(vis->nvmu==1)&&((vis->nvpi0>0)||(vis->nvpip>0)||(vis->nvk>0))) return 3; //mu + other
-  if ((vis->nve==0)&&(vis->nvmu==0)&&(vis->nvpi0>0)&&(vis->nvpip==0)) return 4;  //single pi0
-  if ((vis->nve==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip>0)) return 5;  //single pip
- // if ((vis->nvpi0>0)||(vis->nvpip>0)||(vis->nvk>0)) return 6;  //OTHER
-  return 6;
+  //charged current
+  if ((absmode>0)&&(absmode<30)){
+    if ((vis->nve==1)&&((vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 0; //CC single e
+    if ((vis->nvmu==1)&&((vis->nvp==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 1; //CC single mu
+    if ((vis->nve==1)&&(vis->nvmu==0)) return 2; //CC e + other
+    if ((vis->nve==0)&&(vis->nvmu==1)) return 3; //CC mu + other
+    return 4; //CC Other
+  }
+  else{
+    if ((vis->nvpi0>0)) return 5;  //single pi0
+    return 6;  //NC other
+  }
+//  return 7;
 
 
 //  if ((absmode)<30){

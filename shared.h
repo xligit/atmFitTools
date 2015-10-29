@@ -14,6 +14,7 @@
 #define NCOMPMAX 20
 #define NATTMAX 20
 #define NBINMAX 10
+#define NSYSPARMAX 10
 
 #endif
 
