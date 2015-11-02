@@ -84,24 +84,20 @@ void splineFactory::debugtest(){
 };
 
 void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
-   nsystpar = isyst;
-   nbin = ibin;
-   ncomponent = icomp;
-   nattribute = iatt;
    nsample = isamp;
    nhistobins = hMC[isamp][ibin][icomp][iatt][0]->GetNbinsX();
    npoints = NPTSMAX;
    for (int ipt=0;ipt<NPTSMAX;ipt++){
-     for (int jbin=0;jbin<=nhistobins;jbin++){
-       if (hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jbin)==0){
-         binWeight[ipt][jbin] = 0.;
+     for (int jhistobin=0;jhistobin<=nhistobins;jhistobin++){
+       if (hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin)==0){
+         binWeight[ipt][jhistobin] = 1.;
        }
        else{
-         binWeight[ipt][jbin] =
-           (float)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jbin)/
-           (float)hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jbin);
+         binWeight[ipt][jhistobin] =
+           (float)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin)/
+           (float)hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin);
        }
-       cout<<"value: "<<ipt<<","<<jbin<<" -> "<<binWeight[ipt][jbin]<<endl;
+       cout<<"value: "<<ipt<<","<<jbin<<" -> "<<binWeight[ipt][jhistobin]<<endl;
      }
    }
    return;

@@ -28,20 +28,24 @@
  //hpiddat->Add(hpiddatmu);
 
  histoCompare* hc = new histoCompare("comptest");
- hc->readFromFile("histos_test2",3,3,7,1);
- hc->getTotSumSq();
- hc->setBinName(0,"");
+ hc->readFromFile("histos_test2",3,3,7,1);  //reads in histogram manager
+ hc->setupPars(); //setup parameters
+// hc->getTotSumSq();
+// hc->setBinName(0,"bin0");
+// hc->setBinName(1,"bin1");
+// hc->setBinName(2,"bin2");
  hc->setCompName(0,"CC1e");
  hc->setCompName(1,"CC1mu");
  hc->setCompName(2,"CCeOth");
  hc->setCompName(3,"CCmuOth");
- hc->setCompName(4,"pi0");
- hc->setCompName(5,"pi+");
+ hc->setCompName(4,"CCOth");
+ hc->setCompName(5,"NCpi0");
+ hc->setCompName(6,"NCOth");
  hc->setBinName(0,"FV0");
  hc->setBinName(1,"FV1");
  hc->setBinName(2,"FV2");
- hc->setAttName(0,"emu");
- hc->setAttName(0,"Other");
+ hc->setAttName(0,"emuPID");
+/ hc->setAttName(0,"Other");
  hc->setRebinFactor(1);
 // hc->LnLFit();
 // hc->addHistogram(hpidmc,0);

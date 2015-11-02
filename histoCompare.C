@@ -352,7 +352,7 @@ void histoCompare::LnLPreFit(){
   float  parinit; //container to temporarily store initial values 
 
   //total number of parameters to be fit
-  int npars = nBin*nComp*nAtt*2;
+  int npars = thePars->nTotPars;
 
   cout<<"$$$$$$$$$$$$$$$ LNL PRE FIT $$$$$$$$$$$$$$$"<<endl;
   cout<<"  ---------------------------------------- "<<endl;
@@ -394,8 +394,9 @@ void histoCompare::LnLPreFit(){
         if (hTot->GetEntries()<nthresh){
           cout<<"  FIXING PARAMETER:  "<<parName[ibin][icomp][iatt][0].Data()<<" (ENTRIES TOO LOW!) "<<endl; 
           fixPar[ibin][icomp][iatt][0]=1;
+          thePars->fixParameter(ibin,icomp,iatt,0);
+          thePars->fixParameter(ibin,icomp,iatt,1);
           cout<<"  FIXING PARAMETER:  "<<parName[ibin][icomp][iatt][1].Data()<<" (ENTRIES TOO LOW!) "<<endl; 
-          fixPar[ibin][icomp][iatt][1]=1;
         }
         hTot->Delete();
         parindex+=2;
@@ -415,19 +416,24 @@ void histoCompare::LnLPreFit(){
   fit->SetFCN(lnLWrapper);
 
   //set parameters to inital values
-  parindex = 0;
-  for (int kbin=0;kbin<nBin;kbin++){
-    for (int katt=0;katt<nAtt;katt++){
-      for (int kcomp=0;kcomp<nComp;kcomp++){
-        bestPar[kbin][kcomp][katt][0] = Par[kbin][kcomp][katt][0];
-        fit->SetParameter(parindex,parName[kbin][kcomp][katt][0].Data(),Par[kbin][kcomp][katt][0],parerr,0,0);
-        parindex++;
-        bestPar[kbin][kcomp][katt][1] = Par[kbin][kcomp][katt][1];
-        fit->SetParameter(parindex,parName[kbin][kcomp][katt][1].Data(),Par[kbin][kcomp][katt][1],parerr,0,0);
-        parindex++;
-      }
-    }
+  TString pname;
+  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
+    pname = Form("parameter%d",ipar);
+    fit->SetParameter(ipar,pname.Data(),thePars->pars[ipar],parerr,0,0);
   }
+
+//  parindex = 0;
+//  for (int kbin=0;kbin<nBin;kbin++){
+//    for (int katt=0;katt<nAtt;katt++){
+//      for (int kcomp=0;kcomp<nComp;kcomp++){
+//        fit->SetParameter(parindex,parName[kbin][kcomp][katt][0].Data(),Par[kbin][kcomp][katt][0],parerr,0,0);
+//        parindex++;
+//        bestPar[kbin][kcomp][katt][1] = Par[kbin][kcomp][katt][1];
+//        fit->SetParameter(parindex,parName[kbin][kcomp][katt][1].Data(),Par[kbin][kcomp][katt][1],parerr,0,0);
+//        parindex++;
+//      }
+//    }
+//  }
 
   //fix all parameters
   for (int jpar=0;jpar<npars;jpar++){
@@ -441,14 +447,14 @@ void histoCompare::LnLPreFit(){
       for (int jcomp=0;jcomp<nComp;jcomp++){
           parindex++; //starts on odd parameter (bias only)
           //release biasparameter to be fit
-          if (fixPar[jbin][jcomp][jatt][1]==1){
+          if (thePars->fixPar[parindex]==1){
             parindex++; //do nothing if parameter is fixed
             continue;
           }
           fit->ReleaseParameter(parindex);
           fit->ExecuteCommand("SIMPLEX",0,0);
           fit->FixParameter(parindex);
-          bestPar[jbin][jcomp][jatt][1] = fit->GetParameter(parindex); 
+       //   bestPar[jbin][jcomp][jatt][1] = fit->GetParameter(parindex); 
           parindex++;
       }
     }
@@ -460,31 +466,34 @@ void histoCompare::LnLPreFit(){
       for (int jcomp=0;jcomp<nComp;jcomp++){
           //starts on even parameter (bias only)
           //release smear parameter to be fit
-          if (fixPar[jbin][jcomp][jatt][0]==1){
+          if (thePars->fixPar[parindex]==1){
             parindex++; //do nothing if parameter is fixed
             continue;
           }
           fit->ReleaseParameter(parindex);
           fit->ExecuteCommand("SIMPLEX",0,0);
           fit->FixParameter(parindex);
-          bestPar[jbin][jcomp][jatt][0] = fit->GetParameter(parindex); 
+         // bestPar[jbin][jcomp][jatt][0] = fit->GetParameter(parindex); 
           parindex+=2;
       }
     }
   }
   //print final results
-  
+
+
   for (int pbin=0;pbin<nBin;pbin++){
     for (int patt=0;patt<nAtt;patt++){
       for (int pcomp=0;pcomp<nComp;pcomp++){
         for (int pmod=0;pmod<2;pmod++){
           cout<<"  PAR "<<parName[pbin][pcomp][patt][pmod].Data()<<" FIT RESULT: ";
-          cout<<bestPar[pbin][pcomp][patt][pmod]<<endl;
+          cout<<thePars->histoPar[pbin][pcomp][patt][pmod]<<endl;
         }
       }
     }
   }
-
+  for (int isys=0;isys<thePars->nSysPars;isys++){
+    
+  }
   cout<<"$$$$$$$$$$$$$ END LNL PRE FIT $$$$$$$$$$$$$"<<endl;
 
 }
@@ -522,7 +531,7 @@ void histoCompare::LnLFit(){
   LnLPreFit();
 
   //setup the fitter!
-  TFitter* fit = new TFitter(npars);
+  TFitter* fit = new TFitter(thePars->nTotPars);
   //shut fitter up
   {
     double pp = 1;
@@ -532,17 +541,17 @@ void histoCompare::LnLFit(){
   fit->SetFCN(lnLWrapper);
 
   //set parameters to inital values (from prefit)
-  parindex = 0;
-  for (int kbin=0;kbin<nBin;kbin++){
-    for (int katt=0;katt<nAtt;katt++){
-      for (int kcomp=0;kcomp<nComp;kcomp++){
-        fit->SetParameter(parindex,parName[kbin][kcomp][katt][0].Data(),bestPar[kbin][kcomp][katt][0],parerr,0,0);
-        parindex++;
-        fit->SetParameter(parindex,parName[kbin][kcomp][katt][1].Data(),bestPar[kbin][kcomp][katt][1],parerr,0,0);
-        parindex++;
-      }
-    }
-  }
+//  parindex = 0;
+//  for (int kbin=0;kbin<nBin;kbin++){
+//    for (int katt=0;katt<nAtt;katt++){
+//      for (int kcomp=0;kcomp<nComp;kcomp++){
+//        fit->SetParameter(parindex,parName[kbin][kcomp][katt][0].Data(),bestPar[kbin][kcomp][katt][0],parerr,0,0);
+//        parindex++;
+//        fit->SetParameter(parindex,parName[kbin][kcomp][katt][1].Data(),bestPar[kbin][kcomp][katt][1],parerr,0,0);
+//        parindex++;
+//      }
+//    }
+//  }
   
   parindex = 0;
   int parindextmp = 0;
@@ -817,17 +826,24 @@ void histoCompare::getTotLnL1D(float& result, float par[]){
 
 
 void histoCompare::lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg){
-  //index trix
-  int index=0;
-  for (int ibin=0;ibin<staticthis->nBin;ibin++){
-    for (int icomp=0;icomp<staticthis->nComp;icomp++){
-      for (int iatt=0;iatt<staticthis->nAtt;iatt++){
-        staticthis->Par[ibin][icomp][iatt][0] = par[index];
-        staticthis->Par[ibin][icomp][iatt][1] = par[index+1]; 
-        index+=2;
-      }
-    }
+
+  for (int ipar=0;ipar<staticthis->thePars->nTotPars;ipar++){
+    staticthis->thePars->setParameter(ipar,par[ipar]);
   }
+
+ // set MD parameter array to match the values of the internal pars[] of the fittter
+//  int index=0;
+//  for (int ibin=0;ibin<staticthis->nBin;ibin++){
+//    for (int icomp=0;icomp<staticthis->nComp;icomp++){
+//      for (int iatt=0;iatt<staticthis->nAtt;iatt++){
+ //       staticthis->Par[ibin][icomp][iatt][0] = par[index];
+ //       staticthis->Par[ibin][icomp][iatt][1] = par[index+1]; 
+//        staticthis->thePars->histoPar[ibin][icomp][iatt][0] = par[index];
+//        staticthis->thePars->histoPar[ibin][icomp][iatt][1] = par[index+1];
+//        index+=2;
+//      }
+//    }
+//  }
   result = (double)staticthis->getTotLnL();
 }
 
@@ -972,6 +988,7 @@ float histoCompare::getTotSumSqDebug(){
   return totsumsq;
 }
 
+
 float histoCompare::getTotLnL(){
   float totL = 0.;
   for (int isamp=0;isamp<nSamp;isamp++){
@@ -979,17 +996,19 @@ float histoCompare::getTotLnL(){
       for (int iatt=0;iatt<nAtt;iatt++){
          //get modfied MC prediction
          if (hMod) hMod->Delete();
-         if (hTmp) hTmp->Delete();
-         hMod = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("hmodtmp");
+        // hMod = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("hmodtmp");
+   //      hMod = (TH1F*)hManager->getModHistogram(isamp,ibin,0,iatt)->Clone("hmodtmp");
+         hMod = hManager->getSumHistogramMod(isamp,ibin,iatt);
      //    hMod->Smooth(5);
-         hTmp = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("htmp");
-         smearHisto((*hManager->hMC[isamp][ibin][0][iatt]),(*hMod),Par[ibin][0][iatt][0],Par[ibin][0][iatt][1]);      
-         for (int icomp = 1;icomp<nComp;icomp++){
+      //   hTmp = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("htmp");
+      //   smearHisto((*hManager->hMC[isamp][ibin][0][iatt]),(*hMod),Par[ibin][0][iatt][0],Par[ibin][0][iatt][1]);    
+      //   smearHisto((*hManager->hMC[isamp][ibin][0][iatt]),(*hMod),thePars->histoPars[ibin][0][iatt][0],thePars->histoPars[ibin][0][iatt][1]);    
+      //   for (int icomp = 1;icomp<nComp;icomp++){
      //      hTmp->Smooth(1);
-           smearHisto((*hManager->hMC[isamp][ibin][icomp][iatt]),(*hTmp),Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]);
+    //       smearHisto((*hManager->hMC[isamp][ibin][icomp][iatt]),(*hTmp),Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]);
     //       hTmp->Smooth(3);
-           hMod->Add(hTmp);
-         }
+         //  hMod->Add(hManager->getModHistogram(isamp,ibin,icomp,iatt));
+        // }
          //add error to total
     //     hMod->Smooth(3);
          hMod->Scale(Norm);
@@ -1081,6 +1100,7 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
   float ndataevents=0;
   float nmcevents=0;
   //setup initaal parametres
+  /*
   for (int icomp=0;icomp<nComp;icomp++){
     for (int ibin=0;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
@@ -1091,6 +1111,7 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
       }
     }
   } 
+  */
   float events;
   //count total events
   for (int jsamp=0;jsamp<nSamp;jsamp++){
@@ -1108,8 +1129,17 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
     }
   }
   Norm = ndataevents/nmcevents;
+  
   return;
 }
+
+void histoCompare::setupPars(int nsyspars){
+  thePars = new atmFitPars(nSamp,nBin,nComp,nAtt,nsyspars);
+  thePars->setNorm(Norm);
+  hManager->setFitPars(thePars);
+  return;
+}
+
 
 histoCompare::histoCompare(const char* thename){
   nameTag = thename;

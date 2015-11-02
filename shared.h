@@ -9,6 +9,7 @@
 #include <iostream>
 #include "THStack.h"
 #include "TLegend.h"
+#include "atmFitPars.C"
 
 #define NSAMPMAX 5
 #define NCOMPMAX 20

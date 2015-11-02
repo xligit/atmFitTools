@@ -28,6 +28,11 @@ class histoCompare{
   //created histo manager from file
   void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int natt);
   histoManager* hManager;
+
+  //atmospheric pars
+  atmFitPars* thePars;
+
+  
   float Norm;
   float Par[NBINMAX][NCOMPMAX][NATTMAX][2];
   float sysPar[NSYSPARMAX];
@@ -45,7 +50,7 @@ class histoCompare{
   void setBinName(int ibin, const char* name){binName[ibin]=name;}
   void setCompName(int icomp, const char* name){compName[icomp]=name;}
   void setAttName(int iatt, const char* name){attName[iatt]=name;}
- 
+  void setupPars(int nsyspars=0); //sets up all parameters
   //post-fit toolts
   void profileL(int ibin, int icomp, int iatt, int imod, float range, int npts=1000);
   void showFitHisto(int isamp,int ibin,int icomp,int iatt);
