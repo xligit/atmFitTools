@@ -79,11 +79,13 @@ void sift::siftIt(const char* fname){
  //   if (ncomponent==2) fq->fq1rnll[0][2]+=(-1*25.);
     nsample=getSample();
     nbin=getBin();
+
     trout->Fill();
   }
   TString name = fname;
   name.Append(".root");
   trout->SaveAs(name.Data());
+  trout->Delete();
   return;
 }
 

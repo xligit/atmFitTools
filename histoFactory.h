@@ -1,8 +1,8 @@
 #ifndef HISTOFACTORY_H
 #define HISTOFACTORY_H
 
-#include "shared.h"
 #include "histoManager.C"
+//#include "shared.h"
 
 using namespace std;
 

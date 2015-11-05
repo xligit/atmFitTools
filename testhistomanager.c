@@ -1,7 +1,7 @@
 {
 gROOT->ProcessLine(".L histoManager.C++");
 gROOT->ProcessLine(".L hSplines.C+");
-gROOT->ProcessLine(".x ~/style.c");
+//gROOT->ProcessLine(".x ~/style.c");
 gROOT->ProcessLine(".L atmFitPars.C+");
 
 int nbin=3;

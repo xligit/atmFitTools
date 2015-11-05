@@ -1,5 +1,6 @@
 {
  gROOT->ProcessLine(".L histoCompare.C++");
+ gROOT->ProcessLine(".L atmFitPars.C++");
  gROOT->ProcessLine(".x ~/style.c");
  TChain atmmc("h1");
  atmmc.Add("/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/mc/*stmusel_01*fQ.root");
@@ -28,8 +29,12 @@
  //hpiddat->Add(hpiddatmu);
 
  histoCompare* hc = new histoCompare("comptest");
- hc->readFromFile("histos_test2",3,3,7,1);  //reads in histogram manager
- hc->setupPars(); //setup parameters
+// hc->readFromFile("histos_test2",3,3,7,1);  //reads in histogram manager
+ hc->readFromFile("factoryOut_factorytest.root",3,3,7,1);
+ hc->setupPars(1); //setup parameters
+ hc->thePars->setSysParUnc(0,0.05);
+ hc->setupSplines("splineOut_debug.root");
+// hc->hManager->useSplineFlg=1;
 // hc->getTotSumSq();
 // hc->setBinName(0,"bin0");
 // hc->setBinName(1,"bin1");
@@ -45,7 +50,7 @@
  hc->setBinName(1,"FV1");
  hc->setBinName(2,"FV2");
  hc->setAttName(0,"emuPID");
-/ hc->setAttName(0,"Other");
+ hc->setAttName(0,"Other");
  hc->setRebinFactor(1);
 // hc->LnLFit();
 // hc->addHistogram(hpidmc,0);

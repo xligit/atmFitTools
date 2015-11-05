@@ -52,7 +52,8 @@ class histoCompare{
   void setAttName(int iatt, const char* name){attName[iatt]=name;}
   void setupPars(int nsyspars=0); //sets up all parameters
   //post-fit toolts
-  void profileL(int ibin, int icomp, int iatt, int imod, float range, int npts=1000);
+  void profileL(int ibin, int icomp, int iatt, int imod, float range, int npts=100);
+  void profileL(int ipar,float range, int npts=100);
   void showFitHisto(int isamp,int ibin,int icomp,int iatt);
   void showFitEffect(int isamp,int ibin,int icomp,int iatt);
   void showFitResult(int isamp,int ibin,int iatt);
@@ -61,8 +62,10 @@ class histoCompare{
   void runMCMC(int nsteps);
   float getErrLo(int ibin,int icomp,int iatt,int imod);
   float getErrHi(int ibin,int icomp,int iatt, int imod);
+  TH1F* getModifiedHisto(int ibin, int icomp, int iatt){return hManager->getSumHistogramMod(ibin,icomp,iatt);}
  // TH1F* hMod[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
 
+  void setupSplines(const char* fname){hManager->readSplinesFromFile(fname);}
   //tools for adding histogram directly..for debugging
   void addHistogram(TH1F* h,int dataflg);
   int  rebinFactor;

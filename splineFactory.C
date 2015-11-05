@@ -1,5 +1,5 @@
 #include "hSplines.C"
-#include "shared.h"
+//#include "shared.h"
 //#include "fQreader.C"
 #include "histoManager.C"
 
@@ -97,7 +97,7 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
            (float)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin)/
            (float)hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin);
        }
-       cout<<"value: "<<ipt<<","<<jbin<<" -> "<<binWeight[ipt][jhistobin]<<endl;
+       cout<<"value: "<<ipt<<","<<jhistobin<<" -> "<<binWeight[ipt][jhistobin]<<endl;
      }
    }
    return;

@@ -15,9 +15,14 @@
 
 
 TH1F* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
-  if (hSum!=NULL) hSum->Delete();
+  if (hSum){
+//    cout<<"delete previous sum histogram"<<endl;
+    hSum->Delete();
+  }
+//  cout<<"clone in new histogram"<<endl;
   hSum = (TH1F*)getModHistogram(isamp,ibin,0,iatt)->Clone("hsum");
   for (int icomp=1;icomp<nComponents;icomp++){
+ //   cout<<"add histo component "<<icomp<<endl;
     hSum->Add(getModHistogram(isamp,ibin,icomp,iatt));
   }
   return hSum;
@@ -34,19 +39,19 @@ TH1F* histoManager::getSumHistogram(int isamp, int ibin, int iatt){
 
 TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   if (hMod!=NULL){
-    cout<<"deleting existing histogram"<<endl;
+  //  cout<<"deleting existing histogram"<<endl;
     hMod->Delete();
   }
 
   //if not using splines, start with base histogram
   if (!useSplineFlg){
-    cout<<"getting base histogram"<<endl;
+  //  cout<<"getting base histogram"<<endl;
     hMod = (TH1F*)hMC[isamp][ibin][icomp][iatt]->Clone("hmod");
   }
 
   //if splines are being used, start with histogram modified by splines
   else{
-    cout<<"getting spline modified histogram"<<endl; 
+  //  cout<<"getting spline modified histogram"<<endl; 
     theSplines[isamp][ibin][icomp][iatt]->buildModHistoAllPar(fitPars->nSysPars,fitPars->sysPar);
 //    theSplines[isamp][ibin][icomp][iatt]->buildModHisto(0,1.);
 
@@ -54,9 +59,9 @@ TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   }
 
   //apply histogram smearing
-  cout<<"smearing histogram with parameters: "<<fitPars->histoPar[ibin][0][iatt][0]<<" "<<fitPars->histoPar[ibin][0][iatt][1]<<endl;
+//  cout<<"smearing histogram with parameters: "<<fitPars->histoPar[ibin][0][iatt][0]<<" "<<fitPars->histoPar[ibin][0][iatt][1]<<endl;
 //  TH1F* htmp = (TH1F*)hMod->CLone("htmo");
-//  smearThisHisto( (*hMod), fitPars->histoPar[ibin][0][iatt][0], fitPars->histoPar[ibin][0][iatt][1]);
+  smearThisHisto( (*hMod), fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
 
   //return post-smearing histogram
   return hMod;

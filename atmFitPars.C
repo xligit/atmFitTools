@@ -37,23 +37,34 @@ class atmFitPars{
   void setParameter(int ipar, float value);
   void setSysParameter(int ipar, float value);
   void setParameter(int ibin, int icomp, int iatt, int imod, float value); 
+  void setSysParUnc(int isys,float value){sysParUnc[isys]=value;}
   void fixParameter(int ipar);
   void fixParameter(int ibin,int icomp,int iatt, int imod);
-
-  private:
+  int  checkFixFlg(int ibin,int icomp,int iatt, int imod);
+  void printParValues();
   int binOfPar[4000];
   int compOfPar[4000];
   int attOfPar[4000];
   int typeOfPar[4000];
 };
 
+void atmFitPars::printParValues(){
+  for (int ipar=0;ipar<nTotPars;ipar++){
+    cout<<"par "<<ipar<<": "<<pars[ipar]<<endl;
+  }
+}
+
+int atmFitPars::checkFixFlg(int ibin, int icomp, int iatt, int imod){
+  return fixPar[parIndex[ibin][icomp][iatt][imod]];
+}
+
 void atmFitPars::fixParameter(int ibin,int icomp,int iatt, int imod){
-  fixPar[getParIndex(ibin,icomp,iatt,imod)] = 1.;
+  fixPar[getParIndex(ibin,icomp,iatt,imod)] = 1;
   return;
 }
 
 void atmFitPars::fixParameter(int ipar){
-  fixPar[ipar] = 1.;
+  fixPar[ipar] = 1;
   return;
 }
 
@@ -71,7 +82,7 @@ void atmFitPars::setParameter(int ibin, int icomp, int iatt, int itype, float va
 
 void atmFitPars::setParameter(int ipar, float value){
   pars[ipar]=value;
-  if (ipar>=(nTotPars-nSysPars)) sysPar[nTotPars-ipar] = value;
+  if (ipar>=(nTotPars-nSysPars)) sysPar[nTotPars-ipar-1] = value;
   else{
     histoPar[binOfPar[ipar]][compOfPar[ipar]][attOfPar[ipar]][typeOfPar[ipar]]=value;
   }
@@ -103,7 +114,7 @@ void atmFitPars::initPars(){
         index++;
         histoPar[ibin][icomp][iatt][1]=0.0;
         parIndex[ibin][icomp][iatt][1]=index;
-        pars[index]=1.0;
+        pars[index]=0.0;
         binOfPar[index]=ibin;
         compOfPar[index]=icomp;
         attOfPar[index]=iatt;
@@ -120,6 +131,9 @@ void atmFitPars::initPars(){
   }
   nTotPars = index;
   cout<<"Total number of fit parameters: "<<nTotPars<<endl;
+  for (int kpar=0;kpar<nTotPars;kpar++){
+    cout<<"par "<<kpar<<" value: "<<pars[kpar]<<endl;
+  }
   return;
 }
 
