@@ -38,7 +38,8 @@ class histoFactory{
   void setMCTree(TTree* tr);
   void setMCTree(TChain* ch);
   void saveToFile();
-
+  TString outputFileName;
+  TString getOutputFileName(){return outputFileName;}
 };
 
 

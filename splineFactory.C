@@ -107,9 +107,8 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
 
 void splineFactory::buildTheSplines(){
   // file setup
-  TString fname = "splineOut_";
-  fname.Append(nameTag.Data());
-  fname.Append(".root");
+  TString fname = nameTag.Data();
+  fname.Append("_splineOut.root");
   fout = new TFile(fname.Data(),"recreate");
 
   //setup the output tree

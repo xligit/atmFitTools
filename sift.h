@@ -16,17 +16,25 @@
 using namespace std;
 
 
+#define NFILEMAX 5000
 
 class sift{
   public:
-  sift(TChain* chin);
-  sift(TTree* trin);
+  sift(const char* name);
+  sift(TChain* chin,const char* name="");
+  sift(TTree* trin,const char* name="");
+  void setTree(TTree* trin);
+  void setTree(TChain* trin);
   TTree* tr;
   TTree* trout;
+  TFile* fout;
+  TString nameTag;
+  TString fileNames[NFILEMAX];
+  int nFiles;
   fqReader* fq;
   visRing*  vis;
   void setupNewTree();
-  void siftIt(const char* filename);
+  void siftIt();
   int passCuts();
   int ncomponent;
   int nsample;
@@ -39,6 +47,11 @@ class sift{
   int getComponent();
   int getSample();
   int getBin();
+  void processFile(const char* fname,const char* outname="");
+  void processAllFiles(TChain* chain);
+  void addFile(const char* filename);
+  TString getFileRootName();
+
 };
 
 #endif

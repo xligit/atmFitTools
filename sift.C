@@ -2,7 +2,86 @@
 #define SIFT_C
 
 #include "sift.h"
+#include "TObjArray.h"
 
+void sift::processAllFiles(TChain* chain){
+  int nfiles = chain->GetNtrees();
+  TObjArray* listOfFiles = chain->GetListOfFiles();
+  TString tag;
+  TString fname;
+  for (int ifile=0;ifile<nfiles;ifile++){
+    tag = Form("_%d_",ifile);
+    fname = listOfFiles->At(ifile)->GetTitle();
+    processFile(fname,tag);
+  }
+  return;
+}
+
+TString sift::getFileRootName(){
+  return nameTag;
+}
+
+void sift::setTree(TChain* chin){
+  TTree* trin = (TTree*)chin;
+  setTree(trin);
+  return;
+}
+
+void sift::setTree(TTree* trin){
+/*  if (vis!=NULL){
+     cout<<"delete visible ring counter"<<endl;
+     delete vis;
+     vis=NULL;
+  }
+  if (fq!=NULL){
+     cout<<"deleting fiTQun reader"<<endl;
+     delete fq;
+     fq=NULL;
+  }
+  */
+  tr = trin;
+  fq = new fqReader(tr);
+  vis = new visRing(fq); 
+  return;
+}
+
+void sift::processFile(const char* fname,const char* outname){
+
+  //make output file name
+  TString outputName = nameTag.Data();
+  outputName.Append(outname);
+  outputName.Append(".root");
+//  outputName.Append(fname);
+  //
+
+  //get tree
+  cout<<"opening file: "<<fname<<endl;
+  TFile* fin = new TFile(fname);
+  TTree* intree = (TTree*)fin->Get("h1");
+  cout<<"got tree: "<<intree->GetEntries()<<endl;
+  setTree(intree);
+
+  //make new tree
+  cout<<"create file: "<<outputName.Data()<<endl;
+  fout = new TFile(outputName.Data(),"recreate");
+  setupNewTree(); 
+
+  //fill new tree
+  siftIt();
+//
+  //delete new tree
+  //trout->Delete();
+  fout->Write();
+  fin->Close();
+  fout->Close();
+  
+  return;   
+}
+
+void sift::addFile(const char*filename){
+  fileNames[nFiles]=filename;
+  nFiles++;
+}
 
 int sift::getBin(){
   //calculate fiducial volume variables
@@ -65,7 +144,7 @@ int sift::getComponent(){
 }
 
 //loop over all events and sort into bins, samples and components
-void sift::siftIt(const char* fname){
+void sift::siftIt(){
   int nev = tr->GetEntries();
   for (int i=0;i<nev;i++){
     //get info for event
@@ -73,21 +152,21 @@ void sift::siftIt(const char* fname){
     tr->GetEntry(i);
     if (!passCuts()) continue;
     vis->fillVisVar(); //get visible ring information
-    //sort event
     ncomponent=getComponent();
-  //  if (ncomponent==3) fq->fq1rnll[0][1]-=100.;
- //   if (ncomponent==2) fq->fq1rnll[0][2]+=(-1*25.);
     nsample=getSample();
     nbin=getBin();
-
     trout->Fill();
   }
-  TString name = fname;
-  name.Append(".root");
-  trout->SaveAs(name.Data());
-  trout->Delete();
+ // TString name = fname;
+ // name.Append(".root");
+//  trout->SaveAs(name.Data());
+ // trout->Write();
+ // fout->Write();
+ // fout->Close();
+ // trout->Delete();
   return;
 }
+
 
 void sift::setupNewTree(){
   tr->SetBranchStatus("*",0);
@@ -97,6 +176,9 @@ void sift::setupNewTree(){
   //tr->SetBranchStatus("cluster*",1);
   tr->SetBranchStatus("mode",1);
   tr->SetBranchStatus("nhitac",1);
+//  TString filename=nameTag.Data();
+//  filename.Append("_siftOutput.root");
+//  fout = new TFile(filename.Data(),"recreate");
   trout = tr->CloneTree(0); //clone but don't copy data
   trout->CopyAddresses(tr); //set addresses
   
@@ -119,16 +201,23 @@ void sift::setupNewTree(){
   return;
 }
 
-sift::sift(TTree* trin){
+sift::sift(const char* name){
+  nameTag=name;
+  nFiles=0;
+}
+
+sift::sift(TTree* trin,const char* name){
   tr=trin;
   fq = new fqReader(tr);
   vis = new visRing(fq);
   setupNewTree();
+  nameTag=name;
   return;
 }
 
-sift::sift(TChain* chin){
+sift::sift(TChain* chin,const char* name){
   tr=(TTree*)chin;
+  nameTag=name;
   fq = new fqReader(tr);
   vis = new visRing(fq);
   setupNewTree();

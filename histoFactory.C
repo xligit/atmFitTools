@@ -2,8 +2,8 @@
 
 //constructor to re-created a histogram factory from a file
 histoFactory::histoFactory(int nsampl,int nbins,int ncomp,const char* name){
-  nameTag = "factoryOut_";
-  nameTag.Append(name);
+  nameTag = name;
+  nameTag.Append("_hFactoryOutput");
   nSamples = nsampl;
   nComponents = ncomp;
   nAttributes = 0;
@@ -34,6 +34,7 @@ void histoFactory::init(){
   //setup name for output file
   TString fname = nameTag.Data();
   fname.Append(".root");
+  outputFileName=fname.Data();
   fout = new TFile(fname.Data(),"RECREATE");
   //setup attribute names
   attNames[0]="fq1rnll_emu_subev0";
