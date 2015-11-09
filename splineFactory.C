@@ -85,6 +85,8 @@ void splineFactory::debugtest(){
 
 void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
    nsample = isamp;
+   nbin = ibin;
+   ncomponent=icomp;
    nhistobins = hMC[isamp][ibin][icomp][iatt][0]->GetNbinsX();
    npoints = NPTSMAX;
    for (int ipt=0;ipt<NPTSMAX;ipt++){

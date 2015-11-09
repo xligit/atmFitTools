@@ -16,13 +16,13 @@
 
 TH1F* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
   if (hSum){
-//    cout<<"delete previous sum histogram"<<endl;
+  //  cout<<"delete previous sum histogram"<<endl;
     hSum->Delete();
   }
-//  cout<<"clone in new histogram"<<endl;
+ // cout<<"clone in new histogram"<<endl;
   hSum = (TH1F*)getModHistogram(isamp,ibin,0,iatt)->Clone("hsum");
   for (int icomp=1;icomp<nComponents;icomp++){
- //   cout<<"add histo component "<<icomp<<endl;
+    //cout<<"add histo component "<<icomp<<endl;
     hSum->Add(getModHistogram(isamp,ibin,icomp,iatt));
   }
   return hSum;
@@ -39,7 +39,7 @@ TH1F* histoManager::getSumHistogram(int isamp, int ibin, int iatt){
 
 TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   if (hMod!=NULL){
-  //  cout<<"deleting existing histogram"<<endl;
+ //   cout<<"deleting existing histogram"<<endl;
     hMod->Delete();
   }
 
