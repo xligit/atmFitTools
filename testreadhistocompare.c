@@ -16,9 +16,9 @@
 
  hc->setupPars(1); //setup parameters
  hc->thePars->setSysParUnc(0,0.05);
- hc->setupSplines("./rootfiles/nominalRun_splineOut.root");
+ hc->setupSplines("./rootfiles/splineOutTest_splineOut.root",9);
 // hc->setupSplines("./rootfiles/splineOutTest_splineOut.root");
- hc->setupSplines("./rootfiles/nominalRun_splineOut.root");
+// hc->setupSplines("./rootfiles/nominalRun_splineOut.root");
 
 // hc->hManager->useSplineFlg=1;
 // hc->getTotSumSq();

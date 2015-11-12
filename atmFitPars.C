@@ -10,7 +10,7 @@ class atmFitPars{
   public:
   
   atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst=0);
- 
+  atmFitPars(int isamp, int ibin, int icomp, int iatt, const char* systype); 
   //numbers of various parametrs
   int nSamples;
   int nBins;
@@ -89,12 +89,63 @@ void atmFitPars::setParameter(int ipar, float value){
   return;
 }
 
+atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, const char* systype){
+  TString stype = systype;
+  nSysPars=0;
+  if (!stype.CompareTo("tn186")){
+    //CCQE xsec norm bin 1//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm  bin 2//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.25;
+    nSysPars++;
+    //CCQE xsec norm bin 3//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.1;
+    nSysPars++;
+    //CCQE xsec norm bin 4//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.05;
+    nSysPars++;
+    //SubGeV flux norm//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.25;
+    nSysPars++;
+    //MultiGeV flux norm//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.15;
+    nSysPars++;
+      //CCnQE xsec norm//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.2;
+    nSysPars++;
+    //NC xsec norm
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.2;
+    nSysPars++;
+    //mu/e xsec ratio
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.05;
+    nSysPars++;
+   }
+  nSamples = isamp;
+  nBins    = ibin;
+  nComponents    = icomp;
+  nAttributes   = iatt;;
+  initPars();
+}
+
 atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst){
   nSamples = isamp;
   nBins    = ibin;
   nComponents    = icomp;
   nAttributes   = iatt;
   nSysPars = nsyst;
+  for (int isys=0;isys<nSysPars;isys++){
+    sysPar[isys]=1.;
+  }
   initPars();
 }
 
@@ -124,9 +175,10 @@ void atmFitPars::initPars(){
       }
     }
   }
+  //setup flux and xsec pars:
   for (int isys=0;isys<nSysPars;isys++){
-    sysPar[isys]=1.;
-    pars[index]=1.;
+   // sysPar[isys]=1.;
+    pars[index]=sysPar[isys];
     index++;
   }
   nTotPars = index;

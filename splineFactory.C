@@ -16,22 +16,20 @@ class splineFactory{
   splineFactory(int nsamp, int nbin, int ncomp, int natt, int nsyst, const char* name);
   splineFactory(){;}
   
-
   //internal vars
-  TString nameTag;
-  TTree* mcTree;
+  TString nameTag; //set in constructor. this is the prefix for the output file
+  TTree* mcTree; 
   fQreader* mcEvt;
   histoManager* hManager; //manages all default histograms
-
-  TH1F* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX][NPTSMAX]; //array for modified
-  TFile *fout;
+  TH1F* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX][NPTSMAX]; //array for modified histograms for spline creation
+  TFile *fout; //output file
   int nSamp;
   int nBin;
   int nComp;
   int nAtt;
   int nSyst;
-  float sysPar[NSYSTMAX];
-  float sysUnc[NSYSTMAX];
+  float sysPar[NSYSTMAX]; //systematic parameter values
+  float sysUnc[NSYSTMAX];  //systematic parameter uncertainties
   float attribute[NATTMAX];
   float eventWeight;
 
@@ -47,10 +45,12 @@ class splineFactory{
   float systParValues[NPTSMAX];
   float binWeight[NPTSMAX][NHBINSMAX];
   //methods
+  //this needs to be modified for each systematic paramater to add
   float getEvtWeight(int ipar); //returns event weight after applying syst. par. 
-  void fillHistograms(int ipt,int isyst);
-  void  makeManagerFromFile(const char* fname);
-  void fillLeaves(int nsamp,int nbin,int ncomp,int natt,int isyst);  
+  //
+  void fillHistograms(int ipt,int isyst); //fills all histograms given weight
+  void  makeManagerFromFile(const char* fname); //reads in histograms from histoFactory
+  void fillLeaves(int nsamp,int nbin,int ncomp,int natt,int isyst); //fills leaves of output tree
   void setMCTree(TTree* tr);
   //build the splines
   void buildTheSplines();
@@ -61,7 +61,7 @@ class splineFactory{
 //  private:
   void fillAttributes();
   void setupHistos();
-  void setupSystPars();
+  void setupSystPars(); //sets up systematic parameters
   void incrementSystPars(float nsig);
 };
 
@@ -89,6 +89,7 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
    ncomponent=icomp;
    nhistobins = hMC[isamp][ibin][icomp][iatt][0]->GetNbinsX();
    npoints = NPTSMAX;
+   nsystpar = isyst;
    for (int ipt=0;ipt<NPTSMAX;ipt++){
      for (int jhistobin=0;jhistobin<=nhistobins;jhistobin++){
        if (hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin)==0){
@@ -108,6 +109,7 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
 
 
 void splineFactory::buildTheSplines(){
+
   // file setup
   TString fname = nameTag.Data();
   fname.Append("_splineOut.root");
@@ -125,7 +127,6 @@ void splineFactory::buildTheSplines(){
   splineTree->Branch("npoints",&npoints,"npoints/I");
   splineTree->Branch("systParValues",systParValues,Form("systParValues[%d]/F",NPTSMAX));
   splineTree->Branch("binWeight",binWeight,Form("binWeight[%d][%d]/F",NPTSMAX,NHBINSMAX));
-
   
 
   //setup systematic deviations
@@ -167,15 +168,65 @@ void splineFactory::incrementSystPars(float nsig){
   //change systematic parameters
   for (int isyst=0;isyst<nSyst;isyst++){
     sysPar[isyst] += sysUnc[isyst]*nsig;
+   // if (sysPar[isyst]<0.) sysPar[isyst]=0.;
   }
   
   return;
 }
 
 void splineFactory::setupSystPars(){
-  nSyst=1;
+  nSyst=0;
+  /*
+  //debug par 1
   sysPar[0] = 1.0;
-  sysUnc[0] = 0.1;  //one sigma uncertainty
+  sysUnc[0] = 0.1;
+  nSyst++;
+  //debug par 2
+  sysPar[1] = 1.0;
+  sysUnc[1] = 0.1;
+  nSyst++;
+  //debug par 3
+  sysPar[2] = 1.0;
+  sysUnc[2] = 0.1;
+  nSyst++;
+  */
+
+  //CCQE xsec norm bin 1//
+  sysPar[nSyst] = 1.0;
+  sysUnc[nSyst] = 1.0;
+  nSyst++;
+  //CCQE xsec norm  bin 2//
+  sysPar[nSyst] = 1.0;
+  sysUnc[nSyst] = 0.25;
+  nSyst++;
+  //CCQE xsec norm bin 3//
+  sysPar[nSyst] = 1.0;
+  sysUnc[nSyst] = 0.1;
+  nSyst++;
+  //CCQE xsec norm bin 4//
+  sysPar[nSyst] = 1.0;
+  sysUnc[nSyst] = 0.05;
+  nSyst++;
+  //SubGeV flux norm//
+  sysPar[nSyst] = 1.0;
+  sysUnc[nSyst] = 0.25;
+  nSyst++;
+  //MultiGeV flux norm//
+  sysPar[nSyst] = 1.0;
+  sysUnc[nSyst] = 0.15;
+  nSyst++;
+  //CCnQE xsec norm//
+  sysPar[nSyst] = 1.0;
+  sysUnc[nSyst] = 0.2;
+  nSyst++;
+  //NC xsec norm
+  sysPar[nSyst] = 1.0;
+  sysUnc[nSyst] = 0.2;
+  nSyst++;
+  //mu/e xsec ratio
+  sysPar[nSyst] = 1.0;
+  sysUnc[nSyst] = 0.05;
+  nSyst++;
   return;
 }
 
@@ -216,6 +267,19 @@ void splineFactory::fillAttributes(){
 
 void splineFactory::fillHistograms(int ipt, int isyst){
   //fills histograms after applying systematic error parameter
+  
+  //reset bin contents
+  for (int jbin=0;jbin<nBin;jbin++){
+    for (int jsamp=0;jsamp<nSamp;jsamp++){
+      for (int jatt=0;jatt<nAtt;jatt++){
+        for (int jcomp=0;jcomp<nComp;jcomp++){
+          hMC[jsamp][jbin][jcomp][jatt][ipt]->Reset();
+        }
+      }
+    }
+  }
+
+  //fill new bin contents
   for (int iev=0;iev<mcTree->GetEntries();iev++){
      mcTree->GetEvent(iev);
      fillAttributes();
@@ -230,9 +294,38 @@ void splineFactory::fillHistograms(int ipt, int isyst){
 
 float splineFactory::getEvtWeight(int ipar){
   float ww = 1.;
+  int absmode = TMath::Abs(mcEvt->mode);
+  float Enu     = mcEvt->pmomv[0];
+  int  nutype  = TMath::Abs(mcEvt->ipnu[0]);
+//  if (ipar==0){
+//   if (mcEvt->ncomponent==0) ww*=sysPar[0];
+//  } 
+//  if (ipar==1){
+//   if (mcEvt->ncomponent==1) ww*=sysPar[1];
+//  }
+//  if (ipar==2){
+//   if (mcEvt->ncomponent==2) ww*=sysPar[2];
+//  }
+   
+  //CCQE norm bin1 
   if (ipar==0){
-    if (TMath::Abs(mcEvt->mode)<30.) ww*=sysPar[0];
+    if ((absmode==1)&&(Enu<200.)) ww*=sysPar[0];
   }
+  //CCQE norm bin2 
+  if (ipar==1){
+    if ((absmode==1)&&(Enu>200.)&&(Enu<400.)) ww*=sysPar[1];
+  }
+  //CCQE norm bin3 
+  if (ipar==2){
+    if ((absmode==4)&&(Enu>400.)&&(Enu<800.)) ww*=sysPar[2];
+  }
+  //CCQE norm bin4 
+  if (ipar==3){
+    if ((absmode==1)&&(Enu>800.)) ww*=sysPar[3];
+  }
+  
+
+  if (ww<0.) ww = 0.;
   eventWeight = ww;
   return ww;
 };

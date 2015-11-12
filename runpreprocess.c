@@ -5,7 +5,7 @@
  gROOT->ProcessLine(".L splineFactory.C+");
  gROOT->ProcessLine(".x ~/style.c");
 
- TString nameTag = "nominalRun";
+ TString nameTag = "multiSyst";
  TString directory = "./rootfiles/"; 
  //setup input files
  TChain chmc("h1");
@@ -37,7 +37,7 @@
  
 
  //create histograms
-
+ 
  TChain *postmc=new TChain("h1");
  TChain *postdata=new TChain("h1");
  TString mcfilenames = siftMC->getFileRootName();
@@ -61,7 +61,7 @@
  TString hFactoryOutput = "factoryOut_";
  hFactoryOutput.Append("nameTage.Data()");
  hFactoryOutput.Append(".root");
-
+ 
 
  //create splines
  TString splinename=directory.Data();
@@ -71,6 +71,6 @@
  s->setupHistos();
  s->setupSystPars();
  s->setMCTree(trmc);
- s->buildTheSplines();
+ //s->buildTheSplines();
  
 }

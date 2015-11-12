@@ -15,12 +15,13 @@
 
 
 TH1F* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
-  if (hSum){
+//  if (hSum){
   //  cout<<"delete previous sum histogram"<<endl;
-    hSum->Delete();
-  }
+ //   hSum->Delete();
+ // }
+  hSum = getModHistogram(isamp,ibin,0,iatt);
  // cout<<"clone in new histogram"<<endl;
-  hSum = (TH1F*)getModHistogram(isamp,ibin,0,iatt)->Clone("hsum");
+//  hSum = (TH1F*)getModHistogram(isamp,ibin,0,iatt)->Clone("hsum");
   for (int icomp=1;icomp<nComponents;icomp++){
     //cout<<"add histo component "<<icomp<<endl;
     hSum->Add(getModHistogram(isamp,ibin,icomp,iatt));
@@ -37,6 +38,25 @@ TH1F* histoManager::getSumHistogram(int isamp, int ibin, int iatt){
   return hSum;
 }
 
+TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
+  int nhistobins = hMC[isamp][ibin][icomp][iatt]->GetNbinsX();
+  float weightsum;
+  float bincontent;
+  for (int i=1;i<=nhistobins;i++){
+    bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(i);
+    weightsum=0.;
+    for (int isyspar=0;isyspar<fitPars->nSysPars;isyspar++){
+      weightsum+=getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
+    } 
+    weightsum = weightsum -(float)fitPars->nSysPars + 1.; 
+    bincontent*=weightsum;
+    hMCModified[isamp][ibin][icomp][iatt]->SetBinContent(i,bincontent);
+  }
+  smearThisHisto( (*hMCModified[isamp][ibin][icomp][iatt]), fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
+  return hMCModified[isamp][ibin][icomp][iatt];
+}
+
+/*
 TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   if (hMod!=NULL){
  //   cout<<"deleting existing histogram"<<endl;
@@ -66,10 +86,11 @@ TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   //return post-smearing histogram
   return hMod;
 }
-
+*/
 TH1F* histoManager::getHistogram(int isamp, int ibin, int icomp, int iatt){
   return hMC[isamp][ibin][icomp][iatt];
 }
+
 
 //Use this to see how each MC component contributes to the overall histogram
 void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
@@ -249,6 +270,7 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
       }
     }
   }
+  TString hmodname; //name for modified histogram
   //setup mc histos
   for (int isamp=0;isamp<nSamples;isamp++){
     for (int ibin=0;ibin<nBins;ibin++){
@@ -258,6 +280,10 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
            hname.Append(Form("samp%d_bin%d_comp%d_att%d",isamp,ibin,icomp,iatt));
            cout<<"Getting histogram: "<<hname.Data()<<endl;
            hMC[isamp][ibin][icomp][iatt] = (TH1F*)fin->Get(hname.Data());
+           hmodname = hMC[isamp][ibin][icomp][iatt]->GetName();
+           hmodname.Append("_modified");
+           hMCModified[isamp][ibin][icomp][iatt] = (TH1F*)hMC[isamp][ibin][icomp][iatt]->Clone(hmodname.Data());
+           hMCModified[isamp][ibin][icomp][iatt]->Reset();
         }
       }
     }
@@ -265,15 +291,9 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
   return;
 }
 
-void histoManager::readSplinesFromFile(const char* fname){
-  TFile splineFile(fname);
-  TTree* splinePars = (TTree*)splineFile.Get("splinePars");
-  splineParReader* parReader = new splineParReader(splinePars);
-  splinePars->GetEntry(0);
-  int nsyspartot = parReader->nsyspartot;
+void histoManager::readSplinesFromFile(const char* fname,int nsyspartot){
   TString splinename;
   //make splines
-  
   for (int ibin=0;ibin<nBins;ibin++){
     for (int isamp=0;isamp<nSamples;isamp++){
       for (int icomp=0;icomp<nComponents;icomp++){
@@ -285,6 +305,11 @@ void histoManager::readSplinesFromFile(const char* fname){
       }
     }
   }
+  //open spline parameter file
+  TFile splineFile(fname);
+  TTree* splinePars = (TTree*)splineFile.Get("splinePars");
+  splineParReader* parReader = new splineParReader(splinePars);
+  splinePars->GetEntry(0);
   //build the splines
   double Y[parReader->npoints];
   double X[parReader->npoints];
@@ -299,6 +324,7 @@ void histoManager::readSplinesFromFile(const char* fname){
                   ->buildSpline(hbin,parReader->nsystpar,X,Y,parReader->npoints);
     }
   }
+  splineFile.Close();
 //  */
   useSplineFlg=1;
   return;

@@ -1227,7 +1227,7 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
 }
 
 void histoCompare::setupPars(int nsyspars){
-  thePars = new atmFitPars(nSamp,nBin,nComp,nAtt,nsyspars);
+  thePars = new atmFitPars(nSamp,nBin,nComp,nAtt,"tn186");
   thePars->setNorm(Norm);
   hManager->setFitPars(thePars);
   return;

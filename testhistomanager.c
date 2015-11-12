@@ -1,8 +1,9 @@
 {
-gROOT->ProcessLine(".L histoManager.C++");
-gROOT->ProcessLine(".L hSplines.C++");
-//gROOT->ProcessLine(".x ~/style.c");
 gROOT->ProcessLine(".L atmFitPars.C++");
+gROOT->ProcessLine(".L hSplines.C++");
+gROOT->ProcessLine(".L histoManager.C++");
+//gROOT->ProcessLine(".x ~/style.c");
+//gROOT->ProcessLine(".L atmFitPars.C++");
 
 int nbin=3;
 int ncomp=7;
@@ -16,16 +17,17 @@ int natt=1;
 //chmc.Add("/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/mc/stopmu_mc_1390_for_atmnu_test_0649*001*fQ.root");
 TChain *chdata = new TChain("h1");
 TChain *chmc   = new TChain("h1");
-chdata->Add("./rootfiles/nominalRun_Data*.root");
-chmc->Add("./rootfiles/nominalRun_MC*.root");
+//chdata->Add("./rootfiles/nominalRun_Data*.root");
+//chmc->Add("./rootfiles/nominalRun_MC*.root");
+chdata->Add("./rootfiles/multiSyst_Data*.root");
+chmc->Add("./rootfiles/multiSyst_MC*.root");
 atmFitPars* fitpars = new atmFitPars(nbin,ncomp,nsamp,natt,1);
  
 TTree* trdata = (TTree*)chdata;
 TTree* trmc   = (TTree*)trdata;
 
-histoManager* hm = new histoManager("./rootfiles/nominalRun_hFactoryOutput.root",3,3,7,1); 
-//hm->readSplinesFromFile("splineOut_debug.root");
-hm->readSplinesFromFile("./rootfiles/nominalRun_splineOut.root");
+histoManager* hm = new histoManager("./rootfiles/multiSyst_hFactoryOutput.root",3,3,7,1); 
+hm->readSplinesFromFile("./rootfiles/splineOutTest_splineOut.root",9);
 
 
 hm->setFitPars(fitpars);

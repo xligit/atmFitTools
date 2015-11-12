@@ -36,6 +36,7 @@ class histoManager{
   int nAttributes; //number of attributes (fiTQun outputs)
   int nBins;  //number of bins in data
   TH1F* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //array of all MC histograms
+  TH1F* hMCModified[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //array of all MODIFIED MC histograms
   TH1F* hMod;
   TH1F* hSum;
   int useSplineFlg;
@@ -65,7 +66,7 @@ class histoManager{
   void showMCBreakdown(int isample,int ibin,int iatt);
   THStack* showMCBreakdownStack(int isample,int ibin,int iatt);
   void readFromFile(const char* rootename,int nsamp,int nbin,int ncomp,int natt);
-  void readSplinesFromFile(const char* rootname);
+  void readSplinesFromFile(const char* rootname, int nsyspartot);
 };
 
 #endif

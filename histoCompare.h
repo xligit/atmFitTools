@@ -65,7 +65,7 @@ class histoCompare{
   TH1F* getModifiedHisto(int ibin, int icomp, int iatt){return hManager->getSumHistogramMod(ibin,icomp,iatt);}
  // TH1F* hMod[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
 
-  void setupSplines(const char* fname){hManager->readSplinesFromFile(fname);}
+  void setupSplines(const char* fname,int npar){hManager->readSplinesFromFile(fname,npar);}
   //tools for adding histogram directly..for debugging
   void addHistogram(TH1F* h,int dataflg);
   int  rebinFactor;
