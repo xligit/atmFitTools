@@ -5,7 +5,7 @@
  gROOT->ProcessLine(".L splineFactory.C+");
  gROOT->ProcessLine(".x ~/style.c");
 
- TString nameTag = "multiSyst";
+ TString nameTag = "tn186";
  TString directory = "./rootfiles/"; 
  //setup input files
  TChain chmc("h1");
@@ -71,6 +71,6 @@
  s->setupHistos();
  s->setupSystPars();
  s->setMCTree(trmc);
- //s->buildTheSplines();
+ s->buildTheSplines();
  
 }

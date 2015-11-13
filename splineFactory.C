@@ -323,7 +323,26 @@ float splineFactory::getEvtWeight(int ipar){
   if (ipar==3){
     if ((absmode==1)&&(Enu>800.)) ww*=sysPar[3];
   }
-  
+  //SubGevFlux
+  if (ipar==4){
+    if (Enu<1000.) ww*=sysPar[4];
+  }
+  //MultiGeVFlux
+  if (ipar==5){
+    if (Enu>1000.) ww*=sysPar[5];
+  }
+  //CCnQE
+  if (ipar==6){
+    if ((absmode>1)&&(absmode<30)) ww*=sysPar[6];
+  }
+  //NC
+  if (ipar==7){
+    if (absmode>=30) ww*=sysPar[7];
+  }
+  //mu2e ratio
+  if (ipar==8){
+    if (nutype==14) ww*=sysPar[8];
+  }
 
   if (ww<0.) ww = 0.;
   eventWeight = ww;

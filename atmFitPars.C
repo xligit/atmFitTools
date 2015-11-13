@@ -2,6 +2,7 @@
 #define ATMFITPARS_C
 
 #include "shared.h"
+#include "TRandom2.h"
 
 using namespace std;
 
@@ -40,6 +41,7 @@ class atmFitPars{
   void setSysParUnc(int isys,float value){sysParUnc[isys]=value;}
   void fixParameter(int ipar);
   void fixParameter(int ibin,int icomp,int iatt, int imod);
+  void setRandSysPar(); //sets systematic parameters to random values
   int  checkFixFlg(int ibin,int icomp,int iatt, int imod);
   void printParValues();
   int binOfPar[4000];
@@ -47,6 +49,16 @@ class atmFitPars{
   int attOfPar[4000];
   int typeOfPar[4000];
 };
+
+void atmFitPars::setRandSysPar(){
+  TRandom2* randy = new TRandom2();
+  float parval;
+  for (int i=0;i<nSysPars;i++){
+     parval = randy->Gaus(sysPar[i],sysParUnc[i]);
+     setSysParameter(i,parval);
+  }
+  return;
+}
 
 void atmFitPars::printParValues(){
   for (int ipar=0;ipar<nTotPars;ipar++){

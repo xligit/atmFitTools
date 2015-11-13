@@ -466,7 +466,7 @@ void histoCompare::LnLPreFit(){
   TFitter* fit = new TFitter(npars);
   //shut fitter up
   {
-    double pp = 1;
+    double pp = -1;
     fit->ExecuteCommand("SET PRINTOUT",&pp,1);
   }
   //specify function to be fit
@@ -497,15 +497,26 @@ void histoCompare::LnLPreFit(){
     fit->FixParameter(jpar);
   }
 
-  fit->ReleaseParameter(npars-1);
-  fit->ExecuteCommand("MIGRAD",0,0);
-  fit->FixParameter(npars-1);
+//  debugging
+//  fit->ReleaseParameter(npars-1);
+//  fit->ExecuteCommand("MIGRAD",0,0);
+//  fit->FixParameter(npars-1);
 //  fit->ExecuteCommand("MIGRAD",0,0);
 
 
-/*
+  //fit flux ans xsec
+  parindex = thePars->nTotPars-thePars->nSysPars;
+  for (int isyspar=0;isyspar<thePars->nSysPars;isyspar++){
+    fit->ReleaseParameter(parindex);
+    parindex++;
+  }
+  fit->ExecuteCommand("SIMPLEX",0,0);
   parindex = 0;
-  //run individual bis fits
+  for (int jpar=0;jpar<npars;jpar++){
+    fit->FixParameter(jpar);
+  }
+ 
+  //run individual bias fits
   for (int jbin=0;jbin<nBin;jbin++){
     for (int jatt=0;jatt<nAtt;jatt++){
       for (int jcomp=0;jcomp<nComp;jcomp++){
@@ -544,16 +555,17 @@ void histoCompare::LnLPreFit(){
       }
     }
   }
-//  fit->ReleaseParameter(1);
-//  fit->ExecuteCommand("SIMPLEX",0,0);
-//  fit->ExecuteCommand("MIGRAD",0,0);
 
-*/
+
   //print final results
   for (int ipar=0;ipar<npars;ipar++){
     thePars->setParameter(ipar,fit->GetParameter(ipar));
+    cout<<"  PAR "<<ipar<<" FIT RESULT: "<<thePars->pars[ipar]<<endl;
   }
 
+
+
+/*
   for (int pbin=0;pbin<nBin;pbin++){
     for (int patt=0;patt<nAtt;patt++){
       for (int pcomp=0;pcomp<nComp;pcomp++){
@@ -567,6 +579,8 @@ void histoCompare::LnLPreFit(){
   for (int isys=0;isys<thePars->nSysPars;isys++){
           cout<<thePars->sysPar[isys]<<endl;
   }
+ */
+
   cout<<"$$$$$$$$$$$$$ END LNL PRE FIT $$$$$$$$$$$$$"<<endl;
 
 }
@@ -592,7 +606,6 @@ void histoCompare::LnLFit(){
   float  parinit; //container to temporarily store initial values 
 
   //total number of parameters to be fit
-//  int npars = nBin*nComp*nAtt*2;
   int npars = thePars->nTotPars;
 
   //run the prefit
@@ -603,8 +616,6 @@ void histoCompare::LnLFit(){
   cout<<"  NUMBER OF PARAMETERS: "<<npars<<endl;
   cout<<"  PRECISION:            "<<parerr<<endl;
   cout<<"  ---------------------------------------  "<<endl;
-
-
 
   //setup the fitter!
   TFitter* fit = new TFitter(npars);
@@ -617,12 +628,14 @@ void histoCompare::LnLFit(){
   fit->SetFCN(lnLWrapper);
  
   //setup parameters
+  TString aname;
   for (int ipar=0;ipar<npars;ipar++){
     int kbin=thePars->binOfPar[ipar];
     int kcomp=thePars->compOfPar[ipar];
     int katt = thePars->attOfPar[ipar];
-    fit->SetParameter(ipar,parName[thePars->binOfPar[ipar]][thePars->compOfPar[ipar]][thePars->attOfPar[ipar]][0].Data(),
-                     thePars->pars[ipar],parerr,0,0);
+    aname = "parameter_";
+    aname.Append(ipar);
+    fit->SetParameter(ipar,aname.Data(),thePars->pars[ipar],parerr,0,0);
   }
  
   parindex = 0;
@@ -630,56 +643,46 @@ void histoCompare::LnLFit(){
   //do individual fits
   for (int jbin=0;jbin<nBin;jbin++){
     for (int jatt=0;jatt<nAtt;jatt++){
-      //start of fit block
+      //start of fit block//
 
       //fix all parameters
       for (int jpar=0;jpar<npars;jpar++){
         fit->FixParameter(jpar);
       }
-      parindextmp = parindex;
-      //release bias parameters
-      for (int jcomp=0;jcomp<nComp;jcomp++){
-        //fill initial value to restore parameter array later
-     //   bestPar[jbin][jcomp][jatt][1] = Par[jbin][jcomp][jatt][1];
 
-      //  if (fixPar[jbin][jcomp][jatt][1]!=1) fit->ReleaseParameter(parindex+1);   
-        if (thePars->checkFixFlg(jbin,jcomp,jatt,1)!=1){
-          cout<<"fitting parameter: "<<jbin<<jcomp<<jatt<<1<<" # "<<thePars->getParIndex(jbin,jcomp,jatt,1)<<endl;
-          fit->ReleaseParameter(thePars->getParIndex(jbin,jcomp,jatt,1));
+      //for bin 0, float the xsec and flux parameters as well//
+      if (jbin==0){
+        //release all flux and xsec pars
+        for (int isyspar=(thePars->nTotPars-thePars->nSysPars);isyspar<thePars->nSysPars;isyspar++){
+          fit->ReleaseParameter(isyspar);
         }
-        parindex+=2;
+        //fit these pars first
+        fit->ExecuteCommand("SIMPLEX",0,0);
       }
 
-      //run fit
-      fit->ExecuteCommand("SIMPLEX",0,0); //run the fit for bias parameters
-      //release smear parameters
-      parindex = parindextmp;
+      //release bias parameters
       for (int jcomp=0;jcomp<nComp;jcomp++){
-        //fill initial value to restore parameter array later
-    //    bestPar[jbin][jcomp][jatt][0] = Par[jbin][jcomp][jatt][0];
-        //fit a single parameter
-   //     if (fixPar[jbin][jcomp][jatt][0]!=1) fit->ReleaseParameter(parindex);   
+        if (thePars->checkFixFlg(jbin,jcomp,jatt,1)!=1){
+          fit->ReleaseParameter(thePars->getParIndex(jbin,jcomp,jatt,1));
+        }
+      }
+
+      //run fit for bias parameters
+      fit->ExecuteCommand("SIMPLEX",0,0);
+
+      //now release smear parameters
+      for (int jcomp=0;jcomp<nComp;jcomp++){
         if (thePars->checkFixFlg(jbin,jcomp,jatt,0)!=1){
           cout<<"fitting parameter: "<<jbin<<jcomp<<jatt<<0<<" # "<<thePars->getParIndex(jbin,jcomp,jatt,0)<<endl;
           fit->ReleaseParameter(thePars->getParIndex(jbin,jcomp,jatt,0));
         }
-       // parindex+=2;
       }
       fit->ExecuteCommand("SIMPLEX",0,0); //run the fit for ALL parameters
 
-      parindex = parindextmp;
-      //get results
-    //  for (int lcomp=0;lcomp<nComp;lcomp++){
-    //    for (int lmod=0;lmod<2;lmod++){
-    //      bestPar[jbin][lcomp][jatt][lmod] = fit->GetParameter(parindex);
-    //      Par[jbin][lcomp][jatt][lmod] = bestPar[jbin][lcomp][jatt][lmod];  
-    //      parindex++;
-    //    }
-   //   }
-      //end of fit block
+      //end of fit block//
     }
   }
-
+/*
   //print final results
   cout<<"  ----------------------------------------  "<<endl;
   for (int pbin=0;pbin<nBin;pbin++){
@@ -694,6 +697,14 @@ void histoCompare::LnLFit(){
       }
     }
   }
+*/
+
+  //print final results
+  for (int ipar=0;ipar<npars;ipar++){
+    thePars->setParameter(ipar,fit->GetParameter(ipar));
+    cout<<"  PAR "<<ipar<<" FIT RESULT: "<<thePars->pars[ipar]<<endl;
+  }
+
   //end
   cout<<"  ----------------------------------------  "<<endl;
   cout<<"$$$$$$$$        FIT  COMPLLETE      $$$$$$$$"<<endl;
