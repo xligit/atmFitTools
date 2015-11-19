@@ -27,14 +27,16 @@ class atmFitPars{
   float sysPar[NSYSPARMAX];
   float sysParUnc[NSYSPARMAX];
   float pars[4000];
+  float parUnc[4000];
   int   fixPar[4000];
   float bestpars[4000];
   int   parIndex[NBINMAX][NCOMPMAX][NATTMAX][2];
   //normalization
   float norm;  
   void setNorm(float x){norm=x;}
-  void initPars();
+  void initPars(const char* systype="");
   int getParIndex(int ibin, int icomp, int iatt, int imod){return parIndex[ibin][icomp][iatt][imod];}
+  float getParameter(int ipar){return pars[ipar];}
   void setParameter(int ipar, float value);
   void setSysParameter(int ipar, float value);
   void setParameter(int ibin, int icomp, int iatt, int imod, float value); 
@@ -50,11 +52,15 @@ class atmFitPars{
   int typeOfPar[4000];
 };
 
+TRandom2* randy2 = new TRandom2();
+
 void atmFitPars::setRandSysPar(){
-  TRandom2* randy = new TRandom2();
+ // TRandom2* randy = new TRandom2();
   float parval;
   for (int i=0;i<nSysPars;i++){
-     parval = randy->Gaus(sysPar[i],sysParUnc[i]);
+     parval = randy2->Gaus(sysPar[i],(sysParUnc[i]/2.));
+     if (parval<0) parval=0.;
+     cout<<"par "<<i<<" is "<<parval<<endl;
      setSysParameter(i,parval);
   }
   return;
@@ -102,6 +108,57 @@ void atmFitPars::setParameter(int ipar, float value){
 }
 
 atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, const char* systype){
+  nSamples = isamp;
+  nBins    = ibin;
+  nComponents    = icomp;
+  nAttributes   = iatt;;
+  initPars(systype);
+}
+
+atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst){
+  nSamples = isamp;
+  nBins    = ibin;
+  nComponents    = icomp;
+  nAttributes   = iatt;
+  nSysPars = nsyst;
+  for (int isys=0;isys<nSysPars;isys++){
+    sysPar[isys]=1.;
+  }
+  initPars();
+}
+
+void atmFitPars::initPars(const char* systype){
+
+  //initialize histogram pars
+  int index = 0;
+  for (int ibin=0;ibin<nBins;ibin++){
+    for (int icomp=0;icomp<nComponents;icomp++){
+      for (int iatt=0;iatt<nAttributes;iatt++){
+        histoPar[ibin][icomp][iatt][0]=1.0;
+        pars[index]=1.0;
+        parUnc[index]=0.005; //rough estimate of uncertainty
+        binOfPar[index]=ibin;
+        compOfPar[index]=icomp;
+        attOfPar[index]=iatt;
+        typeOfPar[index]=0;
+        fixPar[index]=0;
+        parIndex[ibin][icomp][iatt][0]=index;  
+        index++;
+        histoPar[ibin][icomp][iatt][1]=0.0;
+        parIndex[ibin][icomp][iatt][1]=index;
+        pars[index]=0.0;
+        parUnc[index]=1.0;  //rough estimate of uncertainty
+        binOfPar[index]=ibin;
+        compOfPar[index]=icomp;
+        attOfPar[index]=iatt;
+        typeOfPar[index]=1;
+        fixPar[index]=0;
+        index++;
+      }
+    }
+  }
+
+  //initialize systematic error parameters
   TString stype = systype;
   nSysPars=0;
   if (!stype.CompareTo("tn186")){
@@ -129,7 +186,7 @@ atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, const char* sys
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.15;
     nSysPars++;
-      //CCnQE xsec norm//
+    //CCnQE xsec norm//
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.2;
     nSysPars++;
@@ -141,56 +198,11 @@ atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, const char* sys
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.05;
     nSysPars++;
-   }
-  nSamples = isamp;
-  nBins    = ibin;
-  nComponents    = icomp;
-  nAttributes   = iatt;;
-  initPars();
-}
-
-atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst){
-  nSamples = isamp;
-  nBins    = ibin;
-  nComponents    = icomp;
-  nAttributes   = iatt;
-  nSysPars = nsyst;
-  for (int isys=0;isys<nSysPars;isys++){
-    sysPar[isys]=1.;
   }
-  initPars();
-}
-
-void atmFitPars::initPars(){
-  int index = 0;
-  for (int ibin=0;ibin<nBins;ibin++){
-    for (int icomp=0;icomp<nComponents;icomp++){
-      for (int iatt=0;iatt<nAttributes;iatt++){
-        histoPar[ibin][icomp][iatt][0]=1.0;
-        pars[index]=1.0;
-        binOfPar[index]=ibin;
-        compOfPar[index]=icomp;
-        attOfPar[index]=iatt;
-        typeOfPar[index]=0;
-        fixPar[index]=0;
-        parIndex[ibin][icomp][iatt][0]=index;  
-        index++;
-        histoPar[ibin][icomp][iatt][1]=0.0;
-        parIndex[ibin][icomp][iatt][1]=index;
-        pars[index]=0.0;
-        binOfPar[index]=ibin;
-        compOfPar[index]=icomp;
-        attOfPar[index]=iatt;
-        typeOfPar[index]=1;
-        fixPar[index]=0;
-        index++;
-      }
-    }
-  }
-  //setup flux and xsec pars:
+  //fix 1D parameter arrays
   for (int isys=0;isys<nSysPars;isys++){
-   // sysPar[isys]=1.;
     pars[index]=sysPar[isys];
+    parUnc[index]=sysParUnc[isys];
     index++;
   }
   nTotPars = index;

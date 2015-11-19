@@ -18,6 +18,7 @@ class histoFactory{
   fQreader* fqMC; //reads MC tree
   TString nameTag; //name associated with this instance
   TFile*   fout; //output file for filled histograms
+  TH1F*    htmp; //temporary histogram pointer for drawing and comparison
   int nSamples; //number of data samples
   int nComponents; //number of MC components
   int nAttributes; //number of attributes (fiTQun outputs)

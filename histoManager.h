@@ -48,8 +48,8 @@ class histoManager{
   atmFitPars* fitPars; 
   void setFitPars(atmFitPars* thepars){fitPars=thepars;}
   //METHODS//
-  void fillHistogram(int isamp, int ibin, int icomp, int iatt,float value);
-  void fillHistogramData(int isamp, int ibin, int iatt,float value);
+  void fillHistogram(int isamp, int ibin, int icomp, int iatt,float value,float weight=1.);
+  void fillHistogramData(int isamp, int ibin, int iatt,float value,float weight=1.);
 
   //setters
   void setHistogram(int isamp, int ibin, int icomp, int iatt, int dataflg,TH1F* h);

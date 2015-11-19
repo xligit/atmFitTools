@@ -45,15 +45,16 @@ class hSplines{
 };
 
 float hSplines::evaluateSpline(int ibin, int ipar, float parvalue){
+  if (parvalue<0.) parvalue = 0.;
   return (float)theSpline[ibin][ipar]->Eval(parvalue);
 }
 
 void  hSplines::drawSpline(int ibin, int isyst){
-  if (theSpline[ibin][0]==NULL){
+  if (theSpline[ibin][isyst]==NULL){
     cout<<"no such spine exists!"<<endl;
     return;
   }
-  theSpline[ibin][0]->Draw();
+  theSpline[ibin][isyst]->Draw();
 }
 
 void  hSplines::draw2D(int npts,int isyst){
@@ -178,11 +179,25 @@ void hSplines::setSpline(int ibin, int isyst, TSpline3 *spline){
 }
 
 void hSplines::buildSpline(int ibin, int isyst,double* X, double*Y, int N){
- TString splineName = nameTag.Data();
- splineName.Append(Form("_spline_bin%d_par%d",ibin,isyst));
- theSpline[ibin][isyst] = new TSpline3(splineName.Data(),X,Y,N); 
- checkSum--;
- return;
+  //temporary arrays
+  const int npts = N;
+  double    xvals[npts];
+  double    yvals[npts];
+  //ignore x values less than zero:
+  int index=0;
+  for (int ipt=0;ipt<npts;ipt++){
+    if (X[ipt]>=0.){
+      xvals[index]=X[ipt];
+      yvals[index]=Y[ipt];
+      index++;
+    }
+  }
+  TString splineName = nameTag.Data();
+  splineName.Append(Form("_spline_bin%d_par%d",ibin,isyst));
+  theSpline[ibin][isyst] = new TSpline3(splineName.Data(),xvals,yvals,index); 
+ // cout<<"break1"<<endl;
+  checkSum--;
+  return;
 }
 
 hSplines::hSplines(TH1F* h, int nsyst, const char* name){

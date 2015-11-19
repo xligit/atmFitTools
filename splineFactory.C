@@ -23,6 +23,7 @@ class splineFactory{
   histoManager* hManager; //manages all default histograms
   TH1F* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX][NPTSMAX]; //array for modified histograms for spline creation
   TFile *fout; //output file
+  TH1F* htmp; //temporary histogram pointer
   int nSamp;
   int nBin;
   int nComp;
@@ -293,7 +294,8 @@ void splineFactory::fillHistograms(int ipt, int isyst){
 };
 
 float splineFactory::getEvtWeight(int ipar){
-  float ww = 1.;
+//  float ww = 1.;
+  float ww = mcEvt->evtweight;
   int absmode = TMath::Abs(mcEvt->mode);
   float Enu     = mcEvt->pmomv[0];
   int  nutype  = TMath::Abs(mcEvt->ipnu[0]);
@@ -317,7 +319,7 @@ float splineFactory::getEvtWeight(int ipar){
   }
   //CCQE norm bin3 
   if (ipar==2){
-    if ((absmode==4)&&(Enu>400.)&&(Enu<800.)) ww*=sysPar[2];
+    if ((absmode==1)&&(Enu>400.)&&(Enu<800.)) ww*=sysPar[2];
   }
   //CCQE norm bin4 
   if (ipar==3){

@@ -46,6 +46,10 @@ TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
     bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(i);
     weightsum=0.;
     for (int isyspar=0;isyspar<fitPars->nSysPars;isyspar++){
+      //debug
+      float daweight = getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
+      //cout<<daweight<<endl;
+      //
       weightsum+=getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
     } 
     weightsum = weightsum -(float)fitPars->nSysPars + 1.; 
@@ -239,13 +243,13 @@ void histoManager::setHistogram(int isamp, int ibin, int icomp, int iatt, int da
   return;
 }
 
-void histoManager::fillHistogram(int isamp, int ibin, int icomp, int iatt, float value){
-  hMC[isamp][ibin][icomp][iatt]->Fill(value); 
+void histoManager::fillHistogram(int isamp, int ibin, int icomp, int iatt, float value,float weight){
+  hMC[isamp][ibin][icomp][iatt]->Fill(value,weight); 
   return;
 }
 
-void histoManager::fillHistogramData(int isamp, int ibin, int iatt, float value){
-  hData[isamp][ibin][iatt]->Fill(value); 
+void histoManager::fillHistogramData(int isamp, int ibin, int iatt, float value,float weight){
+  hData[isamp][ibin][iatt]->Fill(value,weight); 
   return;
 }
 
@@ -320,8 +324,15 @@ void histoManager::readSplinesFromFile(const char* fname,int nsyspartot){
         Y[ipt] = parReader->binWeight[ipt][hbin];
         X[ipt] = parReader->systParValues[ipt];
       }
+//      cout<<parReader->nsample<<endl;
+//      cout<<parReader->nbin<<endl;
+//      cout<<parReader->ncomponent<<endl;
+//      cout<<parReader->nattribute<<endl;
+
+//      cout<< theSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nattribute]<<endl;
       theSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nattribute]
                   ->buildSpline(hbin,parReader->nsystpar,X,Y,parReader->npoints);
+
     }
   }
   splineFile.Close();

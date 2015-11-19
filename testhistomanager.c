@@ -1,7 +1,9 @@
 {
 gROOT->ProcessLine(".L atmFitPars.C++");
-gROOT->ProcessLine(".L hSplines.C++");
+//gROOT->ProcessLine(".L hSplines.C++");
 gROOT->ProcessLine(".L histoManager.C++");
+gROOT->ProcessLine(".L hSplines.C++");
+
 //gROOT->ProcessLine(".x ~/style.c");
 //gROOT->ProcessLine(".L atmFitPars.C++");
 
@@ -19,15 +21,15 @@ TChain *chdata = new TChain("h1");
 TChain *chmc   = new TChain("h1");
 //chdata->Add("./rootfiles/nominalRun_Data*.root");
 //chmc->Add("./rootfiles/nominalRun_MC*.root");
-chdata->Add("./rootfiles/tn186_Data*.root");
-chmc->Add("./rootfiles/tn186_MC*.root");
+chdata->Add("./rootfiles/fake3_Data*.root");
+chmc->Add("./rootfiles/fake3_MC*.root");
 atmFitPars* fitpars = new atmFitPars(nbin,ncomp,nsamp,natt,1);
  
 TTree* trdata = (TTree*)chdata;
 TTree* trmc   = (TTree*)trdata;
 
-histoManager* hm = new histoManager("./rootfiles/tn186_hFactoryOutput.root",3,3,7,1); 
-hm->readSplinesFromFile("./rootfiles/tn186_splineOut.root",9);
+histoManager* hm = new histoManager("./rootfiles/fake3_hFactoryOutput.root",3,3,7,1); 
+hm->readSplinesFromFile("./rootfiles/fake3_splineOut.root",9);
 
 
 hm->setFitPars(fitpars);

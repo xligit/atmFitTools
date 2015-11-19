@@ -11,12 +11,12 @@
 
  histoCompare* hc = new histoCompare("comptest");
 // hc->readFromFile("histos_test2",3,3,7,1);  //reads in histogram manager
- hc->readFromFile("./rootfiles/tn186_hFactoryOutput.root",3,3,7,1);
+ hc->readFromFile("./rootfiles/fake2_hFactoryOutput.root",3,3,7,1);
 // hc->readFromFile(".root",3,3,7,1);
 
  hc->setupPars(1); //setup parameters
  hc->thePars->setSysParUnc(0,0.05);
- hc->setupSplines("./rootfiles/tn186_splineOut.root",9);
+ hc->setupSplines("./rootfiles/fake2_splineOut.root",9);
 // hc->setupSplines("./rootfiles/splineOutTest_splineOut.root");
 // hc->setupSplines("./rootfiles/nominalRun_splineOut.root");
 
@@ -37,7 +37,7 @@
  hc->setBinName(2,"FV2");
  hc->setAttName(0,"emuPID");
  hc->setAttName(0,"Other");
- hc->setRebinFactor(1);
+// hc->setRebinFactor(1);
 // hc->LnLFit();
 // hc->addHistogram(hpidmc,0);
 // hc->addHistogram(hpidmcmu,0);

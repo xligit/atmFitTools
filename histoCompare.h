@@ -40,8 +40,10 @@ class histoCompare{
   
   float fixPar[NBINMAX][NCOMPMAX][NATTMAX][2];
   float bestPar[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float errParLo[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float errParHi[NBINMAX][NCOMPMAX][NATTMAX][2];
+ // float errParLo[NBINMAX][NCOMPMAX][NATTMAX][2];
+ // float errParHi[NBINMAX][NCOMPMAX][NATTMAX][2];
+  float errParLo[1000];
+  float errParHi[1000];
 
   TString parName[NBINMAX][NCOMPMAX][NATTMAX][2];
   TString binName[NBINMAX];
@@ -60,8 +62,9 @@ class histoCompare{
   void showFitPars(int ibin,int iatt,int imod);
   void showModHiso(int isamp,int ibin, int icomp, int iatt, float smear, float bias);
   void runMCMC(int nsteps);
-  float getErrLo(int ibin,int icomp,int iatt,int imod);
-  float getErrHi(int ibin,int icomp,int iatt, int imod);
+ // float getErrLo(int ibin,int icomp,int iatt,int imod);
+  float getErrLo(int isyst);
+  float getErrHi(int isyst);
   TH1F* getModifiedHisto(int ibin, int icomp, int iatt){return hManager->getSumHistogramMod(ibin,icomp,iatt);}
  // TH1F* hMod[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
 
@@ -97,7 +100,7 @@ class histoCompare{
   float getTotLnL();
   static void sumSqWrapper(int& ndim, double* gout, double& result, double par[], int flg);
   static void lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  void  getTotLnL1D(float& result, float par[]);
+  void  getTotLnL1D(float& result,int npar, float par[]);
   //for debuggint and play
   float getTotSumSqDebug();
   static void sumSqDebugWrapper(int& ndim, double* gout, double& result, double par[], int flg);
@@ -107,6 +110,7 @@ class histoCompare{
   void sumSqPrefit();
   void LnLFit();
   void LnLPreFit();
+  void singleParFit(int ipar);
   void drawResult(int ihist);
   void timetest(int ntry);
   //staticthis for fits

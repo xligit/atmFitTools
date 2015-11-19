@@ -120,7 +120,7 @@ void histoFactory::fillHistos(){
     dataTree->GetEntry(i);
     fillAttributesData();
     for (int iatt=0;iatt<nAttributes;iatt++){
-      hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,att[iatt]);
+      hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,att[iatt],fqData->evtweight);
    }
   }
   //fill MC histos
@@ -128,7 +128,7 @@ void histoFactory::fillHistos(){
     mcTree->GetEntry(j);
     fillAttributesMC();
     for (int jatt=0;jatt<nAttributes;jatt++){
-      hManager->fillHistogram(fqMC->nsample,fqMC->nbin,fqMC->ncomponent,jatt,att[jatt]);
+      hManager->fillHistogram(fqMC->nsample,fqMC->nbin,fqMC->ncomponent,jatt,att[jatt],fqMC->evtweight);
     }
   } 
   return;

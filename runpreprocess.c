@@ -1,11 +1,11 @@
 {
  //load necessary programs
- gROOT->ProcessLine(".L sift.C+");
- gROOT->ProcessLine(".L histoFactory.C+");
- gROOT->ProcessLine(".L splineFactory.C+");
+ gROOT->ProcessLine(".L sift.C++");
+ gROOT->ProcessLine(".L histoFactory.C++");
+ gROOT->ProcessLine(".L splineFactory.C++");
  gROOT->ProcessLine(".x ~/style.c");
 
- TString nameTag = "tn186";
+ TString nameTag = "nominal1";
  TString directory = "./rootfiles/"; 
  //setup input files
  TChain chmc("h1");
@@ -35,7 +35,6 @@
 
 
  
-
  //create histograms
  
  TChain *postmc=new TChain("h1");
@@ -72,5 +71,5 @@
  s->setupSystPars();
  s->setMCTree(trmc);
  s->buildTheSplines();
- 
+
 }

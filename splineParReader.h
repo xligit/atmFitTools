@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Thu Oct 29 11:22:37 2015 by ROOT version 5.28/00c
+// Tue Nov 17 16:42:33 2015 by ROOT version 5.28/00c
 // from TTree splinePars/spinePars
-// found on file: splineOut_debug.root
+// found on file: fake3_splineOut.root
 //////////////////////////////////////////////////////////
 
 #ifndef splineParReader_h
@@ -60,9 +60,9 @@ splineParReader::splineParReader(TTree *tree)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("splineOut_debug.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("fake3_splineOut.root");
       if (!f) {
-         f = new TFile("splineOut_debug.root");
+         f = new TFile("fake3_splineOut.root");
       }
       tree = (TTree*)gDirectory->Get("splinePars");
 

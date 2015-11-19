@@ -42,11 +42,13 @@ class sift{
   //new leaf variables
   float towall;
   float wall;
+  float evtweight;
   //selections
   int absmode;
   int getComponent();
   int getSample();
   int getBin();
+  float getWeight();
   void processFile(const char* fname,const char* outname="");
   void processAllFiles(TChain* chain);
   void addFile(const char* filename);

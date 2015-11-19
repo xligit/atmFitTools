@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Fri Oct  9 16:49:35 2015 by ROOT version 5.28/00c
+// Mon Nov 16 11:42:58 2015 by ROOT version 5.28/00c
 // from TTree h1/DST
-// found on file: nominal1.root
+// found on file: fake1_MC_52_.root
 //////////////////////////////////////////////////////////
 
 #ifndef fQreader_h
@@ -111,6 +111,7 @@ public :
    Int_t           vispid[100];
    Float_t         wall;
    Float_t         towall;
+   Float_t         evtweight;
 
    // List of branches
    TBranch        *b_nev;   //!
@@ -206,6 +207,7 @@ public :
    TBranch        *b_vispid;   //!
    TBranch        *b_wall;   //!
    TBranch        *b_towall;   //!
+   TBranch        *b_evtweight;   //!
 
    fQreader(TTree *tree=0);
    virtual ~fQreader();
@@ -226,9 +228,9 @@ fQreader::fQreader(TTree *tree)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("nominal1.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("fake1_MC_52_.root");
       if (!f) {
-         f = new TFile("nominal1.root");
+         f = new TFile("fake1_MC_52_.root");
       }
       tree = (TTree*)gDirectory->Get("h1");
 
@@ -372,6 +374,7 @@ void fQreader::Init(TTree *tree)
    fChain->SetBranchAddress("vispid", vispid, &b_vispid);
    fChain->SetBranchAddress("wall", &wall, &b_wall);
    fChain->SetBranchAddress("towall", &towall, &b_towall);
+   fChain->SetBranchAddress("evtweight", &evtweight, &b_evtweight);
    Notify();
 }
 
