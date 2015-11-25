@@ -40,6 +40,7 @@ class histoManager{
   TH1F* hMod;
   TH1F* hSum;
   int useSplineFlg;
+  float normFactor;
   hSplines* theSplines[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //splines for flux/xsec params
   TH1F* hData[NSAMPMAX][NBINMAX][NATTMAX];  //array of all Data histograms
   TLegend* Leg;  //for histogram drawing methods

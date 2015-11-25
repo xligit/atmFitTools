@@ -15,29 +15,33 @@ using namespace std;
 TRandom2* randy = new TRandom2();
 #endif
 
-
+//class to manage a Markov Chain Monte Carlo
 class markovTools{
    public:
+   //constructor
    markovTools(int npars);
-   TFile* fout;
-   int nPars;
-   int iStep;
-   float oldPars[NMCMCPARS];
-   float oldL;
+   TFile* fout; //< output file
+   int nPars;  //< totla number of parameters
+   int iStep;  //< counter for total step number
+   float oldPars[NMCMCPARS]; //< array of parameters from previous step
+   float oldL; //< likelihood value of previous step
+   float tuneParameter;
    void setPar(int ipar,float value){oldPars[ipar]=value;}
    void setL(float value){oldL=value;}
-   //proposal function
-   float varPar[NMCMCPARS];
-   void setParVar(int ipar,float value);
-   void proposeStep(float* par);
-   int acceptStep(float newL,float* par);
+   float varPar[NMCMCPARS]; //< stores parameter standard deviations
+   void setParVar(int ipar,float value); //< sets parameter standard deviations
+   void proposeStep(float* par);  //< proposes a new step from the given parameter set
+   int acceptStep(float newL,float* par); 
    int acceptStepLnL(float newL,float* par);
    void savePath(const char* filename);
+   void setTuneParameter(float value){tuneParameter=value;}
    TTree* pathTree;
 
    void test(int itry);
    TH1F* htest;
 };
+
+
 
 void markovTools::savePath(const char* filename){
   pathTree->Write();
@@ -96,7 +100,7 @@ int markovTools::acceptStepLnL(float newL,float* par){
     }
   }
   iStep++;
-  if ((iStep%10)==0) cout<<"step: "<<iStep<<endl;
+  if ((iStep%100)==0) cout<<"step: "<<iStep<<endl;
   return iaccept;
 }
 
@@ -133,7 +137,7 @@ void markovTools::proposeStep(float* par){
     //save current parameters
     oldPars[i] = par[i];
     //set new value
-    par[i] = randy->Gaus(par[i],varPar[i]);
+    par[i] = randy->Gaus(par[i],varPar[i]*tuneParameter);
    // cout<<"par: "<<oldPars[i]<<endl;
    // cout<<"parnew: "<<par[i]<<endl;
   }

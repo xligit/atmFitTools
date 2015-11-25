@@ -5,7 +5,7 @@
  gROOT->ProcessLine(".L splineFactory.C++");
  gROOT->ProcessLine(".x ~/style.c");
 
- TString nameTag = "nominal1";
+ TString nameTag = "fake4";
  TString directory = "./rootfiles/"; 
  //setup input files
  TChain chmc("h1");
@@ -34,7 +34,7 @@
  siftData->processAllFiles(&chdata);
 
 
- 
+/* 
  //create histograms
  
  TChain *postmc=new TChain("h1");
@@ -72,4 +72,5 @@
  s->setMCTree(trmc);
  s->buildTheSplines();
 
+*/
 }

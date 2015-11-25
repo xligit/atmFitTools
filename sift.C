@@ -88,15 +88,15 @@ float sift::getWeight(){
   float enu   = fq->pmomv[0];
   evtweight = 1.0;
   //CCQE norm bin1 
-//  if ((absmode==1)&&(enu<200.)){
-//    evtweight = 1.5;
-//  }
-//  //CCQE norm bin2 
- // if ((absmode==1)&&(enu>200.)&&(enu<400.)) evtweight*=1.2;
+  if ((absmode==1)&&(enu<200.)){
+    evtweight = 1.5;
+  }
+  //CCQE norm bin2 
+  if ((absmode==1)&&(enu>200.)&&(enu<400.)) evtweight*=1.2;
   //CCQE norm bin3 
-//  if ((absmode==1)&&(enu>400.)&&(enu<800.)) evtweight*=0.9;
+  if ((absmode==1)&&(enu>400.)&&(enu<800.)) evtweight*=0.9;
   //CCQE norm bin4 
- // if ((absmode==1)&&(enu>800.)) evtweight*=1.05;
+  if ((absmode==1)&&(enu>800.)) evtweight*=1.05;
 
   return evtweight;
 }

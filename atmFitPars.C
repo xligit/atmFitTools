@@ -31,6 +31,7 @@ class atmFitPars{
   int   fixPar[4000];
   float bestpars[4000];
   int   parIndex[NBINMAX][NCOMPMAX][NATTMAX][2];
+
   //normalization
   float norm;  
   void setNorm(float x){norm=x;}
@@ -50,7 +51,56 @@ class atmFitPars{
   int compOfPar[4000];
   int attOfPar[4000];
   int typeOfPar[4000];
+
+  //saving and reading pars
+  void savePars(const char* filename);
+  void readPars(const char* filename);
+  void printPars();
 };
+
+void atmFitPars::printPars(){
+  cout<<"$$$ CURRENT PARAMETER VALUES $$$"<<endl;
+  for (int i=0;i<nTotPars;i++){
+    cout<<"PAR: "<<i<<" = "<<pars[i]<<" +/- "<<parUnc[i]<<endl;
+  }
+  cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+  return;
+}
+
+
+//read in all parameters from a file made from a call to "savePars"
+void atmFitPars::readPars(const char* filename){
+  //open parameter file
+  TFile* fpars = new TFile(filename);
+  //get parameter tree
+  TTree* parTree = (TTree*)fpars->Get("parTree");
+  parTree->SetBranchAddress("nTotPars",&nTotPars);
+  parTree->SetBranchAddress("nSysPars",&nSysPars);
+  parTree->SetBranchAddress("pars",pars);
+  parTree->SetBranchAddress("parUnc",parUnc);
+  parTree->GetEntry(0);
+  //set parameter explicitly to make sure arrays are filled as well
+  for (int ipar=0;ipar<nTotPars;ipar++){
+    cout<<"setting parameter # "<<ipar<<" to "<<pars[ipar]<<endl;
+    setParameter(ipar,pars[ipar]);
+  }
+  return;
+}
+
+//save current parameters to a file 
+void atmFitPars::savePars(const char* filename){
+  //create output file
+  TFile* fout = new TFile(filename,"RECREATE");
+  //create tree to hold parameter values
+  TTree* parTree = new TTree("parTree","parTree");
+  parTree->Branch("pars",pars,"pars[4000]/F");
+  parTree->Branch("parUnc",parUnc,"parUnc[4000]/F");
+  parTree->Branch("nTotPars",&nTotPars,"nTotPars/I");
+  parTree->Branch("nSysPars",&nSysPars,"nSysPars/I");
+  parTree->Fill();
+  fout->Write();
+  return;
+}
 
 TRandom2* randy2 = new TRandom2();
 
@@ -100,7 +150,7 @@ void atmFitPars::setParameter(int ibin, int icomp, int iatt, int itype, float va
 
 void atmFitPars::setParameter(int ipar, float value){
   pars[ipar]=value;
-  if (ipar>=(nTotPars-nSysPars)) sysPar[nTotPars-ipar-1] = value;
+  if (ipar>=(nTotPars-nSysPars)) sysPar[ipar-nTotPars+nSysPars] = value;
   else{
     histoPar[binOfPar[ipar]][compOfPar[ipar]][attOfPar[ipar]][typeOfPar[ipar]]=value;
   }

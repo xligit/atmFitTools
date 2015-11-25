@@ -19,10 +19,14 @@ class histoFactory{
   TString nameTag; //name associated with this instance
   TFile*   fout; //output file for filled histograms
   TH1F*    htmp; //temporary histogram pointer for drawing and comparison
+  TH1F*    hnorm;
   int nSamples; //number of data samples
   int nComponents; //number of MC components
   int nAttributes; //number of attributes (fiTQun outputs)
   int nBins;  //number of bins in data
+  int nDataEvents; //number of data events
+  int nMCEvents;  //number of MC events
+  float normMC; //normalization factor for MC
   float att[NATTMAX]; //array of all attribute values
   TString attNames[NATTMAX];  //array of attribute names
   TString attType[NATTMAX];  //array of attribute type codes
@@ -41,6 +45,8 @@ class histoFactory{
   void saveToFile();
   TString outputFileName;
   TString getOutputFileName(){return outputFileName;}
+  void setOutputFileName(const char *name){outputFileName=name;}
+  void normalizeHistos(float scale=-1.);
 };
 
 

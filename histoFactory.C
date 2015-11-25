@@ -32,10 +32,10 @@ void histoFactory::addAttribute(int iatt){
 void histoFactory::init(){
   //call ONLY after all attributes are specified
   //setup name for output file
-  TString fname = nameTag.Data();
-  fname.Append(".root");
-  outputFileName=fname.Data();
-  fout = new TFile(fname.Data(),"RECREATE");
+  if (!outputFileName.CompareTo("")){
+    outputFileName = "histoFactoryOutput.root";
+  }
+  fout = new TFile(outputFileName.Data(),"RECREATE");
   //setup attribute names
   attNames[0]="fq1rnll_emu_subev0";
   attNames[1]="fq1rnll_emu_subev1";
@@ -110,7 +110,25 @@ void histoFactory::fillAttributesMC(){
   return;
 }
 
-
+void histoFactory::normalizeHistos(float scale){
+  //scale all MC histograms by some scaling factory
+  if (scale < 0.){
+    scale = (float)nDataEvents/(float)nMCEvents;
+  }
+  hnorm = new TH1F("hnorm","hnorm",1,0,1);
+  scale = (float)nDataEvents/(float)nMCEvents;
+  hnorm->SetBinContent(1,scale);
+  for (int ibin=0;ibin<nBins;ibin++){
+    for (int isamp=0;isamp<nSamples;isamp++){
+      for (int iatt=0;iatt<nAttributes;iatt++){
+        for (int icomp=0;icomp<nComponents;icomp++){
+          hManager->getHistogram(isamp,ibin,icomp,iatt)->Scale(scale);
+        }
+      }
+    }
+  }
+  return;
+}
 
 void histoFactory::fillHistos(){
   int nevdata = dataTree->GetEntries();
@@ -137,24 +155,28 @@ void histoFactory::fillHistos(){
 void histoFactory::setDataTree(TChain* ch){
   dataTree=(TTree*)ch;
   fqData = new fQreader(dataTree);
+  nDataEvents = dataTree->GetEntries();
   return;
 }
 
 void histoFactory::setDataTree(TTree* tr){
   dataTree=tr;
   fqData = new fQreader(dataTree);
+  nDataEvents = dataTree->GetEntries();
   return;
 }
 
 void histoFactory::setMCTree(TTree* tr){
   mcTree=tr;
   fqMC = new fQreader(mcTree);
+  nMCEvents = mcTree->GetEntries();
   return;
 }
 
 void histoFactory::setMCTree(TChain* ch){
   mcTree=(TTree*)ch;
   fqMC = new fQreader(mcTree);
+  nMCEvents = mcTree->GetEntries();
   return;
 }
 

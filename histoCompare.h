@@ -24,6 +24,7 @@ class histoCompare{
   int nBin;  //number of bins
   int nComp;  //number of  components
   int nAtt;  //nummboer of attributes
+  float tunePar; //tuning parameter for MCMC
   //tools for histogram manager management
   //created histo manager from file
   void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int natt);
@@ -111,8 +112,12 @@ class histoCompare{
   void LnLFit();
   void LnLPreFit();
   void singleParFit(int ipar);
+  void sysParFit();
   void drawResult(int ihist);
   void timetest(int ntry);
+  void saveFitPars(const char* filename); //< write parameters and outputs to a file
+  void readFitPars(const char* filename); //< read parameters from a file
+  void tuneMCMC(int ncyles=1,int nsteps=150,float goal=0.25);
   //staticthis for fits
   static histoCompare* staticthis;
 };

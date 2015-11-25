@@ -20,10 +20,15 @@ TH1F* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
  //   hSum->Delete();
  // }
   hSum = getModHistogram(isamp,ibin,0,iatt);
+ // hSum->Smooth(3);
  // cout<<"clone in new histogram"<<endl;
 //  hSum = (TH1F*)getModHistogram(isamp,ibin,0,iatt)->Clone("hsum");
+ // TH1F* tmppointer;
   for (int icomp=1;icomp<nComponents;icomp++){
     //cout<<"add histo component "<<icomp<<endl;
+  //  tmppointer=getModHistogram(isamp,ibin,icomp,iatt);
+  //  tmppointer->Smooth(3);
+  //  hSum->Add(tmppointer);
     hSum->Add(getModHistogram(isamp,ibin,icomp,iatt));
   }
   return hSum;
@@ -47,7 +52,7 @@ TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
     weightsum=0.;
     for (int isyspar=0;isyspar<fitPars->nSysPars;isyspar++){
       //debug
-      float daweight = getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
+      //float daweight = getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
       //cout<<daweight<<endl;
       //
       weightsum+=getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
@@ -230,6 +235,7 @@ histoManager::histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int
   nameTag = "histManager_For_";
   nameTag.Append(rootname);
   useSplineFlg=0;
+
   return;
 }
 
@@ -260,8 +266,11 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
   nComponents = ncomp;
   nAttributes  = natt;
   TString filename = rootname;
-//  filename.Append(".root");
+  //file containing histograms 
   fin = new TFile(filename.Data());
+  //get normalization factor between data and MC
+  TH1F* htmp = (TH1F*)fin->Get("hnorm");
+  normFactor=htmp->GetBinContent(1);
   TString hname;
   //setup data histos
   for (int isamp=0;isamp<nSamples;isamp++){
