@@ -124,9 +124,13 @@ TH1F* smearIt(TH1F* h,float spread, float bias=0.){
 
 
 void smearThisHisto(TH1F &hh, float spread, float bias=0.){
-  if (spread==0) return;
+  if (spread==0){
+    cout<<"smearThisHisto: cannont smear with 0 spread parameter"<<endl;
+    return;
+  }
   //cout<<"cloneing input"<<endl;
   TH1F* htmp = (TH1F*)hh.Clone("htmp");
+  htmp->Smooth(2);
   int nbins=hh.GetNbinsX();
   float binw = hh.GetBinWidth(1);
   float binedge;
@@ -156,6 +160,7 @@ void smearThisHisto(TH1F &hh, float spread, float bias=0.){
     hh.SetBinContent(newbin,sum);
   }
   if (hh.Integral()>0.) hh.Scale(htmp->Integral()/hh.Integral());
+//  hh.Smooth(5);
   htmp->Delete();
   return;
 }

@@ -5,20 +5,32 @@
  gROOT->ProcessLine(".L splineFactory.C++");
  gROOT->ProcessLine(".x ~/style.c");
 
- TString nameTag = "fake4";
+ TString nameTag = "nominal2";
  TString directory = "./rootfiles/"; 
  //setup input files
  TChain chmc("h1");
- chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.07*.root");
- chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.06*.root");
- chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.05*.root");
- chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.04*.root");
- chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.03*.root");
- chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.02*.root");
+ chmc.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.00*.root");
+ chmc.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.01*.root");
+ chmc.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.02*.root");
+ chmc.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.03*.root");
+ chmc.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.04*.root");
+ chmc.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.05*.root");
+ chmc.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.06*.root");
+
+// chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.07*.root");
+// chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.06*.root");
+// chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.05*.root");
+// chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.04*.root");
+// chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.03*.root");
+// chmc.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.02*.root");
 
  TChain chdata("h1");
- chdata.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.09*.root");
- chdata.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.08*.root");
+ chdata.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.07*.root");
+ chdata.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.08*.root");
+ chdata.Add("/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.09*.root");
+
+// chdata.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.09*.root");
+// chdata.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.08*.root");
 
 
  //add branches to input files

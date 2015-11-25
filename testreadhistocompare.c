@@ -13,12 +13,12 @@
 
  histoCompare* hc = new histoCompare("comptest");
 // hc->readFromFile("histos_test2",3,3,7,1);  //reads in histogram manager
- hc->readFromFile("./rootfiles/test1_factoryOutput.root",3,3,7,1);
+ hc->readFromFile("./rootfiles/nom2_factoryOutput.root",3,3,7,1);
 // hc->readFromFile(".root",3,3,7,1);
 
  hc->setupPars(1); //setup parameters
  hc->thePars->setSysParUnc(0,0.05);
- hc->setupSplines("./rootfiles/test1_splineFactoryOut.root",9);
+ hc->setupSplines("./rootfiles/nom2_splineFactoryOut.root",9);
 // hc->setupSplines("./rootfiles/splineOutTest_splineOut.root");
 // hc->setupSplines("./rootfiles/nominalRun_splineOut.root");
 
@@ -40,9 +40,9 @@
  hc->setAttName(0,"emuPID");
  hc->setAttName(0,"Other");
 // hc->setRebinFactor(1);
- hc->readFitPars("./rootfiles/fitpars.root");
+// hc->readFitPars("./rootfiles/fitpars.root");
 // hc->LnLFit();
-// hc->saveFitPars("./rootfiles/fitpars.root");
+// hc->saveFitPars("./rootfiles/fitpars_nosmooth.root");
 // hc->addHistogram(hpidmc,0);
 // hc->addHistogram(hpidmcmu,0);
 // hc->addHistogram(hpiddat,1);

@@ -2,9 +2,9 @@
   gROOT->ProcessLine(".L histoFactory.C++");
   gROOT->ProcessLine(".L splineFactory.C++");
   gROOT->ProcessLine(".x ~/style.c");
-  TString mcfiles= "./rootfiles/fake4_MC*.root";
-  TString datfiles= "./rootfiles/nominal1_Data_*.root";
-  TString nametag = "test1";
+  TString mcfiles= "./rootfiles/nominal2_MC*.root";
+  TString datfiles= "./rootfiles/nominal2_Data_*.root";
+  TString nametag = "nom2";
 
   TChain* chmc=new TChain("h1");
   TChain *chdata=new TChain("h1");
@@ -21,7 +21,7 @@
   hfact->addAttribute(1);
   hfact->setDataTree(trdata);
   hfact->setMCTree(trmc);
-  hfact->setOutputFileName("./rootfiles/test1_factoryOutput.root");
+  hfact->setOutputFileName("./rootfiles/nom2_factoryOutput.root");
   hfact->init();
   //hm->readFromFile("hManager_atmos_emuratio");
   hfact->fillHistos();
@@ -33,7 +33,7 @@
   splinename.Append(nametag.Data());
   splineFactory* s = new splineFactory(3,3,7,1,1,splinename.Data());
   s->makeManagerFromFile(factoryoutputname.Data());
-  s->setOutputFileName("./rootfiles/test1_splineFactoryOut.root");
+  s->setOutputFileName("./rootfiles/nom2_splineFactoryOut.root");
   s->setupHistos();
   s->setupSystPars();
   s->setMCTree(trmc);

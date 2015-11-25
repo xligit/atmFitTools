@@ -87,6 +87,7 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,float goal){
     }
     float rate = xaccepted/(float)nsteps;
     cout<<"acceptance rate: "<<rate<<endl;
+    cout<<"tune parameter: "<<tunePar<<endl;
     tunePar*=(rate/goal);
     cout<<"new tune parameter: "<<tunePar<<endl;
   }
@@ -99,13 +100,12 @@ void histoCompare::runMCMC(int nsteps){
   float par[npars]; //< container for parameters
   int parindex = 0;
   float result = 0.;
-  float tune = 0.11;
   markovTools* mc = new markovTools(npars); //< create markovTools object
-  mc->setTuneParameter(tune);
+  mc->setTuneParameter(tunePar);
   //fill parameter array and set uncertainties
   for (int ipar=0;ipar<npars;ipar++){
     par[ipar]=thePars->getParameter(ipar);
-    mc->setParVar(ipar,(errParHi[ipar]-errParLo[ipar]));
+    mc->setParVar(ipar,thePars->parUnc[ipar]);
   }
   //set initial state
   getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
@@ -192,6 +192,7 @@ float histoCompare::getErrHi(int ipar){
     thePars->setParameter(ipar,parval); //modify parameter
     Ldiff = fabs(Lbest-getTotLnL()); //check L difference
     ntry++;
+    if (ntry>ntrymax) break;
   }
   parval-=dpar;
   thePars->setParameter(ipar,parval);
@@ -204,6 +205,7 @@ float histoCompare::getErrHi(int ipar){
     thePars->setParameter(ipar,parval); //modify paramete
     Ldiff = fabs(Lbest-getTotLnL()); //check L difference
     ntry++;
+    if (ntry>ntrymax) break;
   }
   parval-=dpar;
   thePars->setParameter(ipar,parval);
@@ -246,6 +248,7 @@ float histoCompare::getErrLo(int ipar){
  //   cout<<"Ldiff: "<<Ldiff<<endl;
  //   cout<<"par: "<<thePars->pars[ipar]<<endl;
     ntry++;
+    if (ntry>ntrymax) break;
   }
 //  cout<<"ntry: "<<ntry<<endl;
   parval+=dpar;
@@ -259,6 +262,7 @@ float histoCompare::getErrLo(int ipar){
     thePars->setParameter(ipar,parval); //modify paramete
     Ldiff = fabs(Lbest-getTotLnL()); //check L difference
     ntry++;
+    if (ntry>ntrymax) break;
   }
 //  cout<<"ntry: "<<ntry<<endl;
   parval+=dpar;
@@ -267,12 +271,13 @@ float histoCompare::getErrLo(int ipar){
   dpar*=0.10;
   ntry=0;
   //very fine search
-  while ((Ldiff<1)&&(ntry<ntrymax)){
-    parval-=dpar;
-    thePars->setParameter(ipar,parval); //modify paramete
-    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-    ntry++;
-  }
+//  while ((Ldiff<1)&&(ntry<ntrymax)){
+//    parval-=dpar;
+//    thePars->setParameter(ipar,parval); //modify paramete
+//    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
+//    ntry++;
+//    if (ntry>ntrymax) break;
+//  }
 //  cout<<"ntry: "<<ntry<<endl;
   loerr = thePars->pars[ipar];
   thePars->setParameter(ipar,parbest);

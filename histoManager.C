@@ -20,7 +20,7 @@ TH1F* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
  //   hSum->Delete();
  // }
   hSum = getModHistogram(isamp,ibin,0,iatt);
- // hSum->Smooth(3);
+//  hSum->Smooth(1);
  // cout<<"clone in new histogram"<<endl;
 //  hSum = (TH1F*)getModHistogram(isamp,ibin,0,iatt)->Clone("hsum");
  // TH1F* tmppointer;

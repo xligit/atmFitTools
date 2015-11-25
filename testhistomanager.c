@@ -21,15 +21,15 @@ TChain *chdata = new TChain("h1");
 TChain *chmc   = new TChain("h1");
 //chdata->Add("./rootfiles/nominalRun_Data*.root");
 //chmc->Add("./rootfiles/nominalRun_MC*.root");
-chdata->Add("./rootfiles/nominal1_Data*.root");
-chmc->Add("./rootfiles/fake3_MC*.root");
-atmFitPars* fitpars = new atmFitPars(nbin,ncomp,nsamp,natt,1);
+chdata->Add("./rootfiles/nominal2_Data*.root");
+chmc->Add("./rootfiles/nominal2_MC*.root");
+atmFitPars* fitpars = new atmFitPars(nsamp,nbin,ncomp,natt,1);
  
 TTree* trdata = (TTree*)chdata;
 TTree* trmc   = (TTree*)trdata;
 
-histoManager* hm = new histoManager("./rootfiles/test1_factoryOutput.root",3,3,7,1); 
-hm->readSplinesFromFile("./rootfiles/test1_splineFactoryOut.root",9);
+histoManager* hm = new histoManager("./rootfiles/nom2_factoryOutput.root",3,3,7,1); 
+hm->readSplinesFromFile("./rootfiles/nom2_splineFactoryOut.root",9);
 
 
 hm->setFitPars(fitpars);
