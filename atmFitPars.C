@@ -3,6 +3,7 @@
 
 #include "shared.h"
 #include "TRandom2.h"
+#include "sharedPars.C"
 
 using namespace std;
 
@@ -10,8 +11,13 @@ using namespace std;
 class atmFitPars{
   public:
   
+  ///////////////////////////////////////////////////////////////////
+  //constructors
   atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst=0);
   atmFitPars(int isamp, int ibin, int icomp, int iatt, const char* systype); 
+  atmFitPars(const char* parfile); //constructs from parameter file
+
+  ///////////////////////////////////////////////////////////////
   //numbers of various parametrs
   int nSamples;
   int nBins;
@@ -20,6 +26,7 @@ class atmFitPars{
   int nSysPars;
   int nTotPars;
 
+  ///////////////////////////////////////////////////////////////////
   //parameter values
   float histoPar[NBINMAX][NCOMPMAX][NATTMAX][2];
   float histoParUncLo[NBINMAX][NCOMPMAX][NATTMAX][2];
@@ -31,11 +38,12 @@ class atmFitPars{
   int   fixPar[4000];
   float bestpars[4000];
   int   parIndex[NBINMAX][NCOMPMAX][NATTMAX][2];
-
-  //normalization
   float norm;  
+
+  //////////////////////////////////////////////////////////////
+  //methods
   void setNorm(float x){norm=x;}
-  void initPars(const char* systype="");
+  void initPars(const char* systype=""); //< sets parameters to initial values
   int getParIndex(int ibin, int icomp, int iatt, int imod){return parIndex[ibin][icomp][iatt][imod];}
   float getParameter(int ipar){return pars[ipar];}
   void setParameter(int ipar, float value);
@@ -57,6 +65,26 @@ class atmFitPars{
   void readPars(const char* filename);
   void printPars();
 };
+
+
+//construct from parameter file
+atmFitPars::atmFitPars(const char* parfilename){
+  /////////////////////////////////////
+  //fill shared parameters from file
+  cout<<"atmFitPars: reading parameter file: "<<parfilename<<endl;
+  sharedPars sharedpar(parfilename);
+  nSamples = sharedpar.nSamples;
+  cout<<"  nSamples: "<<nSamples<<endl;
+  nComponents = sharedpar.nComponents;
+  cout<<"  nComponents: "<<nComponents<<endl;
+  nBins = sharedpar.nFVBins;
+  cout<<"  nBins: "<<nBins<<endl;
+  nSysPars = sharedpar.nSysPars;
+  cout<<"  nSysPars: "<<nSysPars<<endl;
+  nAttributes = sharedpar.nAttributes;
+  cout<<"  nAttributes: "<<nAttributes<<endl;
+
+}
 
 void atmFitPars::printPars(){
   cout<<"$$$ CURRENT PARAMETER VALUES $$$"<<endl;
@@ -177,6 +205,8 @@ atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst){
   initPars();
 }
 
+
+//initialize pars to preset values, the number of bins, components, attributes and systematic parameters must be previously set
 void atmFitPars::initPars(const char* systype){
 
   //initialize histogram pars

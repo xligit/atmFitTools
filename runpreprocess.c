@@ -5,7 +5,7 @@
  gROOT->ProcessLine(".L splineFactory.C++");
  gROOT->ProcessLine(".x ~/style.c");
 
- TString nameTag = "nominal2";
+ TString nameTag = "nominal3";
  TString directory = "./rootfiles/"; 
  //setup input files
  TChain chmc("h1");

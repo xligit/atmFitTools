@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Mon Nov 16 11:42:58 2015 by ROOT version 5.28/00c
+// Tue Dec  1 11:25:55 2015 by ROOT version 5.28/00c
 // from TTree h1/DST
-// found on file: fake1_MC_52_.root
+// found on file: nominal3_MC_7_.root
 //////////////////////////////////////////////////////////
 
 #ifndef fQreader_h
@@ -96,6 +96,7 @@ public :
    Float_t         fqmst0[5][20];   //[fqmsnfit]
    Float_t         fqmspos[5][20][3];   //[fqmsnfit]
    Float_t         fqmsdir[5][20][3];   //[fqmsnfit]
+   Float_t         attribute[1000];
    Int_t           ncomponent;
    Int_t           nsample;
    Int_t           nbin;
@@ -192,6 +193,7 @@ public :
    TBranch        *b_fqmst0;   //!
    TBranch        *b_fqmspos;   //!
    TBranch        *b_fqmsdir;   //!
+   TBranch        *b_attribute;   //!
    TBranch        *b_ncomponent;   //!
    TBranch        *b_nsample;   //!
    TBranch        *b_nbin;   //!
@@ -228,9 +230,9 @@ fQreader::fQreader(TTree *tree)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("fake1_MC_52_.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("nominal3_MC_7_.root");
       if (!f) {
-         f = new TFile("fake1_MC_52_.root");
+         f = new TFile("nominal3_MC_7_.root");
       }
       tree = (TTree*)gDirectory->Get("h1");
 
@@ -359,6 +361,7 @@ void fQreader::Init(TTree *tree)
    fChain->SetBranchAddress("fqmst0", fqmst0, &b_fqmst0);
    fChain->SetBranchAddress("fqmspos", fqmspos, &b_fqmspos);
    fChain->SetBranchAddress("fqmsdir", fqmsdir, &b_fqmsdir);
+   fChain->SetBranchAddress("attribute", attribute, &b_attribute);
    fChain->SetBranchAddress("ncomponent", &ncomponent, &b_ncomponent);
    fChain->SetBranchAddress("nsample", &nsample, &b_nsample);
    fChain->SetBranchAddress("nbin", &nbin, &b_nbin);

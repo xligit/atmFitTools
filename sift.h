@@ -43,7 +43,9 @@ class sift{
   float towall;
   float wall;
   float evtweight;
+  float attribute[1000];
   //selections
+  void fillAttributes();
   int absmode;
   int getComponent();
   int getSample();

@@ -50,6 +50,7 @@ class splineFactory{
   //methods
   //this needs to be modified for each systematic paramater to add
   float getEvtWeight(int ipar); //returns event weight after applying syst. par. 
+  float getEvtWeight(fQreader* mcEvt,int ipar,float value); //
   void setOutputFileName(const char* name){foutName=name;}
   TString getOutputFileName(){return foutName;}
   //
@@ -326,6 +327,64 @@ void splineFactory::fillHistograms(int ipt, int isyst){
 
   return;
 };
+
+float splineFactory::getEvtWeight(fQreader* mcEvt,int ipar,float value){
+//  float ww = 1.;
+  float ww = mcEvt->evtweight;
+  int absmode = TMath::Abs(mcEvt->mode);
+  float Enu     = mcEvt->pmomv[0];
+  int  nutype  = TMath::Abs(mcEvt->ipnu[0]);
+//  if (ipar==0){
+//   if (mcEvt->ncomponent==0) ww*=sysPar[0];
+//  } 
+//  if (ipar==1){
+//   if (mcEvt->ncomponent==1) ww*=sysPar[1];
+//  }
+//  if (ipar==2){
+//   if (mcEvt->ncomponent==2) ww*=sysPar[2];
+//  }
+   
+  //CCQE norm bin1 
+  if (ipar==0){
+    if ((absmode==1)&&(Enu<200.)) ww*=value;
+  }
+  //CCQE norm bin2 
+  if (ipar==1){
+    if ((absmode==1)&&(Enu>200.)&&(Enu<400.)) ww*=value;
+  }
+  //CCQE norm bin3 
+  if (ipar==2){
+    if ((absmode==1)&&(Enu>400.)&&(Enu<800.)) ww*=value;
+  }
+  //CCQE norm bin4 
+  if (ipar==3){
+    if ((absmode==1)&&(Enu>800.)) ww*=value;
+  }
+  //SubGevFlux
+  if (ipar==4){
+    if (Enu<1000.) ww*=value;
+  }
+  //MultiGeVFlux
+  if (ipar==5){
+    if (Enu>1000.) ww*=value;
+  }
+  //CCnQE
+  if (ipar==6){
+    if ((absmode>1)&&(absmode<30)) ww*=value;
+  }
+  //NC
+  if (ipar==7){
+    if (absmode>=30) ww*=value;
+  }
+  //mu2e ratio
+  if (ipar==8){
+    if (nutype==14) ww*=value;
+  }
+  if (ww<0.) ww = 0.;
+  eventWeight = ww;
+  return ww;
+
+}
 
 float splineFactory::getEvtWeight(int ipar){
 //  float ww = 1.;

@@ -42,7 +42,7 @@
 // hc->setRebinFactor(1);
 // hc->readFitPars("./rootfiles/fitpars.root");
 // hc->LnLFit();
-// hc->saveFitPars("./rootfiles/fitpars_nosmooth.root");
+ hc->saveFitPars("./rootfiles/fitpars_smooth.root");
 // hc->addHistogram(hpidmc,0);
 // hc->addHistogram(hpidmcmu,0);
 // hc->addHistogram(hpiddat,1);

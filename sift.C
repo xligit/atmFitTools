@@ -170,6 +170,7 @@ void sift::siftIt(){
     tr->GetEntry(i);
     if (!passCuts()) continue;
     vis->fillVisVar(); //get visible ring information
+    fillAttributes();
     ncomponent=getComponent();
     nsample=getSample();
     nbin=getBin();
@@ -186,6 +187,13 @@ void sift::siftIt(){
   return;
 }
 
+void sift::fillAttributes(){
+  attribute[0] = fq->fq1rnll[0][2]-fq->fq1rnll[0][1];
+  attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
+  attribute[2] = fq->fq1rmom[0][1];
+  attribute[3] = fq->fq1rmom[0][2];
+  return;
+}
 
 void sift::setupNewTree(){
   tr->SetBranchStatus("*",0);
@@ -202,6 +210,7 @@ void sift::setupNewTree(){
   trout->CopyAddresses(tr); //set addresses
   
   //add new branches
+  trout->Branch("attribute",attribute,"attribute[1000]/F");
   trout->Branch("ncomponent",&ncomponent,"ncomponent/I");
   trout->Branch("nsample",&nsample,"nsample/I");
   trout->Branch("nbin",&nbin,"nbin/I");
