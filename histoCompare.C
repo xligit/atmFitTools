@@ -493,7 +493,7 @@ void histoCompare::showFitResult(int isamp,int ibin,int iatt){
 //  hTot->Rebin(rebinFactor);
 //  hMod->Rebin(rebinFactor);
   hMod->Draw();
-  hTmp->Draw("same");
+  hTmp->Draw("samee");
 
   hManager->hData[isamp][ibin][iatt]->SetMarkerStyle(8);
   hManager->hData[isamp][ibin][iatt]->Draw("samee");
@@ -1428,15 +1428,46 @@ float histoCompare::getSumSq(TH1F* h1, TH1F* h2){
   return sumsq;
 }
 
+////////////////////////////////////////////////////////////////////
+//evalute log-likelihood between two histograms
 float histoCompare::getLnL(TH1F* h1, TH1F* h2){
   float lnL = 0.;
   float diff;
   float term;
   float c1;
   float c2;
+  float dof=0.;
+  float quaderr;
+  //////////////////////////////////////////////////
+  //assume Gaussian errors
+//  /*
+  for (int ibin=1;ibin<=(h1->GetNbinsX()-1);ibin++){
+    c1 = h1->GetBinContent(ibin);
+    if (c1<=0.) continue; //do nothing if there are no (or few) predicted events in this bin
+    dof++;
+    c2 = h2->GetBinContent(ibin);
+    //assume 2nd histogram is data..
+    cout<<"bin: "<<ibin<<endl;
+    cout<<"c1:  "<<c1<<endl;
+    cout<<"c2:  "<<c2<<endl;
+    cout<<"diff: "<<c1-c2<<endl;
+    cout<<"sig:  "<<h1->GetBinError(ibin)<<endl;
+    quaderr = (h1->GetBinError(ibin)*h1->GetBinError(ibin));
+    quaderr += (h2->GetBinError(ibin)*h2->GetBinError(ibin));
+//    lnL += ((c1-c2)*(c1-c2))/(2*h1->GetBinError(ibin)*h1->GetBinError(ibin));
+    lnL += ((c1-c2)*(c1-c2))/(2*quaderr);
+
+  }
+  cout<<"dof: "<<dof<<endl;
+//  */
+
+  ///////////////////////////////////////////////////
+  //assume poisson errors
+  /*
   for (int ibin=3;ibin<=(h1->GetNbinsX()-3);ibin++){
     c1 = h1->GetBinContent(ibin);
     c2 = h2->GetBinContent(ibin);
+ //   if ((c1<=0.)||(c2<=0.))continue;
     diff = c1-c2;
    // if (c1==0) return (c1-c2)*(c1-c2);
     if (c2==0){
@@ -1450,6 +1481,8 @@ float histoCompare::getLnL(TH1F* h1, TH1F* h2){
     }
     lnL += (diff+term);
   }
+//  */
+
   return lnL;
 }
 
@@ -1512,6 +1545,23 @@ void histoCompare::setupPars(int nsyspars){
  // thePars->setNorm(Norm);
   hManager->setFitPars(thePars);
   return;
+}
+
+/////////////////////////////////////////////////////////////////////
+//initializes all necessary compoents
+void  histoCompare::initialize(histoManager* hm, atmFitPars* apars){
+  cout<<"histoCompare: Initialization: "<<endl;
+  thePars = apars;
+  hManager = hm;
+  nComp = thePars->nComponents;
+  nBin  = thePars->nBins;
+  nAtt  = thePars->nAttributes;
+  nSamp = thePars->nSamples;
+  cout<<"    bins: "<<nBin<<endl;
+  cout<<"    sampless: "<<nSamp<<endl;
+  cout<<"    components: "<<nComp<<endl;
+  cout<<"    attributes: "<<nAtt<<endl; 
+  return; 
 }
 
 

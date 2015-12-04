@@ -26,7 +26,8 @@ class histoManager{
   //CONSTRUCTORS//
   histoManager(int nsampl,int nbins,int ncomp,const char* name=""); //creates blank histogram manager
   histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int natt); //recreates a histoManager from a file
-  
+  histoManager(int nptsmc, int nptsdata); //< for unit testing, makes histoManager with gaussian histograms 
+
   //INTERNAL VARIABLES//
   TString nameTag; //name associated with this instance
   TFile*   fout; //output file for filled histograms
@@ -49,6 +50,8 @@ class histoManager{
   atmFitPars* fitPars; 
   void setFitPars(atmFitPars* thepars){fitPars=thepars;}
   //METHODS//
+  //for initialization
+  void initHistos();
   void fillHistogram(int isamp, int ibin, int icomp, int iatt,float value,float weight=1.);
   void fillHistogramData(int isamp, int ibin, int iatt,float value,float weight=1.);
 

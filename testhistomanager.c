@@ -28,19 +28,13 @@ atmFitPars* fitpars = new atmFitPars(nsamp,nbin,ncomp,natt,1);
 TTree* trdata = (TTree*)chdata;
 TTree* trmc   = (TTree*)trdata;
 
-histoManager* hm = new histoManager("./rootfiles/nom2_factoryOutput.root",3,3,7,1); 
-hm->readSplinesFromFile("./rootfiles/nom2_splineFactoryOut.root",9);
+
+histoManager* hm = new histoManager(1000,10000);
+
+//histoManager* hm = new histoManager("./rootfiles/nom2_factoryOutput.root",3,3,7,1); 
+//hm->readSplinesFromFile("./rootfiles/nom2_splineFactoryOut.root",9);
 
 
-hm->setFitPars(fitpars);
-//hSplines* hs = hm->getSplines(0,0,0,0);
+//hm->setFitPars(fitpars);
 
-//hm->addAttribute(1);
-//hm->addAttribute(2);
-//hm->setDataTree(trdata);
-//hm->setMCTree(trmc);
-//hm->init();
-//hm->readFromFile("hManager_atmos_emuratio");
-//hm->fillHistos();
-//hm->saveToFile();
 }

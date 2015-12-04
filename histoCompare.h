@@ -29,7 +29,6 @@ class histoCompare{
   //created histo manager from file
   void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int natt);
   histoManager* hManager;
-
   //atmospheric pars
   atmFitPars* thePars;
 
@@ -68,6 +67,9 @@ class histoCompare{
   float getErrHi(int isyst);
   TH1F* getModifiedHisto(int ibin, int icomp, int iatt){return hManager->getSumHistogramMod(ibin,icomp,iatt);}
  // TH1F* hMod[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
+
+  //initialize all necessary components
+  void initialize(histoManager* hm, atmFitPars* apars);
 
   void setupSplines(const char* fname,int npar){hManager->readSplinesFromFile(fname,npar);}
   //tools for adding histogram directly..for debugging

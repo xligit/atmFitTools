@@ -22,13 +22,25 @@ float B(float x,float a, float b){
   return (x-a)/(b-a);
 }
 
-TH1F* testBump(int nev,double sig=1.0,double mean=0.0){
-  TH1F* h = new TH1F("testbump","testbump",100,-10,10);
+TH1F* testBump(int nev,double sig=1.0,double mean=0.0,const char* name="testbumb"){
+  TH1F* hset;
+  hset->SetDefaultSumw2(kTRUE);
+  TH1F* h = new TH1F(name,name,5,-10,10);
   for (int  i=0;i<nev;i++){
     h->Fill(randy->Gaus(mean,sig));
   }
   return h;
 }
+
+TH1F* testTable(int nev,double width=4.0,double mean=0.0){
+  TH1F* h = new TH1F("testbump","testbump",20,-10,10);
+  for (int  i=0;i<nev;i++){
+    h->Fill((randy->Rndm()*width) - (width/2.)+mean);
+  }
+  return h;
+}
+
+
 
 TH1F* convolveHisto(TH1F* hh, float sig, float bias, const char* name=""){
   //name setup
@@ -176,12 +188,13 @@ void smearThisHisto(TH1F &hh, float spread, float bias=0.){
   }
   //cout<<"cloneing input"<<endl;
   TH1F* htmp = (TH1F*)hh.Clone("htmp");
-   htmp->Smooth(1);
+ //  htmp->Smooth(0);
  // convolveThisHisto((*htmp),(htmp->GetBinWidth(1)/1.),0.);
   int nbins=hh.GetNbinsX();
   float binw = hh.GetBinWidth(1);
   float binedge;
   float sum;
+  float binerr;
   float weight;
   float xmin;
   float xmax;
@@ -193,7 +206,15 @@ void smearThisHisto(TH1F &hh, float spread, float bias=0.){
 
   //cout<<"calculating new bin content"<<endl;
   for (int newbin=1;newbin<=nbins;newbin++){
+    //////////////////////////////////
+    //it is necessary to "mask out" bins where the mc predicts zero events
+    //what is the uncertainty on the mean in this case?
+    if (htmp->GetBinContent(newbin)<=0.){
+      hh.SetBinContent(newbin,0.);
+      continue;
+    }
     sum = 0.;
+    binerr=0.;
     binedge = htmp->GetBinLowEdge(newbin);
     ymin = ((binedge-bias)*smear) - shift;
     ymax = ymin + (binw*smear);
@@ -203,10 +224,18 @@ void smearThisHisto(TH1F &hh, float spread, float bias=0.){
       xmax = (xmin+binw);
       weight = B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
       sum+=(weight*htmp->GetBinContent(oldbin));
+      //calculate new bin error
+   //   binerr += weight*weight*(htmp->GetBinContent(oldbin));
+      binerr += weight*weight*(htmp->GetBinError(oldbin))*(htmp->GetBinError(oldbin));
+  //    cout<<"content: "<<htmp->GetBinContent(oldbin)<<" error: "<<htmp->GetBinError(oldbin)*htmp->GetBinError(oldbin)<<endl;
      // sum+=(weight*(htmp->GetBinContent(oldbin)+(0.5*htmp->GetBinContent(oldbin-1))+(0.5*htmp->GetBinContent(oldbin+1))));
       
     }
     hh.SetBinContent(newbin,sum);
+    //set bin uncertainty..
+    hh.SetBinError(newbin,TMath::Sqrt(binerr));
+  //  hh.SetBinError(newbin,TMath::Sqrt(sum));
+
   }
   if (hh.Integral()>0.) hh.Scale(htmp->Integral()/hh.Integral());
 //  hh.Smooth(5);
