@@ -1,7 +1,7 @@
 #ifndef HISTOMANAGER_H
 #define HISTOMANAGER_H
 
-#include "TH1F.h"
+#include "TH1D.h"
 #include "TString.h"
 #include "TFile.h"
 #include "TChain.h"
@@ -23,11 +23,14 @@
 //manages all histograms and splines for the fit
 class histoManager{
   public:
+
+  ///////////////////////////
   //CONSTRUCTORS//
   histoManager(int nsampl,int nbins,int ncomp,const char* name=""); //creates blank histogram manager
   histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int natt); //recreates a histoManager from a file
   histoManager(int nptsmc, int nptsdata); //< for unit testing, makes histoManager with gaussian histograms 
 
+  ///////////////////////////
   //INTERNAL VARIABLES//
   TString nameTag; //name associated with this instance
   TFile*   fout; //output file for filled histograms
@@ -36,41 +39,54 @@ class histoManager{
   int nComponents; //number of MC components
   int nAttributes; //number of attributes (fiTQun outputs)
   int nBins;  //number of bins in data
-  TH1F* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //array of all MC histograms
-  TH1F* hMCModified[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //array of all MODIFIED MC histograms
-  TH1F* hMod;
-  TH1F* hSum;
+  TH1D* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //array of all MC histograms
+  TH1D* hMCModified[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //array of all MODIFIED MC histograms
+  TH1D* hSumHisto[NSAMPMAX][NBINMAX][NATTMAX];
+  TH1D* hSumHistoMod[NSAMPMAX][NBINMAX][NATTMAX];
+  TH1D* hMod;
+  TH1D* hSum;
+  TH1D* hTmp;
   int useSplineFlg;
-  float normFactor;
+  double normFactor;
   hSplines* theSplines[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //splines for flux/xsec params
-  TH1F* hData[NSAMPMAX][NBINMAX][NATTMAX];  //array of all Data histograms
+  TH1D* hData[NSAMPMAX][NBINMAX][NATTMAX];  //array of all Data histograms
   TLegend* Leg;  //for histogram drawing methods
 
+  ///////////////////////////
   //parametrs
   atmFitPars* fitPars; 
   void setFitPars(atmFitPars* thepars){fitPars=thepars;}
-  //METHODS//
+
+  ///////////////////////////
+  //methods
   //for initialization
   void initHistos();
-  void fillHistogram(int isamp, int ibin, int icomp, int iatt,float value,float weight=1.);
-  void fillHistogramData(int isamp, int ibin, int iatt,float value,float weight=1.);
+  void fillHistogram(int isamp, int ibin, int icomp, int iatt,double value,double weight=1.);
+  void fillHistogramData(int isamp, int ibin, int iatt,double value,double weight=1.);
 
+  ///////////////////////////
   //setters
-  void setHistogram(int isamp, int ibin, int icomp, int iatt, int dataflg,TH1F* h);
+  void setHistogram(int isamp, int ibin, int icomp, int iatt, int dataflg,TH1D* h);
 
+  ///////////////////////////
   //getters
-  TH1F* getHistogram(int isamp, int ibin, int icomp, int iatt);
-  TH1F* getModHistogram(int isamp, int ibin, int icomp, int iatt); //gets histogram modified from atm pars
-  TH1F* getHistogramData(int isamp, int ibin, int iatt){return hData[isamp][ibin][iatt];}
+  TH1D* getHistogram(int isamp, int ibin, int icomp, int iatt);
+  TH1D* getModHistogram(int isamp, int ibin, int icomp, int iatt); //gets histogram modified from atm pars
+  TH1D* getHistogramData(int isamp, int ibin, int iatt){return hData[isamp][ibin][iatt];}
   hSplines* getSplines(int isamp, int ibin, int icomp, int iatt){return theSplines[isamp][ibin][icomp][iatt];}
-  TH1F* getSumHistogram(int isamp, int ibin, int att);
-  TH1F* getSumHistogramMod(int isamp, int ibin, int att);
-  
+  TH1D* getSumHistogram(int isamp, int ibin, int att);
+  TH1D* getSumHistogramMod(int isamp, int ibin, int att);
+
+  ///////////////////////////  
   //plotting
   void showMCBreakdown(int isample,int ibin,int iatt);
   THStack* showMCBreakdownStack(int isample,int ibin,int iatt);
   void readFromFile(const char* rootename,int nsamp,int nbin,int ncomp,int natt);
   void readSplinesFromFile(const char* rootname, int nsyspartot);
+  
+  ///////////////////////////
+  //debugging
+  void showErrorComparison(int isamp, int ibin, int iatt);
 };
 
 #endif

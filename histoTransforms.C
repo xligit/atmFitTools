@@ -1,7 +1,7 @@
 #ifndef HISTOTRANSFORMS_C
 #define HISTOTRANSFORMS_C
 
-#include "TH1F.h"
+#include "TH1D.h"
 #include "TRandom2.h"
 #include "TMath.h"
 #include "time.h"
@@ -16,24 +16,34 @@ TRandom2* randy = new TRandom2();
 using namespace std;
 
 //Integral of box function
-float B(float x,float a, float b){
+double B(double x,double a, double b){
   if (x<=a) return 0.;
   if (x>=b) return 1.;
   return (x-a)/(b-a);
 }
 
-TH1F* testBump(int nev,double sig=1.0,double mean=0.0,const char* name="testbumb"){
-  TH1F* hset;
+TH1D* testBumpD(int nev,double sig=1.0,double mean=0.0,const char* name="testbumb"){
+  TH1D* hset;
   hset->SetDefaultSumw2(kTRUE);
-  TH1F* h = new TH1F(name,name,5,-10,10);
+  TH1D* h = new TH1D(name,name,20,-10,10);
   for (int  i=0;i<nev;i++){
     h->Fill(randy->Gaus(mean,sig));
   }
   return h;
 }
 
-TH1F* testTable(int nev,double width=4.0,double mean=0.0){
-  TH1F* h = new TH1F("testbump","testbump",20,-10,10);
+TH1D* testBump(int nev,double sig=1.0,double mean=0.0,const char* name="testbumb"){
+  TH1D* hset;
+  hset->SetDefaultSumw2(kTRUE);
+  TH1D* h = new TH1D(name,name,20,-10,10);
+  for (int  i=0;i<nev;i++){
+    h->Fill(randy->Gaus(mean,sig));
+  }
+  return h;
+}
+
+TH1D* testTable(int nev,double width=4.0,double mean=0.0){
+  TH1D* h = new TH1D("testbump","testbump",50,-10,10);
   for (int  i=0;i<nev;i++){
     h->Fill((randy->Rndm()*width) - (width/2.)+mean);
   }
@@ -42,24 +52,24 @@ TH1F* testTable(int nev,double width=4.0,double mean=0.0){
 
 
 
-TH1F* convolveHisto(TH1F* hh, float sig, float bias, const char* name=""){
+TH1D* convolveHisto(TH1D* hh, double sig, double bias, const char* name=""){
   //name setup
   TString hname = "convhist";
   hname.Append(name);
  
   //make convolved histogram;
-  TH1F* hconv;
-  hconv = (TH1F*)hh->Clone(hname.Data());
+  TH1D* hconv;
+  hconv = (TH1D*)hh->Clone(hname.Data());
   hconv->Reset();
 
   //vars for calculation
   int nbinsx = hh->GetNbinsX();
-  float xx;
-  float area;
+  double xx;
+  double area;
   
-  float bmin;
-  float bmax;
-  float gweight; //integral of gaussian in bin
+  double bmin;
+  double bmax;
+  double gweight; //integral of gaussian in bin
   for (int ibin=1;ibin<=nbinsx;ibin++){
     //calculate area overlap for each bin:
     xx = hh->GetBinCenter(ibin);
@@ -76,7 +86,7 @@ TH1F* convolveHisto(TH1F* hh, float sig, float bias, const char* name=""){
   }
 
   //normalize
-  float norm = (float)hh->Integral()/(float)hconv->Integral();
+  double norm = (double)hh->Integral()/(double)hconv->Integral();
   hconv->Scale(norm);
 //  hconv->SetLineColor(kRed);
 //  hconv->Draw();
@@ -90,20 +100,20 @@ TH1F* convolveHisto(TH1F* hh, float sig, float bias, const char* name=""){
 //bias -> Adds bias to histogram 
 
 
-TH1F* smearIt(TH1F* h,float spread, float bias=0.){
-  TH1F* hsmear = (TH1F*)h->Clone("hsmear");
+TH1D* smearIt(TH1D* h,double spread, double bias=0.){
+  TH1D* hsmear = (TH1D*)h->Clone("hsmear");
   hsmear->Reset();
   int nbins=hsmear->GetNbinsX();
-  float sum;
-  float weight;
-  float xmin;
-  float xmax;
-  float ymin;
-  float ymax;
+  double sum;
+  double weight;
+  double xmin;
+  double xmax;
+  double ymin;
+  double ymax;
   if (spread==0) return hsmear;
-  float smear = 1./spread;
-  float mean = h->GetMean() + (h->GetBinWidth(1)/2.);
-  float shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
+  double smear = 1./spread;
+  double mean = h->GetMean() + (h->GetBinWidth(1)/2.);
+  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
   for (int newbin=1;newbin<=nbins;newbin++){
     sum = 0.;
     ymin = ((hsmear->GetBinLowEdge(newbin)-bias)*smear) - shift;
@@ -118,7 +128,7 @@ TH1F* smearIt(TH1F* h,float spread, float bias=0.){
   }
   if (hsmear->Integral()>0.) hsmear->Scale(h->Integral()/hsmear->Integral());
   hsmear->SetLineColor(kMagenta);
- // TH1F* hsmooth = convolveHisto(hsmear,(hsmear->GetBinWidth(1)/2.),0.);
+ // TH1D* hsmooth = convolveHisto(hsmear,(hsmear->GetBinWidth(1)/2.),0.);
   /* // for debugging
   if (spread<=1.0){
     hsmear->Draw();
@@ -135,22 +145,22 @@ TH1F* smearIt(TH1F* h,float spread, float bias=0.){
 
 
 
-void convolveThisHisto(TH1F &hh, float sig, float bias){
+void convolveThisHisto(TH1D &hh, double sig, double bias){
  
   //make convolved histogram;
-  TH1F* htmp;
-  htmp = (TH1F*)hh.Clone("tmphisto");
+  TH1D* htmp;
+  htmp = (TH1D*)hh.Clone("tmphisto");
 
   //vars for calculation
   int nbinsx = hh.GetNbinsX();
-  float xx;
-  float area;
-  float bmin;
-  float bmax;
-  float binw = htmp->GetBinWidth(1);
-  float sqrt2 = sqrt(2.);
-  float gweight; //integral of gaussian in bin
-  float rms0 = (float)hh.GetRMS();
+  double xx;
+  double area;
+  double bmin;
+  double bmax;
+  double binw = htmp->GetBinWidth(1);
+  double sqrt2 = sqrt(2.);
+  double gweight; //integral of gaussian in bin
+  double rms0 = (double)hh.GetRMS();
   for (int ibin=1;ibin<=nbinsx;ibin++){
     //calculate area overlap for each bin:
     xx = htmp->GetBinCenter(ibin);
@@ -166,10 +176,10 @@ void convolveThisHisto(TH1F &hh, float sig, float bias){
   }
 
   //normalize
-  float norm = (float)htmp->Integral()/(float)hh.Integral();
+  double norm = (double)htmp->Integral()/(double)hh.Integral();
   hh.Scale(norm);
-  float rms1 = (float)hh.GetRMS();
-  float correction = rms0/(rms1);
+  double rms1 = (double)hh.GetRMS();
+  double correction = rms0/(rms1);
  // cout<<"smear factor: "<<correction<<endl;
 //  smearThisHisto(hh,correction);
 //  hconv->SetLineColor(kRed);
@@ -181,38 +191,42 @@ void convolveThisHisto(TH1F &hh, float sig, float bias){
 
 
 
-void smearThisHisto(TH1F &hh, float spread, float bias=0.){
+void smearThisHisto(TH1D &hh, double spread, double bias=0.){
   if (spread==0){
     cout<<"smearThisHisto: cannont smear with 0 spread parameter"<<endl;
     return;
   }
   //cout<<"cloneing input"<<endl;
-  TH1F* htmp = (TH1F*)hh.Clone("htmp");
+  hh.SetDefaultSumw2(kTRUE);
+  TH1D* htmp = (TH1D*)hh.Clone("htmp");
  //  htmp->Smooth(0);
  // convolveThisHisto((*htmp),(htmp->GetBinWidth(1)/1.),0.);
   int nbins=hh.GetNbinsX();
-  float binw = hh.GetBinWidth(1);
-  float binedge;
-  float sum;
-  float binerr;
-  float weight;
-  float xmin;
-  float xmax;
-  float ymin;
-  float ymax;
-  float smear = 1./spread;
-  float mean = hh.GetMean() + (binw/2.);
-  float shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
+  double binw = hh.GetBinWidth(1);
+  double binedge;
+  double sum;
+  double binerr;
+  double weight;
+  double xmin;
+  double xmax;
+  double ymin;
+  double ymax;
+  double smear = 1./spread;
+  double mean = hh.GetMean() + (binw/2.);
+  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
 
   //cout<<"calculating new bin content"<<endl;
   for (int newbin=1;newbin<=nbins;newbin++){
     //////////////////////////////////
     //it is necessary to "mask out" bins where the mc predicts zero events
     //what is the uncertainty on the mean in this case?
-    if (htmp->GetBinContent(newbin)<=0.){
-      hh.SetBinContent(newbin,0.);
+//    if (htmp->GetBinContent(newbin)<=0.){
+    if ((htmp->GetBinContent(newbin)<=0.001)||(htmp->GetBinContent(newbin-1)<=0.001)||(htmp->GetBinContent(newbin+1)<=0.001)){
+      hh.SetBinContent(newbin,htmp->GetBinContent(newbin));
+      hh.SetBinError(newbin,htmp->GetBinError(newbin));
       continue;
     }
+  //  */
     sum = 0.;
     binerr=0.;
     binedge = htmp->GetBinLowEdge(newbin);
@@ -234,7 +248,76 @@ void smearThisHisto(TH1F &hh, float spread, float bias=0.){
     hh.SetBinContent(newbin,sum);
     //set bin uncertainty..
     hh.SetBinError(newbin,TMath::Sqrt(binerr));
-  //  hh.SetBinError(newbin,TMath::Sqrt(sum));
+ //   hh.SetBinError(newbin,TMath::Sqrt(sum));
+
+  }
+  if (hh.Integral()>0.) hh.Scale(htmp->Integral()/hh.Integral());
+//  hh.Smooth(5);
+  htmp->Delete();
+  return;
+}
+
+
+void smearThisHistoD(TH1D &hh, double spread, double bias=0.){
+  if (spread==0){
+    cout<<"smearThisHisto: cannont smear with 0 spread parameter"<<endl;
+    return;
+  }
+  //cout<<"cloneing input"<<endl;
+  hh.SetDefaultSumw2(kTRUE);
+  TH1D* htmp = (TH1D*)hh.Clone("htmp");
+ //  htmp->Smooth(0);
+ // convolveThisHisto((*htmp),(htmp->GetBinWidth(1)/1.),0.);
+  int nbins=hh.GetNbinsX();
+  double binw = hh.GetBinWidth(1);
+  double binedge;
+  double sum;
+  double binerr;
+  double weight;
+  double xmin;
+  double xmax;
+  double ymin;
+  double ymax;
+  double smear = 1./spread;
+  double mean = hh.GetMean() + (binw/2.);
+  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
+
+  //cout<<"calculating new bin content"<<endl;
+  for (int newbin=1;newbin<=nbins;newbin++){
+    //////////////////////////////////
+    //it is necessary to "mask out" bins where the mc predicts zero events
+    //what is the uncertainty on the mean in this case?
+//    if (htmp->GetBinContent(newbin)<=0.){
+    if ((htmp->GetBinContent(newbin)<=0.001)||(htmp->GetBinContent(newbin-1)<=0.001)||(htmp->GetBinContent(newbin+1)<=0.001)){
+//    if (1){
+  //    cout<<"no calculation for bin: "<<newbin<<endl;
+      hh.SetBinContent(newbin,htmp->GetBinContent(newbin));
+      hh.SetBinError(newbin,htmp->GetBinError(newbin));
+      continue;
+    }
+  //  */
+    sum = 0.;
+    binerr=0.;
+    binedge = htmp->GetBinLowEdge(newbin);
+    ymin = ((binedge-bias)*smear) - shift;
+    ymax = ymin + (binw*smear);
+    //ymax = ((binedge+binw-bias)*smear) - shift;
+    for (int oldbin=1;oldbin<=nbins;oldbin++){
+      xmin = htmp->GetBinLowEdge(oldbin);
+      xmax = (xmin+binw);
+      weight = B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
+      sum+=(weight*htmp->GetBinContent(oldbin));
+      //calculate new bin error
+   //   binerr += weight*weight*(htmp->GetBinContent(oldbin));
+      binerr += weight*weight*(htmp->GetBinError(oldbin))*(htmp->GetBinError(oldbin));
+  //    cout<<"content: "<<htmp->GetBinContent(oldbin)<<" error: "<<htmp->GetBinError(oldbin)*htmp->GetBinError(oldbin)<<endl;
+     // sum+=(weight*(htmp->GetBinContent(oldbin)+(0.5*htmp->GetBinContent(oldbin-1))+(0.5*htmp->GetBinContent(oldbin+1))));
+      
+    }
+    hh.SetBinContent(newbin,sum);
+    //set bin uncertainty..
+  //  hh.SetBinError(newbin,TMath::Sqrt(binerr));
+    hh.SetBinError(newbin,TMath::Sqrt(sum));
 
   }
   if (hh.Integral()>0.) hh.Scale(htmp->Integral()/hh.Integral());
@@ -246,21 +329,20 @@ void smearThisHisto(TH1F &hh, float spread, float bias=0.){
 
 
 
-
-void smearHisto(TH1F &hi,TH1F &hf,float spread, float bias=0.){
+void smearHisto(TH1D &hi,TH1D &hf,double spread, double bias=0.){
   if (spread==0) return;
   int nbins=hi.GetNbinsX();
-  float binw = hi.GetBinWidth(1);
-  float binedge;
-  float sum;
-  float weight;
-  float xmin;
-  float xmax;
-  float ymin;
-  float ymax;
-  float smear = 1./spread;
-  float mean = hi.GetMean() + (binw/2.);
-  float shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
+  double binw = hi.GetBinWidth(1);
+  double binedge;
+  double sum;
+  double weight;
+  double xmin;
+  double xmax;
+  double ymin;
+  double ymax;
+  double smear = 1./spread;
+  double mean = hi.GetMean() + (binw/2.);
+  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
   for (int newbin=1;newbin<=nbins;newbin++){
     sum = 0.;
     binedge = hi.GetBinLowEdge(newbin);
@@ -283,17 +365,17 @@ void smearHisto(TH1F &hi,TH1F &hf,float spread, float bias=0.){
 
 
 
-float testtime(){
+double testtime(){
   int ntry = 25000;
   clock_t t1,t2;
-  TH1F* hb = testBump(1000);
-  TH1F* hmod = (TH1F*)hb->Clone("htmp");
+  TH1D* hb = testBump(1000);
+  TH1D* hmod = (TH1D*)hb->Clone("htmp");
   t1=clock();
   for (int i=0;i<ntry;i++){
     smearHisto(*hb,*hmod,1.1,1.2);
   }
   t2=clock();
-  float diff = ((float)t2-(float)t1)/((float)ntry);
+  double diff = ((double)t2-(double)t1)/((double)ntry);
   cout<<"time: "<<diff<<endl;
   return diff;
   

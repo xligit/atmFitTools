@@ -6,7 +6,7 @@
  gROOT->ProcessLine(".x ~/style.c");
 
  histoCompare* hc = new histoCompare("comptest");
- histoManager* hm = new histoManager(1000,100);
+ histoManager* hm = new histoManager(4000,800);
  hc->initialize(hm,hm->fitPars);
 // hc->readFromFile("histos_test2",3,3,7,1);  //reads in histogram manager
 // hc->readFromFile("./rootfiles/nom2_factoryOutput.root",3,3,7,1);

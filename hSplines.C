@@ -1,6 +1,6 @@
 #ifndef HSPLINES_C
 #define HSPLINES_C
-#include "TH1F.h"
+#include "TH1D.h"
 #include "TH2F.h"
 #include "TSpline.h"
 #include "TString.h"
@@ -10,7 +10,7 @@ using namespace std;
 class hSplines{
   public:
   //a class for managing splines for a histogram
-  hSplines(TH1F* h, int nsyst, const char* name="");
+  hSplines(TH1D* h, int nsyst, const char* name="");
   hSplines(const char* name=""){}
  
   //spline creation 
@@ -19,12 +19,12 @@ class hSplines{
   //set spline
   void setSpline(int ibin, int isyst, TSpline3 *spline);
   //create modified histogram
-  TH1F* buildModHistoAllPar(int npars, float* systPars);
-  void buildModHisto(int npar, float parval);
+  TH1D* buildModHistoAllPar(int npars, double* systPars);
+  void buildModHisto(int npar, double parval);
 
   //getters
-  TH1F* getBaseHisto() {return baseHisto;}
-  TH1F* getModHisto()  {return modHisto;}
+  TH1D* getBaseHisto() {return baseHisto;}
+  TH1D* getModHisto()  {return modHisto;}
   
   //drawing
   void draw2D(int npts, int isyst);
@@ -34,19 +34,19 @@ class hSplines{
 
   int checkSum;
 
-  TH1F* baseHisto; //the default histogram from which all modified histograms are obtained
-  TH1F* modHisto;  //pointer to the histogram that has been modified by splines
+  TH1D* baseHisto; //the default histogram from which all modified histograms are obtained
+  TH1D* modHisto;  //pointer to the histogram that has been modified by splines
   TH2F* drawHisto;  //pointer to the histogram that is used in the draw functions
   TSpline3 *theSpline[500][10]; //number of bins* number of sys pars
-  float evaluateSpline(int ibin, int ipar, float parvalue);
+  double evaluateSpline(int ibin, int ipar, double parvalue);
   TString nameTag;
   int nSyst; //number of systematic pars
   int nHistoBins; //number of bins in histogram
 };
 
-float hSplines::evaluateSpline(int ibin, int ipar, float parvalue){
+double hSplines::evaluateSpline(int ibin, int ipar, double parvalue){
   if (parvalue<0.) parvalue = 0.;
-  return (float)theSpline[ibin][ipar]->Eval(parvalue);
+  return (double)theSpline[ibin][ipar]->Eval(parvalue);
 }
 
 void  hSplines::drawSpline(int ibin, int isyst){
@@ -59,10 +59,10 @@ void  hSplines::drawSpline(int ibin, int isyst){
 
 void  hSplines::draw2D(int npts,int isyst){
   cout<<"getting par max and min"<<endl;
-  float parmin= theSpline[1][isyst]->GetXmin();
-  float parmax= theSpline[1][isyst]->GetXmax(); 
-  float xx;
-  float parval;
+  double parmin= theSpline[1][isyst]->GetXmin();
+  double parmax= theSpline[1][isyst]->GetXmax(); 
+  double xx;
+  double parval;
   cout<<"delete prev histo"<<endl;
 //  if (drawHisto!=NULL) drawHisto->Delete();
   cout<<"make new histo histo"<<endl;
@@ -92,7 +92,7 @@ void  hSplines::debugTest(){
   double y1[5] = {0.5,0.1,0.9,1.3,1.1};
   nSyst = 1;
   nHistoBins = 5;
-  baseHisto = new TH1F("hdebug","hdebug",nHistoBins,0,5);
+  baseHisto = new TH1D("hdebug","hdebug",nHistoBins,0,5);
   baseHisto->Fill(1.);
   baseHisto->Fill(1.);
   baseHisto->Fill(2.);
@@ -110,18 +110,18 @@ void  hSplines::debugTest(){
   return;
 }
 
-void hSplines::buildModHisto(int ipar, float parval){ 
+void hSplines::buildModHisto(int ipar, double parval){ 
  // if (modHisto==NULL){   
  //   TString modhname = baseHisto->GetName();
   //  cout<<"creating mod histo from base: "<<baseHisto->GetName()<<endl;
   //  modhname.Append("_modified");
  //   int basenbins = baseHisto->GetNbinsX();
- //   float basexmin  = baseHisto->GetBinLowEdge(1);
- //   float  basexmax = baseHisto->GetBinLowEdge(basenbins);
-  //  modHisto=(TH1F*)baseHisto->Clone(modhname.Data());
+ //   double basexmin  = baseHisto->GetBinLowEdge(1);
+ //   double  basexmax = baseHisto->GetBinLowEdge(basenbins);
+  //  modHisto=(TH1D*)baseHisto->Clone(modhname.Data());
  // }
   
-  float newcontent;
+  double newcontent;
   for (int ibin=1;ibin<=nHistoBins;ibin++){
     newcontent = baseHisto->GetBinContent(ibin);
     if (theSpline[ibin][ipar]->Eval(parval)==0){
@@ -133,16 +133,16 @@ void hSplines::buildModHisto(int ipar, float parval){
   return;
 }
 
-TH1F* hSplines::buildModHistoAllPar(int npars, float *systPars){
-  float binx;
-  float newcontent;
-  float oldcontent;
-  float weightsum;
+TH1D* hSplines::buildModHistoAllPar(int npars, double *systPars){
+  double binx;
+  double newcontent;
+  double oldcontent;
+  double weightsum;
 // if (modHisto==NULL){   
 //    TString modhname = baseHisto->GetName();
  //   cout<<"creating mod histo from base: "<<baseHisto->GetName()<<endl;
 //    modhname.Append("_modified");
-//    modHisto=(TH1F*)baseHisto->Clone(modhname.Data());
+//    modHisto=(TH1D*)baseHisto->Clone(modhname.Data());
 //  }
 
 
@@ -151,9 +151,9 @@ TH1F* hSplines::buildModHistoAllPar(int npars, float *systPars){
 //    cout<<"creating mod histo from base: "<<baseHisto->GetName()<<endl;
     modhname.Append("_modified");
  //   int basenbins = baseHisto->GetNbinsX();
- //   float basexmin  = baseHisto->GetBinLowEdge(1);
- //   float  basexmax = baseHisto->GetBinLowEdge(basenbins);
-    modHisto=(TH1F*)baseHisto->Clone(modhname.Data());
+ //   double basexmin  = baseHisto->GetBinLowEdge(1);
+ //   double  basexmax = baseHisto->GetBinLowEdge(basenbins);
+    modHisto=(TH1D*)baseHisto->Clone(modhname.Data());
 //  }
   
  // cout<<"nbins: "<<nHistoBins<<endl;
@@ -164,7 +164,7 @@ TH1F* hSplines::buildModHistoAllPar(int npars, float *systPars){
     for (int isyst=0;isyst<npars;isyst++){
       weightsum += theSpline[ibin][isyst]->Eval(systPars[isyst]); 
     }
-    weightsum = weightsum - (float)npars + 1.;
+    weightsum = weightsum - (double)npars + 1.;
    // cout<<"weightsum: "<<weightsum<<endl;
     newcontent*=weightsum;
     modHisto->SetBinContent(ibin,newcontent);
@@ -200,7 +200,7 @@ void hSplines::buildSpline(int ibin, int isyst,double* X, double*Y, int N){
   return;
 }
 
-hSplines::hSplines(TH1F* h, int nsyst, const char* name){
+hSplines::hSplines(TH1D* h, int nsyst, const char* name){
   if (name!=NULL) nameTag = name;
    nameTag = h->GetName();
    nHistoBins=h->GetNbinsX();
@@ -212,20 +212,20 @@ hSplines::hSplines(TH1F* h, int nsyst, const char* name){
    TString modhname = baseHisto->GetName();
    modhname.Append("_modified");
    int hbins = baseHisto->GetNbinsX();
-   float hmin = baseHisto->GetBinLowEdge(1);
-   float hmax = baseHisto->GetBinLowEdge(baseHisto->GetNbinsX())+baseHisto->GetBinWidth(1);
-   //modHisto = new TH1F(modhname.Data(),modhname.Data(),hbins,hmin,hmax);
-   modHisto = (TH1F*)baseHisto->Clone(modhname.Data());
+   double hmin = baseHisto->GetBinLowEdge(1);
+   double hmax = baseHisto->GetBinLowEdge(baseHisto->GetNbinsX())+baseHisto->GetBinWidth(1);
+   //modHisto = new TH1D(modhname.Data(),modhname.Data(),hbins,hmin,hmax);
+   modHisto = (TH1D*)baseHisto->Clone(modhname.Data());
    cout<<"mod histogram: "<<modHisto->GetName()<<endl;
 
    int basenbins = baseHisto->GetNbinsX();
-   float basexmin  = baseHisto->GetBinLowEdge(1);
-   float  basexmax = baseHisto->GetBinLowEdge(basenbins);
+   double basexmin  = baseHisto->GetBinLowEdge(1);
+   double  basexmax = baseHisto->GetBinLowEdge(basenbins);
    checkSum = nHistoBins*nSyst;
 
-   //modHisto= new TH1F(modhname.Data(),modhname.Data(),basenbins,basexmin,basexmax);
+   //modHisto= new TH1D(modhname.Data(),modhname.Data(),basenbins,basexmin,basexmax);
    
-//   modHisto=(TH1F*)baseHisto->Clone(modhname.Data());
+//   modHisto=(TH1D*)baseHisto->Clone(modhname.Data());
 //   modHisto->Reset();
 }
 

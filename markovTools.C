@@ -1,6 +1,6 @@
 #include "TRandom2.h"
 #include "TMath.h"
-#include "TH1F.h"
+#include "TH1D.h"
 #include <math.h>
 #include "TTree.h"
 #include <iostream>
@@ -23,22 +23,22 @@ class markovTools{
    TFile* fout; //< output file
    int nPars;  //< totla number of parameters
    int iStep;  //< counter for total step number
-   float oldPars[NMCMCPARS]; //< array of parameters from previous step
-   float oldL; //< likelihood value of previous step
-   float tuneParameter;
-   void setPar(int ipar,float value){oldPars[ipar]=value;}
-   void setL(float value){oldL=value;}
-   float varPar[NMCMCPARS]; //< stores parameter standard deviations
-   void setParVar(int ipar,float value); //< sets parameter standard deviations
-   void proposeStep(float* par);  //< proposes a new step from the given parameter set
-   int acceptStep(float newL,float* par); 
-   int acceptStepLnL(float newL,float* par);
+   double oldPars[NMCMCPARS]; //< array of parameters from previous step
+   double oldL; //< likelihood value of previous step
+   double tuneParameter;
+   void setPar(int ipar,double value){oldPars[ipar]=value;}
+   void setL(double value){oldL=value;}
+   double varPar[NMCMCPARS]; //< stores parameter standard deviations
+   void setParVar(int ipar,double value); //< sets parameter standard deviations
+   void proposeStep(double* par);  //< proposes a new step from the given parameter set
+   int acceptStep(double newL,double* par); 
+   int acceptStepLnL(double newL,double* par);
    void savePath(const char* filename);
-   void setTuneParameter(float value){tuneParameter=value;}
+   void setTuneParameter(double value){tuneParameter=value;}
    TTree* pathTree;
 
    void test(int itry);
-   TH1F* htest;
+   TH1D* htest;
 };
 
 
@@ -51,7 +51,7 @@ void markovTools::savePath(const char* filename){
   return;
 }
 
-void markovTools::setParVar(int ipar,float value){
+void markovTools::setParVar(int ipar,double value){
   varPar[ipar] = value;
   cout<<"param "<<ipar<<" variance set to: "<<value<<endl;
   return;
@@ -59,10 +59,10 @@ void markovTools::setParVar(int ipar,float value){
 
 void markovTools::test(int ntry){
   nPars = 1;
-  float thePar[1] = {0.};
+  double thePar[1] = {0.};
   int itry = 0;
   int iaccept = 0;
-  htest = new TH1F("htest","htest",100,-5,5);
+  htest = new TH1D("htest","htest",100,-5,5);
   while (itry<ntry){
     cout<<"step: "<<itry<<endl;
     setL(1.*(thePar[0]*thePar[0]));
@@ -81,9 +81,9 @@ void markovTools::test(int ntry){
   return;
 }
 
-int markovTools::acceptStepLnL(float newL,float* par){
-  float alpha = (oldL-newL);
-  float rand = randy->Rndm();
+int markovTools::acceptStepLnL(double newL,double* par){
+  double alpha = (oldL-newL);
+  double rand = randy->Rndm();
   int iaccept = 0;
   //cout<<"delta L: "<<alpha<<endl;
   if (alpha>TMath::Log(rand)){
@@ -104,14 +104,14 @@ int markovTools::acceptStepLnL(float newL,float* par){
   return iaccept;
 }
 
-int markovTools::acceptStep(float newL,float* par){
-  float alpha = 1.;
-  float lnOld;
-  float lnNew;
+int markovTools::acceptStep(double newL,double* par){
+  double alpha = 1.;
+  double lnOld;
+  double lnNew;
   lnOld = TMath::Log(oldL);
   lnNew = TMath::Log(newL);
   alpha = (lnNew-lnOld);
-  float rand = randy->Rndm();
+  double rand = randy->Rndm();
   int iaccept = 0;
   if (alpha>TMath::Log(rand)){
     cout<<"accept"<<endl;
@@ -132,7 +132,7 @@ int markovTools::acceptStep(float newL,float* par){
 }
 
 
-void markovTools::proposeStep(float* par){  
+void markovTools::proposeStep(double* par){  
   for (int i=0;i<nPars;i++){
     //save current parameters
     oldPars[i] = par[i];

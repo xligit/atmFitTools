@@ -8,6 +8,8 @@
 #include "TFitter.h"
 #include "TCanvas.h"
 #include "TGraphAsymmErrors.h"
+#include "likelihood.C"
+
 using namespace std;
 
 
@@ -24,7 +26,7 @@ class histoCompare{
   int nBin;  //number of bins
   int nComp;  //number of  components
   int nAtt;  //nummboer of attributes
-  float tunePar; //tuning parameter for MCMC
+  double tunePar; //tuning parameter for MCMC
   //tools for histogram manager management
   //created histo manager from file
   void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int natt);
@@ -33,17 +35,17 @@ class histoCompare{
   atmFitPars* thePars;
 
   
-  float Norm;
-  float Par[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float sysPar[NSYSPARMAX];
-  float sysParUnc[NSYSPARMAX];
+  double Norm;
+  double Par[NBINMAX][NCOMPMAX][NATTMAX][2];
+  double sysPar[NSYSPARMAX];
+  double sysParUnc[NSYSPARMAX];
   
-  float fixPar[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float bestPar[NBINMAX][NCOMPMAX][NATTMAX][2];
- // float errParLo[NBINMAX][NCOMPMAX][NATTMAX][2];
- // float errParHi[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float errParLo[1000];
-  float errParHi[1000];
+  double fixPar[NBINMAX][NCOMPMAX][NATTMAX][2];
+  double bestPar[NBINMAX][NCOMPMAX][NATTMAX][2];
+ // double errParLo[NBINMAX][NCOMPMAX][NATTMAX][2];
+ // double errParHi[NBINMAX][NCOMPMAX][NATTMAX][2];
+  double errParLo[1000];
+  double errParHi[1000];
 
   TString parName[NBINMAX][NCOMPMAX][NATTMAX][2];
   TString binName[NBINMAX];
@@ -54,58 +56,58 @@ class histoCompare{
   void setAttName(int iatt, const char* name){attName[iatt]=name;}
   void setupPars(int nsyspars=0); //sets up all parameters
   //post-fit toolts
-  void profileL(int ibin, int icomp, int iatt, int imod, float range, int npts=100);
-  void profileL(int ipar,float range, int npts=100);
+  void profileL(int ibin, int icomp, int iatt, int imod, double range, int npts=100);
+  void profileL(int ipar,double range, int npts=100);
   void showFitHisto(int isamp,int ibin,int icomp,int iatt);
   void showFitEffect(int isamp,int ibin,int icomp,int iatt);
   void showFitResult(int isamp,int ibin,int iatt);
   void showFitPars(int ibin,int iatt,int imod);
-  void showModHiso(int isamp,int ibin, int icomp, int iatt, float smear, float bias);
+  void showModHiso(int isamp,int ibin, int icomp, int iatt, double smear, double bias);
   void runMCMC(int nsteps);
- // float getErrLo(int ibin,int icomp,int iatt,int imod);
-  float getErrLo(int isyst);
-  float getErrHi(int isyst);
-  TH1F* getModifiedHisto(int ibin, int icomp, int iatt){return hManager->getSumHistogramMod(ibin,icomp,iatt);}
- // TH1F* hMod[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
+ // double getErrLo(int ibin,int icomp,int iatt,int imod);
+  double getErrLo(int isyst);
+  double getErrHi(int isyst);
+  TH1D* getModifiedHisto(int ibin, int icomp, int iatt){return hManager->getSumHistogramMod(ibin,icomp,iatt);}
+ // TH1D* hMod[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
 
   //initialize all necessary components
   void initialize(histoManager* hm, atmFitPars* apars);
 
   void setupSplines(const char* fname,int npar){hManager->readSplinesFromFile(fname,npar);}
   //tools for adding histogram directly..for debugging
-  void addHistogram(TH1F* h,int dataflg);
+  void addHistogram(TH1D* h,int dataflg);
   int  rebinFactor;
   void setRebinFactor(int ifact){rebinFactor=ifact;}
-  TH1F* hData[10];
-  TH1F* hMC[10];
-  TH1F* hModDebug;
-  TH1F* hMod;
-  TH1F* hTmp; //temporary histogram container
-  TH1F* hPar; //for fit parameters
+  TH1D* hData[10];
+  TH1D* hMC[10];
+  TH1D* hModDebug;
+  TH1D* hMod;
+  TH1D* hTmp; //temporary histogram container
+  TH1D* hPar; //for fit parameters
   TGraphAsymmErrors* gPar;
-  TH1F* hParErrLo;
-  TH1F* hParErrHi;
-  TH1F* hProf;
-  TH1F* showSmear(TH1F* h, float smear, float bias);
+  TH1D* hParErrLo;
+  TH1D* hParErrHi;
+  TH1D* hProf;
+  TH1D* showSmear(TH1D* h, double smear, double bias);
   void showMod(int imchist);
-  TH1F* hTot;
+  TH1D* hTot;
   TCanvas* cc;
   int nDataHist;
   int nMCHist;
-  float parDebug[10][2];
-//  float getLDebug(); 
+  double parDebug[10][2];
+//  double getLDebug(); 
   
   //likelihood evaluateions
-  float getSumSq(TH1F* h1, TH1F* h2);
-  float getLnL(TH1F* h1, TH1F* h2);
-  float getNDiff();
-  float getTotSumSq();
-  float getTotLnL();
+  double getSumSq(TH1D* h1, TH1D* h2);
+  double getLnL(TH1D* h1, TH1D* h2);
+  double getNDiff();
+  double getTotSumSq();
+  double getTotLnL();
   static void sumSqWrapper(int& ndim, double* gout, double& result, double par[], int flg);
   static void lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  void  getTotLnL1D(float& result,int npar, float par[]);
+  void  getTotLnL1D(double& result,int npar, double par[]);
   //for debuggint and play
-  float getTotSumSqDebug();
+  double getTotSumSqDebug();
   static void sumSqDebugWrapper(int& ndim, double* gout, double& result, double par[], int flg);
   static void nDiffDebugWrapper(int& ndim, double* gout, double& result, double par[], int flg);
   void minSumSqDebug();
@@ -119,7 +121,7 @@ class histoCompare{
   void timetest(int ntry);
   void saveFitPars(const char* filename); //< write parameters and outputs to a file
   void readFitPars(const char* filename); //< read parameters from a file
-  void tuneMCMC(int ncyles=1,int nsteps=150,float goal=0.25);
+  void tuneMCMC(int ncyles=1,int nsteps=150,double goal=0.25);
   //staticthis for fits
   static histoCompare* staticthis;
 };

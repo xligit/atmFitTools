@@ -28,28 +28,28 @@ class atmFitPars{
 
   ///////////////////////////////////////////////////////////////////
   //parameter values
-  float histoPar[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float histoParUncLo[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float histoParUncHi[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float sysPar[NSYSPARMAX];
-  float sysParUnc[NSYSPARMAX];
-  float pars[4000];
-  float parUnc[4000];
+  double histoPar[NBINMAX][NCOMPMAX][NATTMAX][2];
+  double histoParUncLo[NBINMAX][NCOMPMAX][NATTMAX][2];
+  double histoParUncHi[NBINMAX][NCOMPMAX][NATTMAX][2];
+  double sysPar[NSYSPARMAX];
+  double sysParUnc[NSYSPARMAX];
+  double pars[4000];
+  double parUnc[4000];
   int   fixPar[4000];
-  float bestpars[4000];
+  double bestpars[4000];
   int   parIndex[NBINMAX][NCOMPMAX][NATTMAX][2];
-  float norm;  
+  double norm;  
 
   //////////////////////////////////////////////////////////////
   //methods
-  void setNorm(float x){norm=x;}
+  void setNorm(double x){norm=x;}
   void initPars(const char* systype=""); //< sets parameters to initial values
   int getParIndex(int ibin, int icomp, int iatt, int imod){return parIndex[ibin][icomp][iatt][imod];}
-  float getParameter(int ipar){return pars[ipar];}
-  void setParameter(int ipar, float value);
-  void setSysParameter(int ipar, float value);
-  void setParameter(int ibin, int icomp, int iatt, int imod, float value); 
-  void setSysParUnc(int isys,float value){sysParUnc[isys]=value;}
+  double getParameter(int ipar){return pars[ipar];}
+  void setParameter(int ipar, double value);
+  void setSysParameter(int ipar, double value);
+  void setParameter(int ibin, int icomp, int iatt, int imod, double value); 
+  void setSysParUnc(int isys,double value){sysParUnc[isys]=value;}
   void fixParameter(int ipar);
   void fixParameter(int ibin,int icomp,int iatt, int imod);
   void setRandSysPar(); //sets systematic parameters to random values
@@ -134,7 +134,7 @@ TRandom2* randy2 = new TRandom2();
 
 void atmFitPars::setRandSysPar(){
  // TRandom2* randy = new TRandom2();
-  float parval;
+  double parval;
   for (int i=0;i<nSysPars;i++){
      parval = randy2->Gaus(sysPar[i],(sysParUnc[i]/2.));
      if (parval<0) parval=0.;
@@ -164,19 +164,19 @@ void atmFitPars::fixParameter(int ipar){
   return;
 }
 
-void atmFitPars::setSysParameter(int ipar, float value){
+void atmFitPars::setSysParameter(int ipar, double value){
   sysPar[ipar]=value;
   pars[nTotPars-nSysPars+ipar]=value;
   return;
 }
 
-void atmFitPars::setParameter(int ibin, int icomp, int iatt, int itype, float value){
+void atmFitPars::setParameter(int ibin, int icomp, int iatt, int itype, double value){
   histoPar[ibin][icomp][iatt][itype] = value;
   pars[parIndex[ibin][icomp][iatt][itype]] = value;
   return;
 }
 
-void atmFitPars::setParameter(int ipar, float value){
+void atmFitPars::setParameter(int ipar, double value){
   pars[ipar]=value;
   if (ipar>=(nTotPars-nSysPars)) sysPar[ipar-nTotPars+nSysPars] = value;
   else{

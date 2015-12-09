@@ -14,7 +14,7 @@ void histoCompare::readFitPars(const char* filename){
 
 void histoCompare::timetest(int ntry){
   clock_t t1,t2;
-  float par[100];
+  double par[100];
   int parindex = 0;
   for (int ibin=0;ibin<nBin;ibin++){
     for (int icomp=0;icomp<nComp;icomp++){
@@ -26,8 +26,8 @@ void histoCompare::timetest(int ntry){
       }
     }
   }
-  float diff;
-  float result;
+  double diff;
+  double result;
   int itry=0;
   t1=clock();
   while (itry<ntry){
@@ -36,8 +36,8 @@ void histoCompare::timetest(int ntry){
     itry++;
   }
   t2=clock();
-  diff = ((float)t2-(float)t1)/(float)ntry;
-  float diff1 = diff;
+  diff = ((double)t2-(double)t1)/(double)ntry;
+  double diff1 = diff;
   cout<<"time 1: "<<diff<<endl;
   itry=0;
   t1=clock();
@@ -47,20 +47,20 @@ void histoCompare::timetest(int ntry){
     itry++;
   }
   t2=clock();
-  diff = ((float)t2-(float)t1)/(float)ntry;
+  diff = ((double)t2-(double)t1)/(double)ntry;
   cout<<"time 2: "<<diff<<endl;
   cout<<"changes: "<<diff1-diff<<endl;
   return;
 }
 
-void histoCompare::tuneMCMC(int ncycles,int nsteps,float goal){
+void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
 
   //setup mc mcmctools
 //  tunePar = guess;
   const int npars = thePars->nTotPars; //< total number of parameters in fit
-  float par[npars]; //< container for parameters
+  double par[npars]; //< container for parameters
   int parindex = 0;
-  float result = 0.;
+  double result = 0.;
   markovTools* mc = new markovTools(npars); //< create markovTools object
   mc->setTuneParameter(tunePar);
   //fill parameter array and set uncertainties
@@ -70,11 +70,11 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,float goal){
   }
   //set initial state
   getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
-  mc->setL((float)result);//< sets the initial likelihood
-  float Linit = result;
+  mc->setL((double)result);//< sets the initial likelihood
+  double Linit = result;
   //run tuning
   for (int icycle=0;icycle<ncycles;icycle++){
-    float xaccepted=0.;
+    double xaccepted=0.;
     int   istep=0;
     while (istep<nsteps){
       istep = mc->iStep;
@@ -85,7 +85,7 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,float goal){
         xaccepted++; 
       }
     }
-    float rate = xaccepted/(float)nsteps;
+    double rate = xaccepted/(double)nsteps;
     cout<<"acceptance rate: "<<rate<<endl;
     cout<<"tune parameter: "<<tunePar<<endl;
     tunePar*=(rate/goal);
@@ -97,9 +97,9 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,float goal){
 void histoCompare::runMCMC(int nsteps){
   //setup mcmc tools
   const int npars = thePars->nTotPars; //< total number of parameters in fit
-  float par[npars]; //< container for parameters
+  double par[npars]; //< container for parameters
   int parindex = 0;
-  float result = 0.;
+  double result = 0.;
   markovTools* mc = new markovTools(npars); //< create markovTools object
   mc->setTuneParameter(tunePar);
   //fill parameter array and set uncertainties
@@ -109,7 +109,7 @@ void histoCompare::runMCMC(int nsteps){
   }
   //set initial state
   getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
-  mc->setL((float)result);//< sets the initial likelihood
+  mc->setL((double)result);//< sets the initial likelihood
   int currentstep=0;
   while (currentstep<nsteps){
     currentstep = mc->iStep;
@@ -122,15 +122,15 @@ void histoCompare::runMCMC(int nsteps){
 }
 
 /*
-float histoCompare::getErrHi(int ibin,int icomp,int iatt,int imod){
+double histoCompare::getErrHi(int ibin,int icomp,int iatt,int imod){
   if (fixPar[ibin][icomp][iatt][imod]==1) return 0.;
-  float thresh = 1.0;
-  float Ldiff = 0.;
-  float Lbest = getTotLnL();
-  float parbest = Par[ibin][icomp][iatt][imod];
-  float parval = 0.;
-  float dpar = 1.;
-  float loerr;
+  double thresh = 1.0;
+  double Ldiff = 0.;
+  double Lbest = getTotLnL();
+  double parbest = Par[ibin][icomp][iatt][imod];
+  double parval = 0.;
+  double dpar = 1.;
+  double loerr;
   int ntry = 0;
   int ntrymax=1000;
   if (imod==0) dpar = 0.005;
@@ -175,15 +175,15 @@ void histoCompare::saveFitPars(const char* filename){
   return;
 }
 
-float histoCompare::getErrHi(int ipar){
+double histoCompare::getErrHi(int ipar){
   //scan through log likelihood by decreasing parameter until threshold is reached
-  float thresh = 1.0; //likelihood threshold
-  float Ldiff = 0.;  //difference in likelihood from current value
-  float Lbest = getTotLnL(); //current likelihood value
-  float parbest = thePars->pars[ipar];
-  float parval = thePars->pars[ipar]; 
-  float dpar = thePars->parUnc[ipar]/2.;
-  float hierr;
+  double thresh = 1.0; //likelihood threshold
+  double Ldiff = 0.;  //difference in likelihood from current value
+  double Lbest = getTotLnL(); //current likelihood value
+  double parbest = thePars->pars[ipar];
+  double parval = thePars->pars[ipar]; 
+  double dpar = thePars->parUnc[ipar]/2.;
+  double hierr;
   int ntry = 0;
   int ntrymax=1000;
   //coarse search
@@ -227,16 +227,16 @@ float histoCompare::getErrHi(int ipar){
 
 
 
-float histoCompare::getErrLo(int ipar){
+double histoCompare::getErrLo(int ipar){
   //scan through log likelihood by decreasing parameter until threshold is reached
-  float thresh = 1.0; //likelihood threshold
-  float Ldiff = 0.;  //difference in likelihood from current value
-  float Lbest = getTotLnL(); //current likelihood value
-  float parbest = thePars->pars[ipar];
-  float parval = thePars->pars[ipar]; 
-  float dpar = thePars->parUnc[ipar]/10.;
+  double thresh = 1.0; //likelihood threshold
+  double Ldiff = 0.;  //difference in likelihood from current value
+  double Lbest = getTotLnL(); //current likelihood value
+  double parbest = thePars->pars[ipar];
+  double parval = thePars->pars[ipar]; 
+  double dpar = thePars->parUnc[ipar]/10.;
 //  cout<<"dpar: "<<dpar<<endl;
-  float loerr;
+  double loerr;
   int ntry = 0;
   int ntrymax=1000;
   //coarse search
@@ -285,16 +285,16 @@ float histoCompare::getErrLo(int ipar){
 }
 
 /*
-float histoCompare::getErrLo(int ibin,int icomp,int iatt,int imod){
+double histoCompare::getErrLo(int ibin,int icomp,int iatt,int imod){
   //scan through log likelihood by decreasing parameter
   if (fixPar[ibin][icomp][iatt][imod]==1) return 0.;
-  float thresh = 1.0;
-  float Ldiff = 0.;
-  float Lbest = getTotLnL();
-  float parbest = Par[ibin][icomp][iatt][imod];
-  float parval = 0.;
-  float dpar = 1.;
-  float loerr;
+  double thresh = 1.0;
+  double Ldiff = 0.;
+  double Lbest = getTotLnL();
+  double parbest = Par[ibin][icomp][iatt][imod];
+  double parval = 0.;
+  double dpar = 1.;
+  double loerr;
   int ntry = 0;
   int ntrymax=1000;
   if (imod==0) dpar = 0.005;
@@ -333,17 +333,17 @@ float histoCompare::getErrLo(int ibin,int icomp,int iatt,int imod){
 }
 */
 
-void histoCompare::profileL(int ipar, float range, int npts){
+void histoCompare::profileL(int ipar, double range, int npts){
   TString pname = "p";
   pname.Append("_profile.png");
-  float bestpoint = thePars->pars[ipar];
+  double bestpoint = thePars->pars[ipar];
   cout<<"Fitted value: "<<bestpoint<<endl;
-  float dx = range/(float)npts;
-  float xx = bestpoint - (range/2.);
-  float ll;
-  float lbest = getTotLnL();
+  double dx = range/(double)npts;
+  double xx = bestpoint - (range/2.);
+  double ll;
+  double lbest = getTotLnL();
   if (hProf) hProf->Delete();
-  hProf = new TH1F("hprof","hprof",npts,xx,(xx+range));
+  hProf = new TH1D("hprof","hprof",npts,xx,(xx+range));
   for (int ipoint=0;ipoint<npts;ipoint++){
    // cout<<"filling point" <<ipoint<<endl;
     //Par[ibin][icomp][iatt][imod] = xx;
@@ -369,19 +369,19 @@ void histoCompare::profileL(int ipar, float range, int npts){
 
 
 
-void histoCompare::profileL(int ibin, int icomp, int iatt, int imod, float range, int npts){
+void histoCompare::profileL(int ibin, int icomp, int iatt, int imod, double range, int npts){
   TString pname = "p";
   pname.Append("_profile.png");
-  //float bestpoint = Par[ibin][icomp][iatt][imod];
-  float bestpoint = thePars->histoPar[ibin][icomp][iatt][imod];
+  //double bestpoint = Par[ibin][icomp][iatt][imod];
+  double bestpoint = thePars->histoPar[ibin][icomp][iatt][imod];
 
   cout<<"Fitted value: "<<bestpoint<<endl;
-  float dx = range/(float)npts;
-  float xx = bestpoint - (range/2.);
-  float ll;
-  float lbest = getTotLnL();
+  double dx = range/(double)npts;
+  double xx = bestpoint - (range/2.);
+  double ll;
+  double lbest = getTotLnL();
   if (hProf) hProf->Delete();
-  hProf = new TH1F("hprof","hprof",npts,xx,(xx+range));
+  hProf = new TH1D("hprof","hprof",npts,xx,(xx+range));
   for (int ipoint=0;ipoint<npts;ipoint++){
    // cout<<"filling point" <<ipoint<<endl;
     //Par[ibin][icomp][iatt][imod] = xx;
@@ -410,9 +410,9 @@ void histoCompare::showFitPars(int ibin,int iatt,int imod){
   double Y[nbinstot];
   int parindex;
   if (gPar) gPar->Delete();
-  hPar  = new TH1F("hpar","hpar",nbinstot,0,nbinstot);
-  hParErrLo = new TH1F("hparerrlo","hparerrlo",nbinstot,0,nbinstot);
-  hParErrHi = new TH1F("hparerrhi","hparerrhi",nbinstot,0,nbinstot);
+  hPar  = new TH1D("hpar","hpar",nbinstot,0,nbinstot);
+  hParErrLo = new TH1D("hparerrlo","hparerrlo",nbinstot,0,nbinstot);
+  hParErrHi = new TH1D("hparerrhi","hparerrhi",nbinstot,0,nbinstot);
   for (int icomp=0;icomp<nComp;icomp++){
     parindex=thePars->getParIndex(ibin,icomp,iatt,imod);
     hPar->SetBinContent(icomp+1,thePars->getParameter(parindex));
@@ -421,8 +421,8 @@ void histoCompare::showFitPars(int ibin,int iatt,int imod){
  //   hPar->GetXaxis()->SetBinLabel(icomp+1,parName[ibin][icomp][iatt][imod].Data());
     EYL[icomp]=(double)thePars->getParameter(parindex) -errParLo[parindex];
     EYH[icomp]=errParHi[parindex] - (double)thePars->getParameter(parindex);
-    hParErrLo->SetBinContent(icomp+1,(float)EYL[icomp]);
-    hParErrHi->SetBinContent(icomp+1,(float)EYH[icomp]);
+    hParErrLo->SetBinContent(icomp+1,(double)EYL[icomp]);
+    hParErrHi->SetBinContent(icomp+1,(double)EYH[icomp]);
     EXL[icomp]=0.4;
     EXH[icomp]=0.4;
   }
@@ -435,9 +435,9 @@ void histoCompare::showFitPars(int ibin,int iatt,int imod){
   return;
 }
 
-void histoCompare::showModHiso(int isamp,int ibin, int icomp, int iatt, float smear, float bias){
-  float biastmp = thePars->histoPar[ibin][icomp][iatt][1];
-  float smeartmp = thePars->histoPar[ibin][icomp][iatt][1];
+void histoCompare::showModHiso(int isamp,int ibin, int icomp, int iatt, double smear, double bias){
+  double biastmp = thePars->histoPar[ibin][icomp][iatt][1];
+  double smeartmp = thePars->histoPar[ibin][icomp][iatt][1];
   thePars->setParameter(ibin,icomp,iatt,0,smear);
   thePars->setParameter(ibin,icomp,iatt,1,bias);
   hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt); //gets the modified histogram
@@ -445,9 +445,9 @@ void histoCompare::showModHiso(int isamp,int ibin, int icomp, int iatt, float sm
 //  if (hMod) hMod->Delete();
 //  if (hTmp) hTmp->Delete();
 //  if (hTot) hTot->Delete();
-//  hMod = (TH1F*) hManager->hMC[isamp][ibin][icomp][iatt]->Clone("hclonetmp");
-//  hTot = (TH1F*) hManager->hMC[isamp][ibin][icomp][iatt]->Clone("htottmp");
-//  hTmp = (TH1F*) hManager->hMC[isamp][ibin][icomp][iatt]->Clone("htmp");
+//  hMod = (TH1D*) hManager->hMC[isamp][ibin][icomp][iatt]->Clone("hclonetmp");
+//  hTot = (TH1D*) hManager->hMC[isamp][ibin][icomp][iatt]->Clone("htottmp");
+//  hTmp = (TH1D*) hManager->hMC[isamp][ibin][icomp][iatt]->Clone("htmp");
 //  smearHisto((*hManager->hMC[isamp][ibin][icomp][iatt]),(*hMod),smear,bias);
   
 //  for (int icomp=1;i<nComp;icomp++){
@@ -467,18 +467,18 @@ void histoCompare::showModHiso(int isamp,int ibin, int icomp, int iatt, float sm
   return;
 }
 
-TH1F* histoCompare::showSmear(TH1F* h, float smear, float bias){
-  TH1F* hh = smearIt(h,smear,bias);
+TH1D* histoCompare::showSmear(TH1D* h, double smear, double bias){
+  TH1D* hh = smearIt(h,smear,bias);
   return hh;
 }
 
 void histoCompare::showFitResult(int isamp,int ibin,int iatt){
   //sum up mc components
   //get MC prediction
-  hMod = (TH1F*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Clone("hmod");
+  hMod = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Clone("hmod");
   hTmp = hManager->getSumHistogram(isamp,ibin,iatt);
  // hMod = smearIt(hManager->hMC[isamp][ibin][0][iatt],smear,bias);
-//  hTot = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("htot");
+//  hTot = (TH1D*)hManager->hMC[isamp][ibin][0][iatt]->Clone("htot");
 //  for (int jcomp=1;jcomp<nComp;jcomp++){
 //    hTot->Add(hManager->hMC[isamp][ibin][jcomp][iatt]);
 //    smear = bestPar[ibin][jcomp][iatt][0];
@@ -492,8 +492,9 @@ void histoCompare::showFitResult(int isamp,int ibin,int iatt){
   hTmp->SetLineColor(kBlue);
 //  hTot->Rebin(rebinFactor);
 //  hMod->Rebin(rebinFactor);
-  hMod->Draw();
-  hTmp->Draw("samee");
+  hTmp->Draw();
+  hMod->Draw("samee");
+ // hTmp->Draw("samee");
 
   hManager->hData[isamp][ibin][iatt]->SetMarkerStyle(8);
   hManager->hData[isamp][ibin][iatt]->Draw("samee");
@@ -505,12 +506,12 @@ void histoCompare::showFitEffect(int isamp,int ibin,int icomp,int iatt){
   hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt); //gets the modified histogram
   hTmp = hManager->getSumHistogram(isamp,ibin,iatt);
 
-//  float smear = bestPar[ibin][icomp][iatt][0];
-//  float bias  = bestPar[ibin][icomp][iatt][1];
+//  double smear = bestPar[ibin][icomp][iatt][0];
+//  double bias  = bestPar[ibin][icomp][iatt][1];
 //  cout<<"SMEAR: "<<smear<<endl;
 //  cout<<"BIAS:  "<<bias<<endl;
 //  hMod = smearIt(hManager->hMC[isamp][ibin][icomp][iatt],smear,bias);
-//  hTot = (TH1F*)hManager->hMC[isamp][ibin][icomp][iatt]->Clone("htot");
+//  hTot = (TH1D*)hManager->hMC[isamp][ibin][icomp][iatt]->Clone("htot");
   for (int jcomp=0;jcomp<nComp;jcomp++){
     if (jcomp!=icomp){
       hMod->Add(hManager->hMC[isamp][ibin][jcomp][iatt]);
@@ -530,18 +531,21 @@ void histoCompare::showFitEffect(int isamp,int ibin,int icomp,int iatt){
   return;
 }
 
+///////////////////////////////////////////////////////////////////////////////////
+//Plots the specified histogram before and after modifications, as well as the data
 void histoCompare::showFitHisto(int isamp,int ibin,int icomp,int iatt){
-  float smear = bestPar[ibin][icomp][iatt][0];
-  float bias  = bestPar[ibin][icomp][iatt][1];
+  double smear = thePars->histoPar[ibin][icomp][iatt][0];
+  double bias  = thePars->histoPar[ibin][icomp][iatt][1];
   cout<<"SMEAR: "<<smear<<endl;
   cout<<"BIAS:  "<<bias<<endl;
-  hMod = smearIt(hManager->hMC[isamp][ibin][icomp][iatt],smear,bias);
-  hManager->hMC[isamp][ibin][icomp][iatt]->SetLineColor(kRed);
-  hManager->hMC[isamp][ibin][icomp][iatt]->Draw();
-  hMod->SetLineColor(kBlue);
+  hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt);
+  hMod->SetLineColor(kRed);
+  hMod->Draw("e");
+  hTmp = hManager->getHistogram(isamp,ibin,icomp,iatt);
+  hTmp->SetLineColor(kBlue);
 //  hMod->Smooth(1);
 //  convolveThisHisto(*hMod,hMod->GetBinWidth(2)*0.5,0.);
-  hMod->Draw("same");
+  hTmp->Draw("samee");
   return;
 }
 
@@ -553,7 +557,7 @@ void histoCompare::LnLPreFit(){
   //threshold to determine if a parameter is fit or not
   //if the MC histograms for this parameter have a size less than this value,
   //don't bother fitting them!
-  float nthresh = 100.;
+  double nthresh = 100.;
 
   //sets the precision of the fits
   double parerr = 0.005;  
@@ -564,7 +568,7 @@ void histoCompare::LnLPreFit(){
   //parameter name container
   TString parnametmp;  
 
-  float  parinit; //container to temporarily store initial values 
+  double  parinit; //container to temporarily store initial values 
 
   //total number of parameters to be fit
   int npars = thePars->nTotPars;
@@ -600,7 +604,7 @@ void histoCompare::LnLPreFit(){
         parnametmp.Append("bias");
         parName[ibin][icomp][iatt][1]=parnametmp.Data();
         //get summed histogram
-        hTot = (TH1F*)hManager->hMC[0][ibin][icomp][iatt]->Clone("htot");
+        hTot = (TH1D*)hManager->hMC[0][ibin][icomp][iatt]->Clone("htot");
         for (int isamp=1;isamp<nSamp;isamp++){
           hTot->Add(hManager->hMC[isamp][ibin][icomp][iatt]);
         }
@@ -850,7 +854,7 @@ void histoCompare::LnLFit(){
   //threshold to determine if a parameter is fit or not
   //if the MC histograms for this parameter have a size less than this value,
   //don't bother fitting them!
-  float nthresh = 50.;
+  double nthresh = 50.;
 
   //sets the precision of the fits
   double parerr = 0.001;  
@@ -861,7 +865,7 @@ void histoCompare::LnLFit(){
   //parameter name container
   TString parnametmp;  
 
-  float  parinit; //container to temporarily store initial values 
+  double  parinit; //container to temporarily store initial values 
 
   //total number of parameters to be fit
   int npars = thePars->nTotPars;
@@ -908,7 +912,7 @@ void histoCompare::LnLFit(){
         fit->FixParameter(jpar);
       }
 
-      //for bin 0, float the xsec and flux parameters as well//
+      //for bin 0, double the xsec and flux parameters as well//
       if (jbin==0){
         //release all flux and xsec pars
         for (int isyspar=(thePars->nTotPars-thePars->nSysPars);isyspar<thePars->nSysPars;isyspar++){
@@ -988,7 +992,7 @@ void histoCompare::sumSqPrefit(){
   //threshold to determine if a parameter is fit or not
   //if the MC histograms for this parameter have a size less than this value,
   //don't bother fitting them!
-  float nthresh = 50.;
+  double nthresh = 50.;
 
   //sets the precision of the fits
   double parerr = 0.05;  
@@ -999,7 +1003,7 @@ void histoCompare::sumSqPrefit(){
   //parameter name container
   TString parnametmp;  
 
-  float  parinit; //container to temporarily store initial values 
+  double  parinit; //container to temporarily store initial values 
 
   //total number of parameters to be fit
   int npars = nBin*nComp*nAtt*2;
@@ -1036,7 +1040,7 @@ void histoCompare::sumSqPrefit(){
         parnametmp.Append("bias");
         parName[ibin][icomp][iatt][1]=parnametmp.Data();
         //get summed histogram
-        hTot = (TH1F*)hManager->hMC[0][ibin][icomp][iatt]->Clone("htot");
+        hTot = (TH1D*)hManager->hMC[0][ibin][icomp][iatt]->Clone("htot");
         for (int isamp=0;isamp<nSamp;isamp++){
           hTot->Add(hManager->hMC[isamp][ibin][icomp][iatt]);
         }
@@ -1137,16 +1141,16 @@ void histoCompare::sumSqPrefit(){
 }
 
 
-float histoCompare::getNDiff(){
+double histoCompare::getNDiff(){
   hTot = smearIt(hMC[0],parDebug[0][0],parDebug[0][1]);
   for (int i=1;i<nMCHist;i++){
     hTot->Add(smearIt(hMC[i],parDebug[i][0],parDebug[i][1]));
   }
-  float xcut = 100.;
+  double xcut = 100.;
   int   cutbin = hTot->FindBin(xcut);
   int   binmax = hTot->GetNbinsX();
-  float diff1 = hTot->Integral(1,cutbin)-hData[0]->Integral(1,cutbin);
-  float diff2 = hTot->Integral(cutbin,binmax)-hData[0]->Integral(cutbin,binmax);
+  double diff1 = hTot->Integral(1,cutbin)-hData[0]->Integral(1,cutbin);
+  double diff2 = hTot->Integral(cutbin,binmax)-hData[0]->Integral(cutbin,binmax);
   return diff1*diff1 + diff2*diff2;
 }
 
@@ -1166,7 +1170,7 @@ void histoCompare::drawResult(int ihist){
   return;
 }
 
-void histoCompare::getTotLnL1D(float& result,int npar, float par[]){
+void histoCompare::getTotLnL1D(double& result,int npar, double par[]){
 
   for (int ipar=0;ipar<npar;ipar++){
     thePars->setParameter(ipar,par[ipar]);
@@ -1335,10 +1339,10 @@ void histoCompare::minSumSq(){
   return;
 }
 
-float histoCompare::getTotSumSqDebug(){
-  float totsumsq = 0.;
-  hMod = smearIt(hMC[0],parDebug[0][0],parDebug[0][1]);
-  hTot = (TH1F*)hMod->Clone("hmod");
+double histoCompare::getTotSumSqDebug(){
+/*  double totsumsq = 0.;
+//  hMod = smearIt(hMC[0],parDebug[0][0],parDebug[0][1]);
+  hTot = (TH1D*)hMod->Clone("hmod");
   for (int ihist=1;ihist<nMCHist;ihist++){
     hTot->Add(smearIt(hMC[ihist],parDebug[ihist][0],parDebug[ihist][1]));
   }
@@ -1348,46 +1352,30 @@ float histoCompare::getTotSumSqDebug(){
 //    totsumsq+=getSumSq(hModDebug,hData[0]);
 //  }
   return totsumsq;
+*/
+ return 1;
 }
 
+////////////////////////////////////////////////
+//Compute the total log liklihood by comparing all histograms
+double histoCompare::getTotLnL(){
 
-float histoCompare::getTotLnL(){
-  float totL = 0.;
+  double totL = 0.;
+
+  ////////////////////////////////////////
+  //contribution from histogram comparison  
   for (int isamp=0;isamp<nSamp;isamp++){
     for (int ibin=0;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
-         //get modfied MC prediction
-      //   if (hMod) hMod->Delete();
-        // hMod = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("hmodtmp");
-   //      hMod = (TH1F*)hManager->getModHistogram(isamp,ibin,0,iatt)->Clone("hmodtmp");
-      //   cout<<"getting histogram: "<<isamp<<" "<<ibin<<" "<<iatt<<endl;
          hMod = hManager->getSumHistogramMod(isamp,ibin,iatt);
-        // hMod = getModifiedHisto(isamp,ibin,iatt);
-     //    hMod->Smooth(5);
-      //   hTmp = (TH1F*)hManager->hMC[isamp][ibin][0][iatt]->Clone("htmp");
-      //   smearHisto((*hManager->hMC[isamp][ibin][0][iatt]),(*hMod),Par[ibin][0][iatt][0],Par[ibin][0][iatt][1]);    
-      //   smearHisto((*hManager->hMC[isamp][ibin][0][iatt]),(*hMod),thePars->histoPars[ibin][0][iatt][0],thePars->histoPars[ibin][0][iatt][1]);    
-      //   for (int icomp = 1;icomp<nComp;icomp++){
-     //      hTmp->Smooth(1);
-    //       smearHisto((*hManager->hMC[isamp][ibin][icomp][iatt]),(*hTmp),Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]);
-    //       hTmp->Smooth(3);
-         //  hMod->Add(hManager->getModHistogram(isamp,ibin,icomp,iatt));
-        // }
-         //add error to total
-    //     hMod->Smooth(3);
-      //   cout<<"scaling histogram "<<endl;
-         //hMod->Scale(Norm);
-        // hMod->Smooth(10);
-     //    convolveThisHisto(*hMod,hMod->GetBinWidth(2)*0.7,0.);
-     //    cout<<"rebin histogram with factor: "<<rebinFactor<<endl;
-       //  hMod->Rebin(rebinFactor);
          totL+=getLnL(hMod,hManager->hData[isamp][ibin][iatt]);
       }
     }
   }
   
-   //add flux/xsec component
-  float pull;
+  //////////////////////////////////////////////
+  //contribution from flux/xsec priors
+  double pull;
   for (int isys=0;isys<thePars->nSysPars;isys++){
     pull = thePars->sysPar[isys]-1.;
     pull/=thePars->sysParUnc[isys];
@@ -1398,8 +1386,8 @@ float histoCompare::getTotLnL(){
 
 
 
-float histoCompare::getTotSumSq(){
-  float totsumsq = 0.;
+double histoCompare::getTotSumSq(){
+  double totsumsq = 0.;
   for (int isamp=0;isamp<nSamp;isamp++){
     for (int ibin=0;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
@@ -1418,9 +1406,9 @@ float histoCompare::getTotSumSq(){
 }
 
 
-float histoCompare::getSumSq(TH1F* h1, TH1F* h2){
-  float sumsq = 0.;
-  float diff;
+double histoCompare::getSumSq(TH1D* h1, TH1D* h2){
+  double sumsq = 0.;
+  double diff;
   for (int ibin=10;ibin<=(h1->GetNbinsX()-10);ibin++){
     diff = h1->GetBinContent(ibin)-h2->GetBinContent(ibin);
     sumsq += (diff*diff);
@@ -1430,63 +1418,57 @@ float histoCompare::getSumSq(TH1F* h1, TH1F* h2){
 
 ////////////////////////////////////////////////////////////////////
 //evalute log-likelihood between two histograms
-float histoCompare::getLnL(TH1F* h1, TH1F* h2){
-  float lnL = 0.;
-  float diff;
-  float term;
-  float c1;
-  float c2;
-  float dof=0.;
-  float quaderr;
+double histoCompare::getLnL(TH1D* h1, TH1D* h2){
+  double lnL = 0.;
+  double diff;
+  double term;
+  double c1;
+  double c2;
+  double dof=0.;
+  double quaderr;
+
   //////////////////////////////////////////////////
   //assume Gaussian errors
-//  /*
-  for (int ibin=1;ibin<=(h1->GetNbinsX()-1);ibin++){
+  /*
+  for (int ibin=5;ibin<=(h1->GetNbinsX()-5);ibin++){
+//  for (int ibin=10;ibin<=10;ibin++){
+
     c1 = h1->GetBinContent(ibin);
-    if (c1<=0.) continue; //do nothing if there are no (or few) predicted events in this bin
+    if (c1<=0.2) continue; //do nothing if there are no (or few) predicted events in this bin
     dof++;
     c2 = h2->GetBinContent(ibin);
+    if (c2<20000){
+       //use numberical method
+       lnL += evalLnLNumeric(c2,c1,h1->GetBinError(ibin));
+       continue;
+    }
     //assume 2nd histogram is data..
-    cout<<"bin: "<<ibin<<endl;
-    cout<<"c1:  "<<c1<<endl;
-    cout<<"c2:  "<<c2<<endl;
-    cout<<"diff: "<<c1-c2<<endl;
-    cout<<"sig:  "<<h1->GetBinError(ibin)<<endl;
-    quaderr = (h1->GetBinError(ibin)*h1->GetBinError(ibin));
-    quaderr += (h2->GetBinError(ibin)*h2->GetBinError(ibin));
+ //   cout<<"bin: "<<ibin<<endl;
+//    cout<<"c1:  "<<c1<<endl;
+//    cout<<"c2:  "<<c2<<endl;
+//    cout<<"diff: "<<c1-c2<<endl;
+//    cout<<"sig:  "<<h1->GetBinError(ibin)<<endl;
+//    quaderr = (h1->GetBinError(ibin)*h1->GetBinError(ibin));
+//    quaderr += (h2->GetBinError(ibin)*h2->GetBinError(ibin));
 //    lnL += ((c1-c2)*(c1-c2))/(2*h1->GetBinError(ibin)*h1->GetBinError(ibin));
-    lnL += ((c1-c2)*(c1-c2))/(2*quaderr);
+ //   lnL += ((c1-c2)*(c1-c2))/(2*quaderr);
 
   }
-  cout<<"dof: "<<dof<<endl;
+//  cout<<"dof: "<<dof<<endl;
 //  */
 
   ///////////////////////////////////////////////////
   //assume poisson errors
-  /*
-  for (int ibin=3;ibin<=(h1->GetNbinsX()-3);ibin++){
-    c1 = h1->GetBinContent(ibin);
-    c2 = h2->GetBinContent(ibin);
- //   if ((c1<=0.)||(c2<=0.))continue;
-    diff = c1-c2;
-   // if (c1==0) return (c1-c2)*(c1-c2);
-    if (c2==0){
-      term = 0.;
-    }
-    else if(c1==0.){
-      term = -1.*diff;
-    }
-    else{ 
-      term = c2*TMath::Log(c2/c1);
-    }
-    lnL += (diff+term);
+  for (int ibin=2;ibin<=(h1->GetNbinsX()-2);ibin++){
+    c1 = h1->GetBinContent(ibin); //MC
+    c2 = h2->GetBinContent(ibin); //data
+    if (c2<10) continue;  //ignore very small bin contents
+    lnL += evalLnLFast(c2,c1,h1->GetBinError(ibin));
   }
-//  */
-
   return lnL;
 }
 
-void histoCompare::addHistogram(TH1F* h,int dataflg){
+void histoCompare::addHistogram(TH1D* h,int dataflg){
   if (dataflg==0){
     hMC[nMCHist] = h;
     nMCHist++;
@@ -1504,22 +1486,9 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
   nComp = ncomp; 
   nAtt  = natt;
   hManager = new histoManager(filerootname,nsamp,nbin,ncomp,natt);
-  float ndataevents=0;
-  float nmcevents=0;
-  //setup initaal parametres
-  /*
-  for (int icomp=0;icomp<nComp;icomp++){
-    for (int ibin=0;ibin<nBin;ibin++){
-      for (int iatt=0;iatt<nAtt;iatt++){
-        Par[ibin][icomp][iatt][0]=1.;  //smear parameter
-        Par[ibin][icomp][iatt][1]=0.;  //bias parameter
-        bestPar[ibin][icomp][iatt][0]=1.;  //smear parameter
-        bestPar[ibin][icomp][iatt][1]=0.;  //bias parameter
-      }
-    }
-  } 
-  */
-  float events;
+  double ndataevents=0;
+  double nmcevents=0;
+  double events;
   //count total events
   for (int jsamp=0;jsamp<nSamp;jsamp++){
     for (int jbin=0;jbin<nBin;jbin++){

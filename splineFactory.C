@@ -21,20 +21,20 @@ class splineFactory{
   TTree* mcTree; 
   fQreader* mcEvt;
   histoManager* hManager; //manages all default histograms
-  TH1F* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX][NPTSMAX]; //array for modified histograms for spline creation
+  TH1D* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX][NPTSMAX]; //array for modified histograms for spline creation
   void resetModHistos();
   TFile *fout; //output file
   TString foutName;
-  TH1F* htmp; //temporary histogram pointer
+  TH1D* htmp; //temporary histogram pointer
   int nSamp;
   int nBin;
   int nComp;
   int nAtt;
   int nSyst;
-  float sysPar[NSYSTMAX]; //systematic parameter values
-  float sysUnc[NSYSTMAX];  //systematic parameter uncertainties
-  float attribute[NATTMAX];
-  float eventWeight;
+  double sysPar[NSYSTMAX]; //systematic parameter values
+  double sysUnc[NSYSTMAX];  //systematic parameter uncertainties
+  double attribute[NATTMAX];
+  double eventWeight;
 
   //for output tree
   TTree* splineTree;
@@ -45,12 +45,12 @@ class splineFactory{
   int nsystpar;
   int npoints;
   int nhistobins;
-  float systParValues[NPTSMAX];
-  float binWeight[NPTSMAX][NHBINSMAX];
+  double systParValues[NPTSMAX];
+  double binWeight[NPTSMAX][NHBINSMAX];
   //methods
   //this needs to be modified for each systematic paramater to add
-  float getEvtWeight(int ipar); //returns event weight after applying syst. par. 
-  float getEvtWeight(fQreader* mcEvt,int ipar,float value); //
+  double getEvtWeight(int ipar); //returns event weight after applying syst. par. 
+  double getEvtWeight(fQreader* mcEvt,int ipar,double value); //
   void setOutputFileName(const char* name){foutName=name;}
   TString getOutputFileName(){return foutName;}
   //
@@ -68,7 +68,7 @@ class splineFactory{
   void fillAttributes();
   void setupHistos();
   void setupSystPars(); //sets up systematic parameters
-  void incrementSystPars(float nsig);
+  void incrementSystPars(double nsig);
 };
 
 void splineFactory::resetModHistos(){
@@ -118,13 +118,13 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
        }
        else{
          binWeight[ipt][jhistobin] =
-           ((float)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin)*hManager->normFactor)/
-           (float)hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin);
+           ((double)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin)*hManager->normFactor)/
+           (double)hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin);
        }
      }
    }
    //fill array of all systematic parameter points used to fill histograms
-   float sigvals[5] = {-5.,-2.,0.,2.,5.};
+   double sigvals[5] = {-5.,-2.,0.,2.,5.};
    for (int jpt=0;jpt<NPTSMAX;jpt++){
      incrementSystPars(sigvals[jpt]);
   //   cout<<"par: "<<isyst<<sysPar[isyst]<<endl;
@@ -152,12 +152,12 @@ void splineFactory::buildTheSplines(){
   splineTree->Branch("nsystpar",&nsystpar,"nsystpar/I");
   splineTree->Branch("nsyspartot",&nSyst,"nsyspartot/I");
   splineTree->Branch("npoints",&npoints,"npoints/I");
-  splineTree->Branch("systParValues",systParValues,Form("systParValues[%d]/F",NPTSMAX));
-  splineTree->Branch("binWeight",binWeight,Form("binWeight[%d][%d]/F",NPTSMAX,NHBINSMAX));
+  splineTree->Branch("systParValues",systParValues,Form("systParValues[%d]/D",NPTSMAX));
+  splineTree->Branch("binWeight",binWeight,Form("binWeight[%d][%d]/D",NPTSMAX,NHBINSMAX));
   
 
   //setup systematic deviations
-  float sigvals[5] = {-5.,-2.,0.,2.,5.};
+  double sigvals[5] = {-5.,-2.,0.,2.,5.};
 
   cout<<"creating spines"<<endl; 
 
@@ -196,7 +196,7 @@ void splineFactory::buildTheSplines(){
   return;
 }
 
-void splineFactory::incrementSystPars(float nsig){
+void splineFactory::incrementSystPars(double nsig){
 
   //reset initial parameters
   setupSystPars();
@@ -268,7 +268,7 @@ void splineFactory::setupSystPars(){
 
 void splineFactory::setupHistos(){
   cout<<"called setupHistos()"<<endl;
-  TH1F* htemplate;
+  TH1D* htemplate;
   TString hname;
   for (int ipt=0;ipt<NPTSMAX;ipt++){
     for (int isamp=0;isamp<nSamp;isamp++){
@@ -279,7 +279,7 @@ void splineFactory::setupHistos(){
             hname = htemplate->GetName();
             hname.Append(Form("_%d%d%d%d%d",ipt,isamp,ibin,icomp,iatt));
             cout<<"setting histogram template: "<<hname.Data()<<endl;
-            hMC[isamp][ibin][icomp][iatt][ipt]=(TH1F*)htemplate->Clone(hname.Data());
+            hMC[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
             hMC[isamp][ibin][icomp][iatt][ipt]->Reset();
           }
         }
@@ -328,11 +328,11 @@ void splineFactory::fillHistograms(int ipt, int isyst){
   return;
 };
 
-float splineFactory::getEvtWeight(fQreader* mcEvt,int ipar,float value){
-//  float ww = 1.;
-  float ww = mcEvt->evtweight;
+double splineFactory::getEvtWeight(fQreader* mcEvt,int ipar,double value){
+//  double ww = 1.;
+  double ww = mcEvt->evtweight;
   int absmode = TMath::Abs(mcEvt->mode);
-  float Enu     = mcEvt->pmomv[0];
+  double Enu     = mcEvt->pmomv[0];
   int  nutype  = TMath::Abs(mcEvt->ipnu[0]);
 //  if (ipar==0){
 //   if (mcEvt->ncomponent==0) ww*=sysPar[0];
@@ -386,11 +386,11 @@ float splineFactory::getEvtWeight(fQreader* mcEvt,int ipar,float value){
 
 }
 
-float splineFactory::getEvtWeight(int ipar){
-//  float ww = 1.;
-  float ww = mcEvt->evtweight;
+double splineFactory::getEvtWeight(int ipar){
+//  double ww = 1.;
+  double ww = mcEvt->evtweight;
   int absmode = TMath::Abs(mcEvt->mode);
-  float Enu     = mcEvt->pmomv[0];
+  double Enu     = mcEvt->pmomv[0];
   int  nutype  = TMath::Abs(mcEvt->ipnu[0]);
 //  if (ipar==0){
 //   if (mcEvt->ncomponent==0) ww*=sysPar[0];

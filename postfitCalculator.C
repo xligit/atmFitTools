@@ -1,7 +1,7 @@
 //#include "TTree.h"
 //#include "TFile.h"
 //#include "TString.h"
-//#include "TH1F.h"
+//#include "TH1D.h"
 
 //#include "shared.h"
 
@@ -30,18 +30,18 @@ class postfitCalculator{
   fQreader* mcreader; //< points to data in mctree
   atmFitPars* fitpars; //< points to the current fit parameters object
   splineFactory* sfact; //< empty spline factory to call getEvtWeight. 
-  float pars[1000]; 
-  float evtweight;
+  double pars[1000]; 
+  double evtweight;
   
   TString parFileName;
   //histogrms
-  TH1F* hEnu;
+  TH1D* hEnu;
  
 
   ////////////////////////////////////////////////////////
   //methods
   void  setMCTree(TTree* tr);
-  float getEvtWeight(); //< returns the weight given the current parameters
+  double getEvtWeight(); //< returns the weight given the current parameters
   void  setParsFromMCMC(int istep); //< sets parameters from mcmmc cloud
   void fillHistos(); //fills all histograms
   int makeSelection(int iselect); //select events based on various attributes;
@@ -91,11 +91,11 @@ void postfitCalculator::setMCTree(TTree* tr){
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //get event weights and modify attributes according to parameters
-float  postfitCalculator::getEvtWeight(){
+double  postfitCalculator::getEvtWeight(){
 
   /////////////////////////////////////////////
   //get event weights
-  float ww = 1.0;
+  double ww = 1.0;
   for (int isyspar=0;isyspar<fitpars->nSysPars;isyspar++){
     ww*=sfact->getEvtWeight(mcreader,isyspar,fitpars->sysPar[isyspar]);
   } 
@@ -117,9 +117,9 @@ void postfitCalculator::init(){
   //////////////////////  
   //setup histograms
   int nbins=25;
-  float xmin =  0.;
-  float xmax = 1000.;
-  hEnu = new TH1F("enu","enu",nbins,xmin,xmax);
+  double xmin =  0.;
+  double xmax = 1000.;
+  hEnu = new TH1D("enu","enu",nbins,xmin,xmax);
 
   ////////////////////////////
   //setup atm fit pars

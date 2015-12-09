@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Tue Nov 17 16:42:33 2015 by ROOT version 5.28/00c
+// Tue Dec  8 18:55:13 2015 by ROOT version 5.28/00c
 // from TTree splinePars/spinePars
-// found on file: fake3_splineOut.root
+// found on file: nom3_splineFactoryOut.root
 //////////////////////////////////////////////////////////
 
 #ifndef splineParReader_h
@@ -26,8 +26,8 @@ public :
    Int_t           nsystpar;
    Int_t           nsyspartot;
    Int_t           npoints;
-   Float_t         systParValues[5];
-   Float_t         binWeight[5][300];
+   Double_t        systParValues[5];
+   Double_t        binWeight[5][300];
 
    // List of branches
    TBranch        *b_nbin;   //!
@@ -60,9 +60,9 @@ splineParReader::splineParReader(TTree *tree)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("fake3_splineOut.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("nom3_splineFactoryOut.root");
       if (!f) {
-         f = new TFile("fake3_splineOut.root");
+         f = new TFile("nom3_splineFactoryOut.root");
       }
       tree = (TTree*)gDirectory->Get("splinePars");
 

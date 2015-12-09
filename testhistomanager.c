@@ -29,9 +29,9 @@ TTree* trdata = (TTree*)chdata;
 TTree* trmc   = (TTree*)trdata;
 
 
-histoManager* hm = new histoManager(1000,10000);
+//histoManager* hm = new histoManager(1000,10000);
 
-//histoManager* hm = new histoManager("./rootfiles/nom2_factoryOutput.root",3,3,7,1); 
+histoManager* hm = new histoManager("./rootfiles/nom3_factoryOutput.root",3,3,7,1); 
 //hm->readSplinesFromFile("./rootfiles/nom2_splineFactoryOut.root",9);
 
 

@@ -4,8 +4,8 @@
 #include "histoManager.h"
 #include "splineParReader.C"
 
-//TH1F*  histoManager::calcMCSum(int isample, int ibin, int iatt){
-//  TH1F* hTot = (TH1F*)hMC[isample][ibin][0][iatt]->Clone("htot");
+//TH1D*  histoManager::calcMCSum(int isample, int ibin, int iatt){
+//  TH1D* hTot = (TH1D*)hMC[isample][ibin][0][iatt]->Clone("htot");
 //  for (int i=1;i<nComponents;i++){
 //    hTot->Add(hMC[isample][ibin][i][iatt]);
 //  }
@@ -14,53 +14,65 @@
 
 
 
-TH1F* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
+TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
 //  if (hSum){
   //  cout<<"delete previous sum histogram"<<endl;
  //   hSum->Delete();
  // }
-  hSum = getModHistogram(isamp,ibin,0,iatt);
-  hSum->SetDefaultSumw2(kTRUE);
+//  hSum = getModHistogram(isamp,ibin,0,iatt);
+  hSumHistoMod[isamp][ibin][iatt]->Reset();
+  hSumHistoMod[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
+//  hSum->Sumw2(kTRUE);
 //  hSum->Smooth(1);
  // cout<<"clone in new histogram"<<endl;
-//  hSum = (TH1F*)getModHistogram(isamp,ibin,0,iatt)->Clone("hsum");
- // TH1F* tmppointer;
-  for (int icomp=1;icomp<nComponents;icomp++){
+//  hSum = (TH1D*)getModHistogram(isamp,ibin,0,iatt)->Clone("hsum");
+  for (int icomp=0;icomp<nComponents;icomp++){
     //cout<<"add histo component "<<icomp<<endl;
   //  tmppointer=getModHistogram(isamp,ibin,icomp,iatt);
   //  tmppointer->Smooth(3);
   //  hSum->Add(tmppointer);
-    hSum->Add(getModHistogram(isamp,ibin,icomp,iatt));
+//    tmppointer = getModHistogram(isamp,ibin,icomp,iatt);
+//    for (int ibin=1;ibin<=hSum->GetNbinsX();ibin++){
+//      double content = hSum->GetBinContent(ibin);
+//      content+=tmppointer->GetBinContent(ibin);
+//      double err1 = hSum->GetBinError(ibin);
+//      double err2 = tmppointer->GetBinError(ibin);
+//      hSum->SetBinContent(ibin,content);
+ //     hSum->SetBinError(ibin,TMath::Sqrt((err1*err1) + (err2*err2)));
+ //   }
+ //   hSum->SetDefaultSumw2(kTRUE);
+    hSumHistoMod[isamp][ibin][iatt]->Add(getModHistogram(isamp,ibin,icomp,iatt));
   }
-  return hSum;
+  return hSumHistoMod[isamp][ibin][iatt];
 }
 
-TH1F* histoManager::getSumHistogram(int isamp, int ibin, int iatt){
-  if (hSum!=NULL) hSum->Delete();
-  hSum = (TH1F*)hMC[isamp][ibin][0][iatt]->Clone("hsum");
-  hSum->SetDefaultSumw2(kTRUE);
-  for (int icomp=1;icomp<nComponents;icomp++){
-    hSum->Add(hMC[isamp][ibin][icomp][iatt]);
+TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt){
+//  if (hSumHisto[isamp][ibin][iatt]!=NULL) hSumHisto[isamp][ibin][iatt]->Delete();
+  hSumHisto[isamp][ibin][iatt]->Reset();
+  hSumHisto[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
+  for (int icomp=0;icomp<nComponents;icomp++){
+    hSumHisto[isamp][ibin][iatt]->Add(hMC[isamp][ibin][icomp][iatt]);
   }
-  return hSum;
+  return hSumHisto[isamp][ibin][iatt];
 }
 
-TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
+TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   int nhistobins = hMC[isamp][ibin][icomp][iatt]->GetNbinsX();
-  float weightsum;
-  float bincontent;
+  double weightsum;
+  double bincontent;
   hMCModified[isamp][ibin][icomp][iatt]->Reset();
+  hMCModified[isamp][ibin][icomp][iatt]->SetDefaultSumw2(kTRUE);
   for (int i=1;i<=nhistobins;i++){
     bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(i);
     weightsum=0.;
     for (int isyspar=0;isyspar<fitPars->nSysPars;isyspar++){
       //debug
-      //float daweight = getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
+      //double daweight = getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
       //cout<<daweight<<endl;
       //
       weightsum+=getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
     } 
-    weightsum = weightsum -(float)fitPars->nSysPars + 1.; 
+    weightsum = weightsum -(double)fitPars->nSysPars + 1.; 
     bincontent*=weightsum;
     hMCModified[isamp][ibin][icomp][iatt]->SetBinContent(i,bincontent);
     hMCModified[isamp][ibin][icomp][iatt]->SetBinError(i,hMC[isamp][ibin][icomp][iatt]->GetBinError(i));
@@ -70,7 +82,7 @@ TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
 }
 
 /*
-TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
+TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   if (hMod!=NULL){
  //   cout<<"deleting existing histogram"<<endl;
     hMod->Delete();
@@ -79,7 +91,7 @@ TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   //if not using splines, start with base histogram
   if (!useSplineFlg){
   //  cout<<"getting base histogram"<<endl;
-    hMod = (TH1F*)hMC[isamp][ibin][icomp][iatt]->Clone("hmod");
+    hMod = (TH1D*)hMC[isamp][ibin][icomp][iatt]->Clone("hmod");
   }
 
   //if splines are being used, start with histogram modified by splines
@@ -88,19 +100,19 @@ TH1F* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
     theSplines[isamp][ibin][icomp][iatt]->buildModHistoAllPar(fitPars->nSysPars,fitPars->sysPar);
 //    theSplines[isamp][ibin][icomp][iatt]->buildModHisto(0,1.);
 
-    hMod = (TH1F*)theSplines[isamp][ibin][icomp][iatt]->getModHisto()->Clone("hmod");
+    hMod = (TH1D*)theSplines[isamp][ibin][icomp][iatt]->getModHisto()->Clone("hmod");
   }
 
   //apply histogram smearing
 //  cout<<"smearing histogram with parameters: "<<fitPars->histoPar[ibin][0][iatt][0]<<" "<<fitPars->histoPar[ibin][0][iatt][1]<<endl;
-//  TH1F* htmp = (TH1F*)hMod->CLone("htmo");
+//  TH1D* htmp = (TH1D*)hMod->CLone("htmo");
   smearThisHisto( (*hMod), fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
 
   //return post-smearing histogram
   return hMod;
 }
 */
-TH1F* histoManager::getHistogram(int isamp, int ibin, int icomp, int iatt){
+TH1D* histoManager::getHistogram(int isamp, int ibin, int icomp, int iatt){
   return hMC[isamp][ibin][icomp][iatt];
 }
 
@@ -125,7 +137,7 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   style[5] = 1001;
   style[6] = 1001;
   style[7] = 1001;
-  float size[NCOMPMAX];
+  double size[NCOMPMAX];
   int hitolo[NCOMPMAX];
   for (int i=0;i<nComponents;i++){
 //    hMC[isample][ibin][i][iatt]->SetLineColor(color[i]);
@@ -147,8 +159,8 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
       }
     }
   }
-  float norm = 1.;
-  //if ((float)mcTree->GetEntries()>0) norm = (float)dataTree->GetEntries()/(float)mcTree->GetEntries();
+  double norm = 1.;
+  //if ((double)mcTree->GetEntries()>0) norm = (double)dataTree->GetEntries()/(double)mcTree->GetEntries();
   hMC[isample][ibin][hitolo[0]][iatt]->Draw();
   for (int j=0;j<nComponents;j++){
      hMC[isample][ibin][hitolo[j]][iatt]->Draw("same");
@@ -186,7 +198,7 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
   style[5] = 1001;
   style[6] = 1001;
   style[7] = 1001;
-  float size[NCOMPMAX];
+  double size[NCOMPMAX];
   int hitolo[NCOMPMAX];
   for (int i=0;i<nComponents;i++){
  //   hMC[isample][ibin][i][iatt]->SetLineColor(color[i]);
@@ -208,8 +220,8 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
       }
     }
   }
-  float norm = 1.;
-//  if ((float)mcTree->GetEntries()>0) norm = (float)dataTree->GetEntries()/(float)mcTree->GetEntries();
+  double norm = 1.;
+//  if ((double)mcTree->GetEntries()>0) norm = (double)dataTree->GetEntries()/(double)mcTree->GetEntries();
   THStack* hstack = new THStack("hstack","stack");
   hstack->Add(hMC[isample][ibin][hitolo[0]][iatt]);
   for (int j=1;j<nComponents;j++){
@@ -243,7 +255,7 @@ histoManager::histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int
   return;
 }
 
-void histoManager::setHistogram(int isamp, int ibin, int icomp, int iatt, int dataflg, TH1F* h){
+void histoManager::setHistogram(int isamp, int ibin, int icomp, int iatt, int dataflg, TH1D* h){
   if (!dataflg){
     hMC[isamp][ibin][icomp][iatt] = h; 
   }
@@ -253,12 +265,12 @@ void histoManager::setHistogram(int isamp, int ibin, int icomp, int iatt, int da
   return;
 }
 
-void histoManager::fillHistogram(int isamp, int ibin, int icomp, int iatt, float value,float weight){
+void histoManager::fillHistogram(int isamp, int ibin, int icomp, int iatt, double value,double weight){
   hMC[isamp][ibin][icomp][iatt]->Fill(value,weight); 
   return;
 }
 
-void histoManager::fillHistogramData(int isamp, int ibin, int iatt, float value,float weight){
+void histoManager::fillHistogramData(int isamp, int ibin, int iatt, double value,double weight){
   hData[isamp][ibin][iatt]->Fill(value,weight); 
   return;
 }
@@ -272,8 +284,14 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
   TString filename = rootname;
   //file containing histograms 
   fin = new TFile(filename.Data());
+  ///////////////////////////////////////////////
   //get normalization factor between data and MC
-  TH1F* htmp = (TH1F*)fin->Get("hnorm");
+  TH1D* htmp = (TH1D*)fin->Get("hnorm");
+
+  ///////////////////////////////////////////////////
+  //Set default sumw2 so errors are handled correctly
+  htmp->SetDefaultSumw2();
+
   normFactor=htmp->GetBinContent(1);
   TString hname;
   //setup data histos
@@ -283,11 +301,11 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
          hname = "hdata_";
          hname.Append(Form("samp%d_bin%d_att%d",isamp,ibin,iatt));
          cout<<"Getting histogram: "<<hname.Data()<<endl;
-         hData[isamp][ibin][iatt] = (TH1F*)fin->Get(hname.Data());
+         hData[isamp][ibin][iatt] = (TH1D*)fin->Get(hname.Data());
       }
     }
   }
-  TString hmodname; //name for modified histogram
+///  TString hmodname; //name for modified histogram
   //setup mc histos
   for (int isamp=0;isamp<nSamples;isamp++){
     for (int ibin=0;ibin<nBins;ibin++){
@@ -296,30 +314,38 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
            hname = "hmc_";
            hname.Append(Form("samp%d_bin%d_comp%d_att%d",isamp,ibin,icomp,iatt));
            cout<<"Getting histogram: "<<hname.Data()<<endl;
-           hMC[isamp][ibin][icomp][iatt] = (TH1F*)fin->Get(hname.Data());
-           hmodname = hMC[isamp][ibin][icomp][iatt]->GetName();
-           hmodname.Append("_modified");
-           hMCModified[isamp][ibin][icomp][iatt] = (TH1F*)hMC[isamp][ibin][icomp][iatt]->Clone(hmodname.Data());
-           hMCModified[isamp][ibin][icomp][iatt]->Reset();
+           hMC[isamp][ibin][icomp][iatt] = (TH1D*)fin->Get(hname.Data());
+   //        hmodname = hMC[isamp][ibin][icomp][iatt]->GetName();
+   //        hmodname.Append("_modified");
+   //        hMCModified[isamp][ibin][icomp][iatt] = (TH1D*)hMC[isamp][ibin][icomp][iatt]->Clone(hmodname.Data());
+   //        hMCModified[isamp][ibin][icomp][iatt]->Reset();
         }
       }
     }
-  } 
+  }
+  initHistos(); 
   return;
 }
 
 ///////////////////////////////////////////
 //initializes arrays of modified histograms
 void  histoManager::initHistos(){
+  TH1D* hsumset;
+  hsumset->SetDefaultSumw2(kTRUE);
   cout<<"histoManager: initializing modified histograms..."<<endl;
   TString hmodname;
   for (int isamp=0;isamp<nSamples;isamp++){
     for (int ibin=0;ibin<nBins;ibin++){
-      for (int icomp=0;icomp<nComponents;icomp++){
-        for (int iatt=0;iatt<nAttributes;iatt++){
+      for (int iatt=0;iatt<nAttributes;iatt++){
+        TString sumname = hMC[isamp][ibin][0][iatt]->GetName();
+        sumname.Append("_sum");
+        hSumHisto[isamp][ibin][iatt] = (TH1D*)hMC[isamp][ibin][0][iatt]->Clone(sumname.Data());
+        sumname.Append("_modified");
+        hSumHistoMod[isamp][ibin][iatt] = (TH1D*)hMC[isamp][ibin][0][iatt]->Clone(sumname.Data()); 
+        for (int icomp=0;icomp<nComponents;icomp++){
           hmodname = hMC[isamp][ibin][icomp][iatt]->GetName();
           hmodname.Append("_mod");
-          hMCModified[isamp][ibin][icomp][iatt] = (TH1F*)hMC[isamp][ibin][icomp][iatt]->Clone(hmodname.Data());
+          hMCModified[isamp][ibin][icomp][iatt] = (TH1D*)hMC[isamp][ibin][icomp][iatt]->Clone(hmodname.Data());
           hMCModified[isamp][ibin][icomp][iatt]->Reset();
         }
       }
@@ -387,21 +413,51 @@ histoManager::histoManager(int nsampl,int nbins,int ncomp,const char* name){
 
 ///////////////////////////////////////////////
 //Unit testing
+//Creates a histomanager object for gaussian histograms.
+//'nptsmc' is the # of points in MC histos
+//'nptsdata' is # of points in Data histos
+//Useful for debugging likelihood evaluation
 histoManager::histoManager(int nptsmc, int nptsdata){
   nameTag = "unittest";
   nSamples = 1;
-  nComponents = 1;
+  nComponents = 6;
   nAttributes = 1;
   nBins = 1;
   useSplineFlg=0; 
-  hMC[0][0][0][0]=testBump(nptsmc,2,0,"hmc_test");
+  hMC[0][0][0][0]=testBumpD(nptsmc,2,0,"hmc_test");
+  hMC[0][0][1][0]=testBumpD(nptsmc,2,0,"hmc_test_comp1");
+  hMC[0][0][2][0]=testBumpD(nptsmc,2,0,"hmc_test_comp2");
+  hMC[0][0][3][0]=testBumpD(nptsmc,2,0,"hmc_test_comp3");
+  hMC[0][0][4][0]=testBumpD(nptsmc,2,0,"hmc_test_comp4");
+  hMC[0][0][5][0]=testBumpD(nptsmc,2,0,"hmc_test_comp5");
+
 //  hMC[0][0][0][0]->SetName("mctest");
-  hData[0][0][0]=testBump(nptsdata,2,0,"hdata_test");
-  fitPars = new atmFitPars(1,1,1,1,0);
-  fitPars->norm = (float)nptsdata/(float)nptsmc;
+  hData[0][0][0]=testBumpD(nptsdata,2,0,"hdata_test");
+  fitPars = new atmFitPars(1,1,nComponents,1,0);
+  fitPars->norm = (double)nptsdata/((double)nptsmc*6.);
   hMC[0][0][0][0]->SetDefaultSumw2(kTRUE);
   hMC[0][0][0][0]->Scale(fitPars->norm);
+  hMC[0][0][1][0]->Scale(fitPars->norm);
+  hMC[0][0][2][0]->Scale(fitPars->norm);
+  hMC[0][0][3][0]->Scale(fitPars->norm);
+  hMC[0][0][4][0]->Scale(fitPars->norm);
+  hMC[0][0][5][0]->Scale(fitPars->norm);
+
   initHistos();
+  return;
+}
+
+void histoManager::showErrorComparison(int isamp, int ibin, int iatt){
+   TH1D* hnom = getSumHistogram( isamp,  ibin,  iatt);
+   TH1D* hmod = getSumHistogramMod( isamp, ibin, iatt);
+   if (hTmp!=NULL) hTmp->Delete();
+   hTmp = (TH1D*) hnom->Clone("herror");
+   for (int ibin=1;ibin<=hnom->GetNbinsX();ibin++){
+     double errdiff = TMath::Sqrt(hmod->GetBinContent(ibin)) - hmod->GetBinError(ibin);
+     hTmp->SetBinContent(ibin,errdiff);
+     hTmp->SetBinError(ibin,0.);
+   }
+  hTmp->Draw();
   return;
 }
 

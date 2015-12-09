@@ -28,23 +28,33 @@ void histoFactory::addAttribute(int iatt){
   return;
 }
 
-
+/////////////////////////////////////////////////////////////////////////////
+//builds all new histograms for data and MC. Call ONLY after all attributes are specified
 void histoFactory::init(){
-  //call ONLY after all attributes are specified
-  //setup name for output file
+
+  //////////////////////////////////////
+  //setup name for output file 
   if (!outputFileName.CompareTo("")){
     outputFileName = "histoFactoryOutput.root";
   }
   fout = new TFile(outputFileName.Data(),"RECREATE");
+
+  ///////////////////////////////////////
   //setup attribute names
   attNames[0]="fq1rnll_emu_subev0";
   attNames[1]="fq1rnll_emu_subev1";
-  TString hname;
+
+  ///////////////////////////////////////////
+  //make sure to set sumw2 to proporly calculate errors
+  TH1D* hsetsum = new TH1D();
+  hsetsum->SetDefaultSumw2(kTRUE);
+
+  ////////////////////////////////////////
   //setup data histos
   for (int isamp=0;isamp<nSamples;isamp++){
     for (int ibin=0;ibin<nBins;ibin++){
       for (int iatt=0;iatt<nAttributes;iatt++){
-         hname = "hdata_";
+         TString hname = "hdata_";
          hname.Append(Form("samp%d_bin%d_att%d",isamp,ibin,iatt));
          cout<<"Making histogram: "<<hname.Data()<<endl;
          hManager->setHistogram(isamp,ibin,0,iatt,1,getHistogramData(iatt,hname.Data()));
@@ -56,7 +66,7 @@ void histoFactory::init(){
     for (int ibin=0;ibin<nBins;ibin++){
       for (int icomp=0;icomp<nComponents;icomp++){
         for (int iatt=0;iatt<nAttributes;iatt++){
-           hname = "hmc_";
+           TString hname = "hmc_";
            hname.Append(Form("samp%d_bin%d_comp%d_att%d",isamp,ibin,icomp,iatt));
            cout<<"Making histogram: "<<hname.Data()<<endl;
            hManager->setHistogram(isamp,ibin,icomp,iatt,0,getHistogramData(iatt,hname.Data()));
@@ -69,30 +79,30 @@ void histoFactory::init(){
 
 
 //use this function to build histograms
-TH1F* histoFactory::getHistogramData(int iatt, const char* thename){
+TH1D* histoFactory::getHistogramData(int iatt, const char* thename){
   //histogram building
-  TH1F* hnew;
+  TH1D* hnew;
   int nBinsNllEMu = 50;
   if (iatt==0){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
+     hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
   }
   if (iatt==1){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
+     hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
   }
   return hnew;
 }
 
 
 
-TH1F* histoFactory::getHistogram(int iatt, const char* thename){
-  TH1F* hnew;
+TH1D* histoFactory::getHistogram(int iatt, const char* thename){
+  TH1D* hnew;
   int nBinsNllEMu = 50;
   int nBinsNllEMuData = 50;
   if (iatt==0){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
+     hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
   }
   if (iatt==1){
-     hnew = new TH1F(thename,thename,nBinsNllEMu,-3000,6000);
+     hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
   }
   return hnew;
 }
@@ -110,13 +120,13 @@ void histoFactory::fillAttributesMC(){
   return;
 }
 
-void histoFactory::normalizeHistos(float scale){
+void histoFactory::normalizeHistos(double scale){
   //scale all MC histograms by some scaling factory
   if (scale < 0.){
-    scale = (float)nDataEvents/(float)nMCEvents;
+    scale = (double)nDataEvents/(double)nMCEvents;
   }
-  hnorm = new TH1F("hnorm","hnorm",1,0,1);
-  scale = (float)nDataEvents/(float)nMCEvents;
+  hnorm = new TH1D("hnorm","hnorm",1,0,1);
+  scale = (double)nDataEvents/(double)nMCEvents;
   hnorm->SetBinContent(1,scale);
   for (int ibin=0;ibin<nBins;ibin++){
     for (int isamp=0;isamp<nSamples;isamp++){
