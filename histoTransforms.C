@@ -199,7 +199,9 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
   //cout<<"cloneing input"<<endl;
   hh.SetDefaultSumw2(kTRUE);
   TH1D* htmp = (TH1D*)hh.Clone("htmp");
- //  htmp->Smooth(0);
+ // float entriesperbin = htmp->GetEntries()/(float)htmp->GetNbinsX();
+  //cout<<entriesperbin<<endl;
+ // if (entriesperbin<1) htmp->Smooth(1);
  // convolveThisHisto((*htmp),(htmp->GetBinWidth(1)/1.),0.);
   int nbins=hh.GetNbinsX();
   double binw = hh.GetBinWidth(1);
@@ -236,7 +238,8 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
     for (int oldbin=1;oldbin<=nbins;oldbin++){
       xmin = htmp->GetBinLowEdge(oldbin);
       xmax = (xmin+binw);
-      weight = B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
+      weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax) ;
+   //   weight = 
       sum+=(weight*htmp->GetBinContent(oldbin));
       //calculate new bin error
    //   binerr += weight*weight*(htmp->GetBinContent(oldbin));

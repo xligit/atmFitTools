@@ -1,10 +1,37 @@
 #include "TMath.h"
 #include "TH1D.h"
+#include "TGraph.h"
 
 #include <iostream>
 #include <math.h>
 
 using namespace std;
+
+//////////////////////////////////////////////////////////
+//Scaled Poisson function since it's not in ROOT
+double PoissonS(double nobs, double mean, double scale){
+  return TMath::Poisson(nobs/scale,mean);
+}
+
+///////////////////////////////////////////////////
+//plot scaled Poisson
+TGraph* plotPossonS(double mean, double scale, int npts=50){
+  double X[npts];
+  double Y[npts];
+  double rangemin = 0;
+  double rangemax = 20;
+  double dx = 20/(double)npts;
+  double x = 0.;
+  for (int ipt=0;ipt<npts;ipt++){
+    X[ipt] = x;
+    Y[ipt] = PoissonS(x,mean,scale);
+    x+=dx;
+  }
+  TGraph* g = new TGraph(npts,X,Y);
+  g->Draw("a*");
+  return g;
+}
+
 
 /////////////////////////////////////////////////////////////
 //Log Likelihood evaluation functions
@@ -28,6 +55,27 @@ double evalLnLRamanujan(double ndata, double nmc){
                + (0.5)*TMath::Log(TMath::Pi());
   return lnL;
 }
+
+
+//////////////////////////////////////////////////////////////////////
+//full numeric calculation for gaussian
+double evalLnLNumericG(double ndata, double mcmean, double mcsig, int ntotpts = 100){
+  if (mcsig==0) return 0.;
+  double I = 0.;
+  double rangemin = fmax((mcmean - (4.*mcsig)),0); 
+  double rangemax = (mcmean + (4.*mcsig));
+  double dx = (rangemax-rangemin)/(double)ntotpts;
+  double x = rangemin;
+  for (int ipt = 0;ipt<ntotpts;ipt++){
+    double value = TMath::Gaus(ndata,x,mcsig,kTRUE)*TMath::Gaus(x,mcmean,mcsig,kTRUE);
+    I+=(value*dx);
+    x+=dx;
+  }
+  return -1*TMath::Log(I);
+
+}
+
+
 
 //////////////////////////////////////////////////////////////////////
 //full numeric calculation
@@ -54,6 +102,24 @@ double evalLnLFast(double ndata, double mcmean, double mcsig, int ntotpts = 100)
   else{
     return evalLnLNumeric(ndata,mcmean,mcsig);
   }
+}
+
+/////////////////////////////////////////////////////////////////////////
+//Assume Gaussian errors
+double evalLnLGauss(double ndata, double mcmean, double mcsig, int ntotpts = 100){
+    return (ndata-mcmean)*(ndata-mcmean)/(2.*mcsig*mcsig);
+}
+
+/////////////////////////////////////////////////////////////////////////
+//Assume scaled Gaussian errors
+double evalLnLGaussS(double ndata, double mcmean, double mcsig, double norm){
+    double diff = ((ndata/norm) - mcmean);
+    double ss = (mcsig*mcsig)/mcmean;
+    double deltasq = ( (ndata/(norm*norm)) + (mcsig*mcsig) );
+    cout<<"diff: "<<diff<<endl;
+    cout<<"ss  : "<<ss<<endl;
+    cout<<"deltasq: "<<deltasq<<endl;
+    return (diff*diff)/(deltasq);
 }
 
 void plotL2(double nmc = 4, double errfrac = 0.1, int npts=100){

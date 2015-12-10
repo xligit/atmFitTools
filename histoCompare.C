@@ -1422,8 +1422,9 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2){
   double lnL = 0.;
   double diff;
   double term;
-  double c1;
-  double c2;
+  double c1; //data
+  double c2; //mc
+  double errmc; //mcerr
   double dof=0.;
   double quaderr;
 
@@ -1462,8 +1463,13 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2){
   for (int ibin=2;ibin<=(h1->GetNbinsX()-2);ibin++){
     c1 = h1->GetBinContent(ibin); //MC
     c2 = h2->GetBinContent(ibin); //data
+    errmc = h1->GetBinError(ibin);
     if (c2<10) continue;  //ignore very small bin contents
-    lnL += evalLnLFast(c2,c1,h1->GetBinError(ibin));
+//    lnL += evalLnLFast(c2,c1,errmc);
+//    lnL += evalLnLNumeric(c2,c1,errmc);
+    lnL += evalLnLGaussS(c2,c1,errmc,hManager->normFactor);
+  //  lnL += evalLnLGauss(c2,c1,h1->GetBinError(ibin));
+//    lnL += evalLnLRamanujan(c2,c1);
   }
   return lnL;
 }

@@ -118,7 +118,7 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
        }
        else{
          binWeight[ipt][jhistobin] =
-           ((double)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin)*hManager->normFactor)/
+           ((double)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
            (double)hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin);
        }
      }

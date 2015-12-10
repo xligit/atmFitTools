@@ -121,7 +121,7 @@ void histoFactory::fillAttributesMC(){
 }
 
 void histoFactory::normalizeHistos(double scale){
-  //scale all MC histograms by some scaling factory
+  //scale all MC histograms by some scaling factor
   if (scale < 0.){
     scale = (double)nDataEvents/(double)nMCEvents;
   }
@@ -132,7 +132,7 @@ void histoFactory::normalizeHistos(double scale){
     for (int isamp=0;isamp<nSamples;isamp++){
       for (int iatt=0;iatt<nAttributes;iatt++){
         for (int icomp=0;icomp<nComponents;icomp++){
-          hManager->getHistogram(isamp,ibin,icomp,iatt)->Scale(scale);
+ //         hManager->getHistogram(isamp,ibin,icomp,iatt)->Scale(scale);
         }
       }
     }

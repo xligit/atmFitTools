@@ -13,37 +13,37 @@
 //}
 
 
-
+//////////////////////////////////////////////////////////////////////////
+//calculate sum of all modified components to compare to data
 TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
-//  if (hSum){
-  //  cout<<"delete previous sum histogram"<<endl;
- //   hSum->Delete();
- // }
-//  hSum = getModHistogram(isamp,ibin,0,iatt);
+ 
+  /////////////////////////////////////////
+  //erase previous calculation
   hSumHistoMod[isamp][ibin][iatt]->Reset();
+
+  //////////////////////////////////////////
+  //make sure this is set to properly account for errors
   hSumHistoMod[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
-//  hSum->Sumw2(kTRUE);
-//  hSum->Smooth(1);
- // cout<<"clone in new histogram"<<endl;
-//  hSum = (TH1D*)getModHistogram(isamp,ibin,0,iatt)->Clone("hsum");
+
+  ///////////////////////////////////////////
+  //add bin contents from all histograms
   for (int icomp=0;icomp<nComponents;icomp++){
-    //cout<<"add histo component "<<icomp<<endl;
-  //  tmppointer=getModHistogram(isamp,ibin,icomp,iatt);
-  //  tmppointer->Smooth(3);
-  //  hSum->Add(tmppointer);
-//    tmppointer = getModHistogram(isamp,ibin,icomp,iatt);
-//    for (int ibin=1;ibin<=hSum->GetNbinsX();ibin++){
-//      double content = hSum->GetBinContent(ibin);
-//      content+=tmppointer->GetBinContent(ibin);
-//      double err1 = hSum->GetBinError(ibin);
-//      double err2 = tmppointer->GetBinError(ibin);
-//      hSum->SetBinContent(ibin,content);
- //     hSum->SetBinError(ibin,TMath::Sqrt((err1*err1) + (err2*err2)));
- //   }
- //   hSum->SetDefaultSumw2(kTRUE);
-    hSumHistoMod[isamp][ibin][iatt]->Add(getModHistogram(isamp,ibin,icomp,iatt));
+    TH1D* tmppointer=getModHistogram(isamp,ibin,icomp,iatt);
+    for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
+      double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
+      content+=tmppointer->GetBinContent(jbin);
+      double err1 = tmppointer->GetBinError(jbin);
+      double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
+      hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,content);
+      hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); 
+    }  
   }
+ 
+  ////////////////////////////////////
+  //return pointer to modified sum of componenets
+//  hSumHistoMod[isamp][ibin][iatt]->Scale(normFactor); //< normalize the histo
   return hSumHistoMod[isamp][ibin][iatt];
+
 }
 
 TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt){
@@ -53,6 +53,8 @@ TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt){
   for (int icomp=0;icomp<nComponents;icomp++){
     hSumHisto[isamp][ibin][iatt]->Add(hMC[isamp][ibin][icomp][iatt]);
   }
+
+//  hSumHisto[isamp][ibin][iatt]->Scale(normFactor);
   return hSumHisto[isamp][ibin][iatt];
 }
 
@@ -62,6 +64,7 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   double bincontent;
   hMCModified[isamp][ibin][icomp][iatt]->Reset();
   hMCModified[isamp][ibin][icomp][iatt]->SetDefaultSumw2(kTRUE);
+  hMCModified[isamp][ibin][icomp][iatt]->SetEntries(hMC[isamp][ibin][icomp][iatt]->GetEntries());
   for (int i=1;i<=nhistobins;i++){
     bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(i);
     weightsum=0.;
@@ -291,8 +294,10 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
   ///////////////////////////////////////////////////
   //Set default sumw2 so errors are handled correctly
   htmp->SetDefaultSumw2();
-
   normFactor=htmp->GetBinContent(1);
+
+  //////////////////////////////////////////////
+  //read in histograms by name
   TString hname;
   //setup data histos
   for (int isamp=0;isamp<nSamples;isamp++){
