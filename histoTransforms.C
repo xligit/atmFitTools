@@ -25,7 +25,7 @@ double B(double x,double a, double b){
 TH1D* testBumpD(int nev,double sig=1.0,double mean=0.0,const char* name="testbumb"){
   TH1D* hset;
   hset->SetDefaultSumw2(kTRUE);
-  TH1D* h = new TH1D(name,name,20,-10,10);
+  TH1D* h = new TH1D(name,name,40,-10,10);
   for (int  i=0;i<nev;i++){
     h->Fill(randy->Gaus(mean,sig));
   }
@@ -35,7 +35,7 @@ TH1D* testBumpD(int nev,double sig=1.0,double mean=0.0,const char* name="testbum
 TH1D* testBump(int nev,double sig=1.0,double mean=0.0,const char* name="testbumb"){
   TH1D* hset;
   hset->SetDefaultSumw2(kTRUE);
-  TH1D* h = new TH1D(name,name,20,-10,10);
+  TH1D* h = new TH1D(name,name,40,-10,10);
   for (int  i=0;i<nev;i++){
     h->Fill(randy->Gaus(mean,sig));
   }

@@ -41,7 +41,7 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
  
   ////////////////////////////////////
   //return pointer to modified sum of componenets
-//  hSumHistoMod[isamp][ibin][iatt]->Scale(normFactor); //< normalize the histo
+  hSumHistoMod[isamp][ibin][iatt]->Scale(normFactor); //< normalize the histo
   return hSumHistoMod[isamp][ibin][iatt];
 
 }
@@ -54,7 +54,7 @@ TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt){
     hSumHisto[isamp][ibin][iatt]->Add(hMC[isamp][ibin][icomp][iatt]);
   }
 
-//  hSumHisto[isamp][ibin][iatt]->Scale(normFactor);
+  hSumHisto[isamp][ibin][iatt]->Scale(normFactor);
   return hSumHisto[isamp][ibin][iatt];
 }
 
@@ -425,28 +425,29 @@ histoManager::histoManager(int nsampl,int nbins,int ncomp,const char* name){
 histoManager::histoManager(int nptsmc, int nptsdata){
   nameTag = "unittest";
   nSamples = 1;
-  nComponents = 6;
+  nComponents = 1;
   nAttributes = 1;
   nBins = 1;
   useSplineFlg=0; 
-  hMC[0][0][0][0]=testBumpD(nptsmc,2,0,"hmc_test");
-  hMC[0][0][1][0]=testBumpD(nptsmc,2,0,"hmc_test_comp1");
-  hMC[0][0][2][0]=testBumpD(nptsmc,2,0,"hmc_test_comp2");
-  hMC[0][0][3][0]=testBumpD(nptsmc,2,0,"hmc_test_comp3");
-  hMC[0][0][4][0]=testBumpD(nptsmc,2,0,"hmc_test_comp4");
-  hMC[0][0][5][0]=testBumpD(nptsmc,2,0,"hmc_test_comp5");
+  hMC[0][0][0][0]=testBumpD(nptsmc,3,0,"hmc_test");
+  hMC[0][0][1][0]=testBumpD(nptsmc,3,0,"hmc_test_comp1");
+  hMC[0][0][2][0]=testBumpD(nptsmc,3,0,"hmc_test_comp2");
+  hMC[0][0][3][0]=testBumpD(nptsmc,3,0,"hmc_test_comp3");
+  hMC[0][0][4][0]=testBumpD(nptsmc,3,0,"hmc_test_comp4");
+  hMC[0][0][5][0]=testBumpD(nptsmc,3,0,"hmc_test_comp5");
 
 //  hMC[0][0][0][0]->SetName("mctest");
-  hData[0][0][0]=testBumpD(nptsdata,2,0,"hdata_test");
+  hData[0][0][0]=testBumpD(nptsdata,3,0,"hdata_test");
   fitPars = new atmFitPars(1,1,nComponents,1,0);
-  fitPars->norm = (double)nptsdata/((double)nptsmc*6.);
+  fitPars->norm = (double)nptsdata/((double)nptsmc*1.);
+  normFactor = fitPars->norm;
   hMC[0][0][0][0]->SetDefaultSumw2(kTRUE);
-  hMC[0][0][0][0]->Scale(fitPars->norm);
-  hMC[0][0][1][0]->Scale(fitPars->norm);
-  hMC[0][0][2][0]->Scale(fitPars->norm);
-  hMC[0][0][3][0]->Scale(fitPars->norm);
-  hMC[0][0][4][0]->Scale(fitPars->norm);
-  hMC[0][0][5][0]->Scale(fitPars->norm);
+ // hMC[0][0][0][0]->Scale(fitPars->norm);
+ // hMC[0][0][1][0]->Scale(fitPars->norm);
+ // hMC[0][0][2][0]->Scale(fitPars->norm);
+ // hMC[0][0][3][0]->Scale(fitPars->norm);
+ // hMC[0][0][4][0]->Scale(fitPars->norm);
+ // hMC[0][0][5][0]->Scale(fitPars->norm);
 
   initHistos();
   return;
@@ -457,10 +458,10 @@ void histoManager::showErrorComparison(int isamp, int ibin, int iatt){
    TH1D* hmod = getSumHistogramMod( isamp, ibin, iatt);
    if (hTmp!=NULL) hTmp->Delete();
    hTmp = (TH1D*) hnom->Clone("herror");
-   for (int ibin=1;ibin<=hnom->GetNbinsX();ibin++){
-     double errdiff = TMath::Sqrt(hmod->GetBinContent(ibin)) - hmod->GetBinError(ibin);
-     hTmp->SetBinContent(ibin,errdiff);
-     hTmp->SetBinError(ibin,0.);
+   for (int jbin=1;jbin<=hnom->GetNbinsX();jbin++){
+     double errdiff = TMath::Sqrt(hmod->GetBinContent(jbin)) - hmod->GetBinError(jbin);
+     hTmp->SetBinContent(jbin,errdiff);
+     hTmp->SetBinError(jbin,0.);
    }
   hTmp->Draw();
   return;

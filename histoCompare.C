@@ -826,10 +826,10 @@ void histoCompare::singleParFit(int ipar){
 
   //setup parameters
   TString aname;
-  for (int ipar=0;ipar<npars;ipar++){
+  for (int kpar=0;kpar<npars;kpar++){
     aname = "parameter";
-    aname.Append(Form("_%d",ipar));
-    fit->SetParameter(ipar,aname.Data(),thePars->pars[ipar],parerr,0,0);
+    aname.Append(Form("_%d",kpar));
+    fit->SetParameter(kpar,aname.Data(),thePars->pars[kpar],parerr,0,0);
   }
  
   //fix all params
@@ -1425,49 +1425,22 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2){
   double c1; //data
   double c2; //mc
   double errmc; //mcerr
+  double norm = hManager->normFactor; //normalization
   double dof=0.;
   double quaderr;
 
-  //////////////////////////////////////////////////
-  //assume Gaussian errors
-  /*
-  for (int ibin=5;ibin<=(h1->GetNbinsX()-5);ibin++){
-//  for (int ibin=10;ibin<=10;ibin++){
 
-    c1 = h1->GetBinContent(ibin);
-    if (c1<=0.2) continue; //do nothing if there are no (or few) predicted events in this bin
-    dof++;
-    c2 = h2->GetBinContent(ibin);
-    if (c2<20000){
-       //use numberical method
-       lnL += evalLnLNumeric(c2,c1,h1->GetBinError(ibin));
-       continue;
-    }
-    //assume 2nd histogram is data..
- //   cout<<"bin: "<<ibin<<endl;
-//    cout<<"c1:  "<<c1<<endl;
-//    cout<<"c2:  "<<c2<<endl;
-//    cout<<"diff: "<<c1-c2<<endl;
-//    cout<<"sig:  "<<h1->GetBinError(ibin)<<endl;
-//    quaderr = (h1->GetBinError(ibin)*h1->GetBinError(ibin));
-//    quaderr += (h2->GetBinError(ibin)*h2->GetBinError(ibin));
-//    lnL += ((c1-c2)*(c1-c2))/(2*h1->GetBinError(ibin)*h1->GetBinError(ibin));
- //   lnL += ((c1-c2)*(c1-c2))/(2*quaderr);
-
-  }
-//  cout<<"dof: "<<dof<<endl;
-//  */
 
   ///////////////////////////////////////////////////
   //assume poisson errors
-  for (int ibin=2;ibin<=(h1->GetNbinsX()-2);ibin++){
+  for (int ibin=1;ibin<=(h1->GetNbinsX()-1);ibin++){
     c1 = h1->GetBinContent(ibin); //MC
     c2 = h2->GetBinContent(ibin); //data
     errmc = h1->GetBinError(ibin);
-    if (c2<10) continue;  //ignore very small bin contents
+   // if (c2<10) continue;  //ignore very small bin contents
 //    lnL += evalLnLFast(c2,c1,errmc);
-//    lnL += evalLnLNumeric(c2,c1,errmc);
-    lnL += evalLnLGaussS(c2,c1,errmc,hManager->normFactor);
+    lnL += evalLnLNumeric(c2,c1,errmc);
+ //   lnL += evalLnLGaussS(c2,c1,errmc,hManager->normFactor);
   //  lnL += evalLnLGauss(c2,c1,h1->GetBinError(ibin));
 //    lnL += evalLnLRamanujan(c2,c1);
   }

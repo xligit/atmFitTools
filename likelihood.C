@@ -47,7 +47,8 @@ double evalLnL(double ndata, double nmc){
 
 //////////////////////////////////////////////////////////
 //Use full approximation for comparing to numeric method
-double evalLnLRamanujan(double ndata, double nmc){
+double evalLnLRamanujan(double ndata, double nmc, double norm=1.){
+  nmc*=norm;
   if (nmc==0) return 0.;
   if (ndata==0) return nmc;
   double lnL = (nmc-ndata) + ndata*TMath::Log(ndata/nmc)
@@ -59,28 +60,31 @@ double evalLnLRamanujan(double ndata, double nmc){
 
 //////////////////////////////////////////////////////////////////////
 //full numeric calculation for gaussian
-double evalLnLNumericG(double ndata, double mcmean, double mcsig, int ntotpts = 100){
-  if (mcsig==0) return 0.;
-  double I = 0.;
-  double rangemin = fmax((mcmean - (4.*mcsig)),0); 
-  double rangemax = (mcmean + (4.*mcsig));
-  double dx = (rangemax-rangemin)/(double)ntotpts;
-  double x = rangemin;
-  for (int ipt = 0;ipt<ntotpts;ipt++){
-    double value = TMath::Gaus(ndata,x,mcsig,kTRUE)*TMath::Gaus(x,mcmean,mcsig,kTRUE);
-    I+=(value*dx);
-    x+=dx;
-  }
-  return -1*TMath::Log(I);
+//double evalLnLNumericG(double ndata, double mcmean, double mcsig, int ntotpts = 100){
+//  if (mcsig==0) return 0.;
+//  double I = 0.;
+//  double rangemin = fmax((mcmean - (4.*mcsig)),0); 
+//  double rangemax = (mcmean + (4.*mcsig));
+//  double dx = (rangemax-rangemin)/(double)ntotpts;
+//  double x = rangemin;
+//  for (int ipt = 0;ipt<ntotpts;ipt++){
+//    double value = TMath::Gaus(ndata,x,mcsig,kTRUE)*TMath::Gaus(x,mcmean,mcsig,kTRUE);
+//    I+=(value*dx);
+//    x+=dx;
+//  }
+//  /return -1*TMath::Log(I);
 
-}
+//}
 
 
 
 //////////////////////////////////////////////////////////////////////
 //full numeric calculation
-double evalLnLNumeric(double ndata, double mcmean, double mcsig, int ntotpts = 100){
+double evalLnLNumeric(double ndata, double mcmean, double mcsig, double norm=1., int ntotpts = 100){
+//  mcmean*=norm;
+//  mcsig*=norm;
   if (mcsig==0) return 0.;
+  if (mcmean<0.1) return 0.;
   double I = 0.;
   double rangemin = fmax((mcmean - (4.*mcsig)),0); 
   double rangemax = (mcmean + (4.*mcsig));
@@ -97,10 +101,10 @@ double evalLnLNumeric(double ndata, double mcmean, double mcsig, int ntotpts = 1
 
 /////////////////////////////////////////////////////////////////////////
 //Choose between numeric and approx to increase speed
-double evalLnLFast(double ndata, double mcmean, double mcsig, int ntotpts = 100){
-  if ((mcsig/mcmean)<0.05) return evalLnLRamanujan(ndata,mcmean);
+double evalLnLFast(double ndata, double mcmean, double mcsig,double norm=1., int ntotpts = 100){
+  if ((mcsig/mcmean)<0.05) return evalLnLRamanujan(ndata,mcmean,norm);
   else{
-    return evalLnLNumeric(ndata,mcmean,mcsig);
+    return evalLnLNumeric(ndata,mcmean,mcsig,norm);
   }
 }
 
@@ -114,8 +118,10 @@ double evalLnLGauss(double ndata, double mcmean, double mcsig, int ntotpts = 100
 //Assume scaled Gaussian errors
 double evalLnLGaussS(double ndata, double mcmean, double mcsig, double norm){
     double diff = ((ndata/norm) - mcmean);
-    double ss = (mcsig*mcsig)/mcmean;
+    double ss = (mcsig*mcsig)/(mcmean*norm);
     double deltasq = ( (ndata/(norm*norm)) + (mcsig*mcsig) );
+//    double deltasq = (ss/norm)*((mcmean/ss)+ndata);
+
     cout<<"diff: "<<diff<<endl;
     cout<<"ss  : "<<ss<<endl;
     cout<<"deltasq: "<<deltasq<<endl;
