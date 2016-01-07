@@ -74,8 +74,8 @@ class histoManager{
   TH1D* getModHistogram(int isamp, int ibin, int icomp, int iatt); //gets histogram modified from atm pars
   TH1D* getHistogramData(int isamp, int ibin, int iatt){return hData[isamp][ibin][iatt];}
   hSplines* getSplines(int isamp, int ibin, int icomp, int iatt){return theSplines[isamp][ibin][icomp][iatt];}
-  TH1D* getSumHistogram(int isamp, int ibin, int att);
-  TH1D* getSumHistogramMod(int isamp, int ibin, int att);
+  TH1D* getSumHistogram(int isamp, int ibin, int att, int normFlg=1);
+  TH1D* getSumHistogramMod(int isamp, int ibin, int att, int normFlg=1);
 
   ///////////////////////////  
   //plotting

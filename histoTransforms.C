@@ -15,6 +15,63 @@ TRandom2* randy = new TRandom2();
 
 using namespace std;
 
+
+double getNoiseFactor(TH1D* hh){
+  int nbins = hh->GetNbinsX();
+  double S = 0.;
+  double B = 0;
+  for (int ibin = 1;ibin<=nbins;ibin++){
+    double content = hh->GetBinContent(ibin);
+    if (content>0.){
+      S+=content;
+      B++;
+    }
+  }
+  S/=B;
+  return 1./TMath::Sqrt(S);
+}
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+//Custom smearing method
+void mySmooth(TH1D* hh,double factor=3.){
+
+  //////////////////////////////
+  //get adjecent bin weights
+  
+  // use Gaussian weights
+  double sigma = factor*getNoiseFactor(hh); //< set sigma using noise
+  double w2 = TMath::Gaus(2,0,sigma,1);
+  double w1 = TMath::Gaus(1,0,sigma,1);
+  double w0 = TMath::Gaus(0,0,sigma,1);
+
+  ////////////////////////////////
+  //clone in original histogram
+  TH1D* htmp = (TH1D*)hh->Clone("tmphistosmooth");
+
+  ///////////////////////////////////////////////
+  //set new histogram contents from adjecent bins
+  double newcontent;
+  for (int ibin=0;ibin<hh->GetNbinsX();ibin++){
+    newcontent = 0.;
+    newcontent+=(htmp->GetBinContent(ibin-2)*w2);
+    newcontent+=(htmp->GetBinContent(ibin-1)*w1);
+    newcontent+=(htmp->GetBinContent(ibin)*w0);
+    newcontent+=(htmp->GetBinContent(ibin+1)*w1);
+    newcontent+=(htmp->GetBinContent(ibin+2)*w2);
+    hh->SetBinContent(ibin,newcontent);
+    hh->SetBinError(ibin,TMath::Sqrt(newcontent));
+  }
+
+  //normalize histogram
+  double normscale = htmp->Integral()/hh->Integral();
+  hh->Scale(normscale); 
+  htmp->Delete(); 
+  return; 
+}
+
 //Integral of box function
 double B(double x,double a, double b){
   if (x<=a) return 0.;
@@ -190,7 +247,6 @@ void convolveThisHisto(TH1D &hh, double sig, double bias){
 }
 
 
-
 void smearThisHisto(TH1D &hh, double spread, double bias=0.){
   if (spread==0){
     cout<<"smearThisHisto: cannont smear with 0 spread parameter"<<endl;
@@ -199,6 +255,7 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
   //cout<<"cloneing input"<<endl;
   hh.SetDefaultSumw2(kTRUE);
   TH1D* htmp = (TH1D*)hh.Clone("htmp");
+  if (hh.GetEntries()<10000.) mySmooth(htmp);
  // float entriesperbin = htmp->GetEntries()/(float)htmp->GetNbinsX();
   //cout<<entriesperbin<<endl;
  // if (entriesperbin<1) htmp->Smooth(1);
@@ -216,20 +273,15 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
   double smear = 1./spread;
   double mean = hh.GetMean() + (binw/2.);
   double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
-
-  //cout<<"calculating new bin content"<<endl;
+  double sumw2;
+  double sumw;
   for (int newbin=1;newbin<=nbins;newbin++){
-    //////////////////////////////////
-    //it is necessary to "mask out" bins where the mc predicts zero events
-    //what is the uncertainty on the mean in this case?
-//    if (htmp->GetBinContent(newbin)<=0.){
-    if ((htmp->GetBinContent(newbin)<=0.001)||(htmp->GetBinContent(newbin-1)<=0.001)||(htmp->GetBinContent(newbin+1)<=0.001)){
-      hh.SetBinContent(newbin,htmp->GetBinContent(newbin));
-      hh.SetBinError(newbin,htmp->GetBinError(newbin));
+    if ((htmp->GetBinContent(newbin)<=0)||(htmp->GetBinContent(newbin-1)<=0)||(htmp->GetBinContent(newbin+1)<=0)){
       continue;
     }
-  //  */
     sum = 0.;
+    sumw = 0;
+    sumw2 = 0;
     binerr=0.;
     binedge = htmp->GetBinLowEdge(newbin);
     ymin = ((binedge-bias)*smear) - shift;
@@ -239,23 +291,23 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
       xmin = htmp->GetBinLowEdge(oldbin);
       xmax = (xmin+binw);
       weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax) ;
-   //   weight = 
+      double binc = htmp->GetBinContent(oldbin);
       sum+=(weight*htmp->GetBinContent(oldbin));
-      //calculate new bin error
-   //   binerr += weight*weight*(htmp->GetBinContent(oldbin));
-      binerr += weight*weight*(htmp->GetBinError(oldbin))*(htmp->GetBinError(oldbin));
-  //    cout<<"content: "<<htmp->GetBinContent(oldbin)<<" error: "<<htmp->GetBinError(oldbin)*htmp->GetBinError(oldbin)<<endl;
-     // sum+=(weight*(htmp->GetBinContent(oldbin)+(0.5*htmp->GetBinContent(oldbin-1))+(0.5*htmp->GetBinContent(oldbin+1))));
-      
-    }
-    hh.SetBinContent(newbin,sum);
-    //set bin uncertainty..
-    hh.SetBinError(newbin,TMath::Sqrt(binerr));
- //   hh.SetBinError(newbin,TMath::Sqrt(sum));
 
+//      if (binc>100)  sum+=(weight*htmp->GetBinContent(oldbin));
+//      else{
+//        sum+=(weight*(0.3333333333)*(htmp->GetBinContent(oldbin-1)+htmp->GetBinContent(oldbin)+htmp->GetBinContent(oldbin+1)));
+//      }
+      binerr += weight*weight*(htmp->GetBinContent(oldbin)*htmp->GetBinContent(oldbin));
+      sumw += weight;
+    }
+    if (sumw<=0) continue;
+    hh.SetBinContent(newbin,sum/sumw);
+    double ss = binerr/(sum*sum);
+    //set bin uncertainty..
+    hh.SetBinError(newbin,(sum*sum*sum)/(binerr));
+  //  hh.SetBinError(newbin,ss);
   }
-  if (hh.Integral()>0.) hh.Scale(htmp->Integral()/hh.Integral());
-//  hh.Smooth(5);
   htmp->Delete();
   return;
 }
@@ -383,6 +435,7 @@ double testtime(){
   return diff;
   
 }
+
 
 
 

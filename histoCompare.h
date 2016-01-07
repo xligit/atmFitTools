@@ -57,7 +57,7 @@ class histoCompare{
   void setupPars(int nsyspars=0); //sets up all parameters
   //post-fit toolts
   void profileL(int ibin, int icomp, int iatt, int imod, double range, int npts=100);
-  void profileL(int ipar,double range, int npts=100);
+  void profileL(int ipar,double range, int npts=100,int sameflg=0);
   void showFitHisto(int isamp,int ibin,int icomp,int iatt);
   void showFitEffect(int isamp,int ibin,int icomp,int iatt);
   void showFitResult(int isamp,int ibin,int iatt);
@@ -87,19 +87,22 @@ class histoCompare{
   TGraphAsymmErrors* gPar;
   TH1D* hParErrLo;
   TH1D* hParErrHi;
-  TH1D* hProf;
+  TH1D* hProf[2];
   TH1D* showSmear(TH1D* h, double smear, double bias);
   void showMod(int imchist);
   TH1D* hTot;
   TCanvas* cc;
   int nDataHist;
   int nMCHist;
+  int useLnLType;
   double parDebug[10][2];
 //  double getLDebug(); 
-  
+ 
+  double cScale; //correction scale for likelihood
+ 
   //likelihood evaluateions
   double getSumSq(TH1D* h1, TH1D* h2);
-  double getLnL(TH1D* h1, TH1D* h2);
+  double getLnL(TH1D* h1, TH1D* h2,double hnorm = 1.);
   double getNDiff();
   double getTotSumSq();
   double getTotLnL();

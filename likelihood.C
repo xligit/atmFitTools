@@ -38,43 +38,46 @@ TGraph* plotPossonS(double mean, double scale, int npts=50){
 
 /////////////////////////////////////////
 //likelihood from tn186
-double evalLnL(double ndata, double nmc){
+double evalLnL(double ndata, double nmc, double norm = 1.){
   if (nmc==0) return 0.;
-  if (ndata==0) return nmc;
-  double lnL = (nmc-ndata) + ndata*TMath::Log(ndata/nmc);
-  return lnL;
+  if (ndata==0) return nmc*norm;
+  double Nmc = nmc*norm;
+  double ngLnL = (Nmc-ndata) + ndata*TMath::Log(ndata/Nmc);
+  return ngLnL;
 }
+
+
+/////////////////////////////////////////
+//likelihood from tn186
+double evalLnLMean(double ndata, double nmc, double mcerr, double norm = 1.){
+  if (nmc==0) return 0.;
+  if (ndata==0) return nmc*norm;
+  double Nmc = nmc*norm;
+  double ss = (mcerr*mcerr/nmc);
+  ss = 1.;
+  double mean = ((ndata*ss) + (nmc/norm))/((1./norm)+ss);
+  double diff = ((1./norm)*ndata) - nmc;
+  cout<<"mean: "<<mean<<endl;
+  cout<<"ss: "<<ss<<endl;
+  double ngLnL = (mean-ndata) + ndata*TMath::Log(ndata/mean);
+//  double ngLnL = (diff*diff)/mean;
+  return ngLnL;
+}
+
+
 
 //////////////////////////////////////////////////////////
 //Use full approximation for comparing to numeric method
 double evalLnLRamanujan(double ndata, double nmc, double norm=1.){
   nmc*=norm;
   if (nmc==0) return 0.;
-  if (ndata==0) return nmc;
-  double lnL = (nmc-ndata) + ndata*TMath::Log(ndata/nmc)
+  if (ndata==0) return nmc*norm;
+  double Nmc = nmc*norm;
+  double lnL = (Nmc-ndata) + ndata*TMath::Log(ndata/Nmc)
                + (0.166666)*TMath::Log(ndata*(1+ ((4*ndata)*(1+(2*ndata)))))
                + (0.5)*TMath::Log(TMath::Pi());
   return lnL;
 }
-
-
-//////////////////////////////////////////////////////////////////////
-//full numeric calculation for gaussian
-//double evalLnLNumericG(double ndata, double mcmean, double mcsig, int ntotpts = 100){
-//  if (mcsig==0) return 0.;
-//  double I = 0.;
-//  double rangemin = fmax((mcmean - (4.*mcsig)),0); 
-//  double rangemax = (mcmean + (4.*mcsig));
-//  double dx = (rangemax-rangemin)/(double)ntotpts;
-//  double x = rangemin;
-//  for (int ipt = 0;ipt<ntotpts;ipt++){
-//    double value = TMath::Gaus(ndata,x,mcsig,kTRUE)*TMath::Gaus(x,mcmean,mcsig,kTRUE);
-//    I+=(value*dx);
-//    x+=dx;
-//  }
-//  /return -1*TMath::Log(I);
-
-//}
 
 
 
@@ -84,53 +87,142 @@ double evalLnLNumeric(double ndata, double mcmean, double mcsig, double norm=1.,
 //  mcmean*=norm;
 //  mcsig*=norm;
   if (mcsig==0) return 0.;
-  if (mcmean<0.1) return 0.;
+  if (mcmean<0) return 0.;
   double I = 0.;
-  double rangemin = fmax((mcmean - (4.*mcsig)),0); 
-  double rangemax = (mcmean + (4.*mcsig));
+  double rangemin = fmax((mcmean - (4.*mcsig)),0)*norm; 
+  double rangemax = (mcmean + (4.*mcsig))*norm;
   double dx = (rangemax-rangemin)/(double)ntotpts;
   double x = rangemin;
   for (int ipt = 0;ipt<ntotpts;ipt++){
-    double value = TMath::Poisson(ndata,x)*TMath::Gaus(x,mcmean,mcsig,kTRUE);
+    double value = TMath::Poisson(ndata,x)*TMath::Gaus(x,mcmean*norm,mcsig*norm,kTRUE);
     I+=(value*dx);
     x+=dx;
   }
-  return -1*TMath::Log(I);
+  return -1*2*TMath::Log(I);
 
 }
 
 /////////////////////////////////////////////////////////////////////////
-//Choose between numeric and approx to increase speed
-double evalLnLFast(double ndata, double mcmean, double mcsig,double norm=1., int ntotpts = 100){
-  if ((mcsig/mcmean)<0.05) return evalLnLRamanujan(ndata,mcmean,norm);
-  else{
-    return evalLnLNumeric(ndata,mcmean,mcsig,norm);
-  }
+//
+double evalLnLScaled(double ndata, double mcmean, double mcsig,double norm=1.,double ascale=1.){
+  if (mcmean==0) return 0.;
+ 
+ // double scale = mcmean/(mcsig*mcsig);
+  double scale = (mcsig);
+
+  double ngLnL = evalLnL(ndata,mcmean,norm);
+//  cout<<"scale: "<<scale<<endl;
+//  ngLnL+= +0.5*TMath::Log(scale)*norm*ascale;
+  ngLnL+= 0.5*TMath::Log(scale)*norm*ascale;
+
+  return ngLnL;
 }
 
 /////////////////////////////////////////////////////////////////////////
 //Assume Gaussian errors
-double evalLnLGauss(double ndata, double mcmean, double mcsig, int ntotpts = 100){
-    return (ndata-mcmean)*(ndata-mcmean)/(2.*mcsig*mcsig);
+//double evalLnLGauss(double ndata, double mcmean, double mcsig, int ntotpts = 100){
+//    return (ndata-mcmean)*(ndata-mcmean)/(2.*mcsig*mcsig);
+//}
+
+/////////////////////////////////////////////////////////////////////////
+//Assume scaled Gaussian errors, and mcmean has been normalized
+double evalLnLMyChi2(double ndata, double mcmean, double mcsig, double norm=1.){
+    double ss = mcsig;
+  //  double deltasq = ( (ndata/(norm*norm)) + (mcsig*mcsig) );
+  //  double deltasq = ( ((ss*ndata) + (mcmean/norm))/(ss + (1./norm)) );
+    double deltasq = (1./(norm*ss))*(mcmean*ss + ndata);
+  //  double diff = (ndata/norm) - deltasq;
+    double diff =(ndata/norm) - mcmean;
+  //  deltasq = mcsig*mcsig;
+    cout<<"diff: "<<diff<<endl;
+    cout<<"ss "<<ss<<endl;
+    cout<<"deltasq: "<<deltasq<<endl;
+//    cout<<"log: "<<TMath::Log(deltasq);
+ //   return -2*TMath::Log(TMath::Gaus(diff,0.,TMath::Sqrt(deltasq),kTRUE));
+ //   return (diff*diff)/(2*(deltasq));
+    return (diff*diff)/(2.*deltasq);
 }
+
+////////////////////////////////////////////////////////////////////////////
+double evalLnLDiff(double ndata, double mcmean, double mcsig, double norm){
+  double diff = TMath::Abs(ndata-(mcmean*norm));
+  return diff;
+}
+/////////////////////////////////////////////////////////////////////////
+//Assume scaled Gaussian errors, and mcmean has been normalized
+double evalLnLMyChi2NoWeight(double ndata, double mcmean, double mcsig, double norm){
+    double diff = ndata - (norm*mcmean);
+    double deltasq = ( ndata + (norm*mcmean) );
+  //  deltasq = mcsig*mcsig;
+    cout<<"diff: "<<diff<<endl;
+    cout<<"deltasq: "<<deltasq<<endl;
+    cout<<"log: "<<TMath::Log(deltasq);
+    return -2*TMath::Log(TMath::Gaus(diff,0.,TMath::Sqrt(deltasq),kTRUE));
+ //   return (diff*diff)/(deltasq) + 2.*TMath::Log(deltasq);
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////
+//Assume scaled Gaussian errors, and mcmean has been normalized
+double evalLnLChi2N(double ndata, double mcmean, double mcsig, double norm){
+    double diff = ndata - (mcmean*norm);
+    double deltasq = ( ndata );
+  //  deltasq = mcsig*mcsig;
+    cout<<"diff: "<<diff<<endl;
+    cout<<"deltasq: "<<deltasq<<endl;
+    cout<<"log: "<<TMath::Log(deltasq);
+    return -2*TMath::Log(TMath::Gaus(diff,0.,TMath::Sqrt(deltasq),kTRUE));
+   // return (diff*diff)/(deltasq) + 2.*TMath::Log(deltasq);
+}
+
 
 /////////////////////////////////////////////////////////////////////////
 //Assume scaled Gaussian errors
-double evalLnLGaussS(double ndata, double mcmean, double mcsig, double norm){
-    double diff = ((ndata/norm) - mcmean);
-    double ss = (mcsig*mcsig)/(mcmean*norm);
-    double deltasq = ( (ndata/(norm*norm)) + (mcsig*mcsig) );
-//    double deltasq = (ss/norm)*((mcmean/ss)+ndata);
-
-    cout<<"diff: "<<diff<<endl;
-    cout<<"ss  : "<<ss<<endl;
-    cout<<"deltasq: "<<deltasq<<endl;
-    return (diff*diff)/(deltasq);
+double evalLnLChi2Numeric(double ndata, double mcmean, double mcsig,double norm, int npts = 100){
+    double diff = ndata - (norm*mcmean);
+    double deltasq = ( (ndata) + (norm*norm*mcsig*mcsig) );
+    double sigmasq = ndata;
+    double rangemin = fmax(0, mcmean - (5*mcsig))*norm;
+    double rangemax = (mcmean + (5*mcsig))*norm;
+    double dx = (rangemax-rangemin)/(double)npts;
+    double I = 0.;
+    double x = rangemin;
+    for (int i=0;i<npts;i++){
+       double value = TMath::Gaus((x-ndata),0.,deltasq,kTRUE)*TMath::Gaus((x-mcmean),norm*mcmean,mcsig*norm,kTRUE);
+       I+=(dx*value);
+       x+=dx;
+    }
+    return -2*TMath::Log(I);
 }
+
+
+void plotLnL(int itype, double nmc = 16, double mcsig = 4., double norm=1, int npts=100){
+  double rangemin = 2;
+  double rangemax = 40;
+  double dx = (rangemax-rangemin)/(double)npts;
+  double xx = rangemin;
+  static TH1D* hreal = new TH1D("hreal","hreal",npts,rangemin,rangemax);
+  double lnL=0.;
+  for (int i=0;i<=npts;i++){      
+    if (itype==0) lnL=evalLnLRamanujan(xx,nmc,norm); //< tn186
+    if (itype==1) lnL=evalLnLNumeric(xx,nmc,mcsig,norm); //< my numerical method
+    if (itype==2) lnL=evalLnLMyChi2(xx,nmc,mcsig,norm); //< chi-2 style errors
+    if (itype==3) lnL=evalLnLChi2N(xx,nmc,mcsig,norm); //< standard chi2
+    if (itype==4) lnL=evalLnLChi2Numeric(xx,nmc,mcsig,norm);
+    hreal->SetBinContent(i,lnL);
+    xx+=dx;
+  }
+  hreal->SetLineColor(kBlue);
+  hreal->Draw();
+  return;
+}
+
+
 
 void plotL2(double nmc = 4, double errfrac = 0.1, int npts=100){
   double rangemin = 0;
-  double rangemax = 10;
+  double rangemax = 20;
   static TH1D* hreal = new TH1D("hreal","hreal",npts,rangemin,rangemax);
   static TH1D* happrox = new TH1D("happrox","happrox",npts,rangemin,rangemax);
   for (int i=0;i<=npts;i++){

@@ -15,7 +15,7 @@
 
 //////////////////////////////////////////////////////////////////////////
 //calculate sum of all modified components to compare to data
-TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
+TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFlg){
  
   /////////////////////////////////////////
   //erase previous calculation
@@ -31,30 +31,46 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt){
     TH1D* tmppointer=getModHistogram(isamp,ibin,icomp,iatt);
     for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
       double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
+ //     content*=normFactor; //< scale the bin content
       content+=tmppointer->GetBinContent(jbin);
       double err1 = tmppointer->GetBinError(jbin);
       double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
       hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,content);
-      hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); 
+   //   hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
+      hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,(err1+err2)); //<average scaling factors
     }  
+
   }
- 
   ////////////////////////////////////
   //return pointer to modified sum of componenets
-  hSumHistoMod[isamp][ibin][iatt]->Scale(normFactor); //< normalize the histo
+  if (normFlg) hSumHistoMod[isamp][ibin][iatt]->Scale(normFactor); //< normalize the histo
+
+
+
+  //calculate errors
+    for (int jbin=1;jbin<=hSumHistoMod[isamp][ibin][iatt]->GetNbinsX();jbin++){
+      double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
+      double err = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
+      if (content>0.) hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,(err/content)); //<average scaling factors
+      else{
+        hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,0.);
+      }
+    }  
+ 
+
+
   return hSumHistoMod[isamp][ibin][iatt];
 
 }
 
-TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt){
-//  if (hSumHisto[isamp][ibin][iatt]!=NULL) hSumHisto[isamp][ibin][iatt]->Delete();
+TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt, int normFlg){
   hSumHisto[isamp][ibin][iatt]->Reset();
   hSumHisto[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
   for (int icomp=0;icomp<nComponents;icomp++){
     hSumHisto[isamp][ibin][iatt]->Add(hMC[isamp][ibin][icomp][iatt]);
   }
 
-  hSumHisto[isamp][ibin][iatt]->Scale(normFactor);
+  if (normFlg) hSumHisto[isamp][ibin][iatt]->Scale(normFactor);
   return hSumHisto[isamp][ibin][iatt];
 }
 
@@ -425,13 +441,13 @@ histoManager::histoManager(int nsampl,int nbins,int ncomp,const char* name){
 histoManager::histoManager(int nptsmc, int nptsdata){
   nameTag = "unittest";
   nSamples = 1;
-  nComponents = 1;
+  nComponents = 2;
   nAttributes = 1;
   nBins = 1;
   useSplineFlg=0; 
   hMC[0][0][0][0]=testBumpD(nptsmc,3,0,"hmc_test");
   hMC[0][0][1][0]=testBumpD(nptsmc,3,0,"hmc_test_comp1");
-  hMC[0][0][2][0]=testBumpD(nptsmc,3,0,"hmc_test_comp2");
+  hMC[0][0][2][0]=testBumpD(nptsmc/3.,3,0,"hmc_test_comp2");
   hMC[0][0][3][0]=testBumpD(nptsmc,3,0,"hmc_test_comp3");
   hMC[0][0][4][0]=testBumpD(nptsmc,3,0,"hmc_test_comp4");
   hMC[0][0][5][0]=testBumpD(nptsmc,3,0,"hmc_test_comp5");
@@ -439,7 +455,12 @@ histoManager::histoManager(int nptsmc, int nptsdata){
 //  hMC[0][0][0][0]->SetName("mctest");
   hData[0][0][0]=testBumpD(nptsdata,3,0,"hdata_test");
   fitPars = new atmFitPars(1,1,nComponents,1,0);
-  fitPars->norm = (double)nptsdata/((double)nptsmc*1.);
+  
+  double nptstot = 0.;
+  for (int i=0;i<nComponents;i++){
+    nptstot += (double) hMC[0][0][i][0]->GetEntries();
+  }
+  fitPars->norm = (double)nptsdata/(nptstot);
   normFactor = fitPars->norm;
   hMC[0][0][0][0]->SetDefaultSumw2(kTRUE);
  // hMC[0][0][0][0]->Scale(fitPars->norm);

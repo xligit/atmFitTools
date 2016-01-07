@@ -333,35 +333,45 @@ double histoCompare::getErrLo(int ibin,int icomp,int iatt,int imod){
 }
 */
 
-void histoCompare::profileL(int ipar, double range, int npts){
+void histoCompare::profileL(int ipar, double range, int npts, int sameflg){
   TString pname = "p";
   pname.Append("_profile.png");
+  int iprofile =0;
+  if (sameflg) iprofile = 1;
   double bestpoint = thePars->pars[ipar];
   cout<<"Fitted value: "<<bestpoint<<endl;
   double dx = range/(double)npts;
   double xx = bestpoint - (range/2.);
   double ll;
   double lbest = getTotLnL();
-  if (hProf) hProf->Delete();
-  hProf = new TH1D("hprof","hprof",npts,xx,(xx+range));
+  if (hProf[iprofile]) hProf[iprofile]->Delete();
+  hProf[iprofile] = new TH1D("hprof","hprof",npts,xx,(xx+range));
   for (int ipoint=0;ipoint<npts;ipoint++){
    // cout<<"filling point" <<ipoint<<endl;
     //Par[ibin][icomp][iatt][imod] = xx;
     thePars->setParameter(ipar,xx);
     ll = getTotLnL();
-    hProf->SetBinContent(ipoint+1,ll-lbest);
-//    hProf->SetBinContent(ipoint+1,ll);
+    hProf[iprofile]->SetBinContent(ipoint+1,ll-lbest);
+//    hProf[0]->SetBinContent(ipoint+1,ll);
 
     xx+=dx;
   } 
   //set parameter back to initial value
   thePars->setParameter(ipar,bestpoint);
-  hProf->SetLineColor(9);
-  hProf->GetYaxis()->SetTitle("#Delta #chi^{2}");
+  hProf[iprofile]->SetLineColor(9);
+  hProf[iprofile]->GetYaxis()->SetTitle("#Delta #chi^{2}");
   TString xname = "parameter ";
   xname.Append(Form("%d",ipar));
-  hProf->GetXaxis()->SetTitle(xname.Data());
-  hProf->Draw("c");
+  hProf[iprofile]->GetXaxis()->SetTitle(xname.Data());
+  hProf[iprofile]->Draw("c");
+  if (sameflg) hProf[iprofile]->SetLineColor(kRed);
+  if (sameflg){ 
+    hProf[0]->Draw("c");
+    hProf[iprofile]->Draw("samec");
+  }
+  else{
+    hProf[0]->Draw("c");
+  }
   cc->Print(pname.Data());
   return;
 }
@@ -380,22 +390,22 @@ void histoCompare::profileL(int ibin, int icomp, int iatt, int imod, double rang
   double xx = bestpoint - (range/2.);
   double ll;
   double lbest = getTotLnL();
-  if (hProf) hProf->Delete();
-  hProf = new TH1D("hprof","hprof",npts,xx,(xx+range));
+  if (hProf[0]) hProf[0]->Delete();
+  hProf[0] = new TH1D("hprof","hprof",npts,xx,(xx+range));
   for (int ipoint=0;ipoint<npts;ipoint++){
    // cout<<"filling point" <<ipoint<<endl;
     //Par[ibin][icomp][iatt][imod] = xx;
     thePars->setParameter(ibin,icomp,iatt,imod,xx);
     ll = getTotLnL();
-    hProf->SetBinContent(ipoint+1,ll-lbest);
- //   hProf->SetBinContent(ipoint+1,ll);
+    hProf[0]->SetBinContent(ipoint+1,ll-lbest);
+ //   hProf[0]->SetBinContent(ipoint+1,ll);
 
     xx+=dx;
   } 
   //set parameter back to initial value
   thePars->setParameter(ibin,icomp,iatt,imod,bestpoint);
-  hProf->SetLineColor(9);
-  hProf->Draw("c");
+  hProf[0]->SetLineColor(9);
+  hProf[0]->Draw("c");
   cc->Print(pname.Data());
   return;
 }
@@ -1367,8 +1377,12 @@ double histoCompare::getTotLnL(){
   for (int isamp=0;isamp<nSamp;isamp++){
     for (int ibin=0;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
-         hMod = hManager->getSumHistogramMod(isamp,ibin,iatt);
-         totL+=getLnL(hMod,hManager->hData[isamp][ibin][iatt]);
+     //    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
+     //    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
+         TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
+         TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
+         double hnorm = hData->Integral()/hPrediction->Integral();
+         totL+=getLnL(hPrediction,hData,hnorm);
       }
     }
   }
@@ -1418,7 +1432,7 @@ double histoCompare::getSumSq(TH1D* h1, TH1D* h2){
 
 ////////////////////////////////////////////////////////////////////
 //evalute log-likelihood between two histograms
-double histoCompare::getLnL(TH1D* h1, TH1D* h2){
+double histoCompare::getLnL(TH1D* h1, TH1D* h2, double hnorm){
   double lnL = 0.;
   double diff;
   double term;
@@ -1433,17 +1447,26 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2){
 
   ///////////////////////////////////////////////////
   //assume poisson errors
-  for (int ibin=1;ibin<=(h1->GetNbinsX()-1);ibin++){
+ // for (int ibin=10;ibin<=(10);ibin++){
+
+  for (int ibin=3;ibin<=(h1->GetNbinsX()-3);ibin++){
     c1 = h1->GetBinContent(ibin); //MC
     c2 = h2->GetBinContent(ibin); //data
     errmc = h1->GetBinError(ibin);
-   // if (c2<10) continue;  //ignore very small bin contents
-//    lnL += evalLnLFast(c2,c1,errmc);
-    lnL += evalLnLNumeric(c2,c1,errmc);
- //   lnL += evalLnLGaussS(c2,c1,errmc,hManager->normFactor);
-  //  lnL += evalLnLGauss(c2,c1,h1->GetBinError(ibin));
-//    lnL += evalLnLRamanujan(c2,c1);
-  }
+
+    if (c2<7) continue;
+   
+    if (useLnLType==0) lnL+=evalLnL(c2,c1,norm); //< tn186
+    if (useLnLType==1) lnL+=evalLnLNumeric(c2,c1,errmc,norm); //< my numerical method
+    if (useLnLType==2) lnL+=evalLnLMyChi2(c2,c1,errmc,norm); //< chi-2 style errors
+    if (useLnLType==3) lnL+=evalLnLChi2N(c2,c1,errmc,norm); //< standard chi2
+    if (useLnLType==4) lnL+=evalLnLChi2Numeric(c2,c1,errmc,norm);
+    if (useLnLType==5) lnL+=evalLnLMyChi2NoWeight(c2,c1,errmc,norm);
+    if (useLnLType==6) lnL+=evalLnLDiff(c2,c1,errmc,norm);
+    if (useLnLType==7) lnL+=evalLnLMean(c2,c1,errmc,norm);
+    if (useLnLType==8) lnL+=evalLnLScaled(c2,c1,errmc,norm,cScale);
+
+}
   return lnL;
 }
 
@@ -1526,6 +1549,7 @@ histoCompare::histoCompare(const char* thename){
       parDebug[jhist][1] = 0.0;
       jhist++;
   }
+  useLnLType=0;
   return;
 }
 #endif
