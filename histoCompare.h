@@ -99,6 +99,11 @@ class histoCompare{
 //  double getLDebug(); 
  
   double cScale; //correction scale for likelihood
+
+
+  //////////////////////////////////////////////////////////
+  //flags
+  int flgFixAllSmearPars;
  
   //likelihood evaluateions
   double getSumSq(TH1D* h1, TH1D* h2);

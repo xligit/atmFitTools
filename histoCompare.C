@@ -54,24 +54,27 @@ void histoCompare::timetest(int ntry){
 }
 
 void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
-
+ 
   //setup mc mcmctools
-//  tunePar = guess;
   const int npars = thePars->nTotPars; //< total number of parameters in fit
   double par[npars]; //< container for parameters
   int parindex = 0;
   double result = 0.;
   markovTools* mc = new markovTools(npars); //< create markovTools object
   mc->setTuneParameter(tunePar);
+
   //fill parameter array and set uncertainties
   for (int ipar=0;ipar<npars;ipar++){
-    par[ipar]=thePars->getParameter(ipar);
-    mc->setParVar(ipar,thePars->parUnc[ipar]);
+    par[ipar]=thePars->getParameter(ipar); //< parameter array
+    mc->setParVar(ipar,thePars->parUnc[ipar]); //< set parameter variance
+    mc->setFixPar(ipar,thePars->fixPar[ipar]); //< set parameter fix flag
   }
+
   //set initial state
   getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
   mc->setL((double)result);//< sets the initial likelihood
   double Linit = result;
+
   //run tuning
   for (int icycle=0;icycle<ncycles;icycle++){
     double xaccepted=0.;
@@ -85,6 +88,7 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
         xaccepted++; 
       }
     }
+
     double rate = xaccepted/(double)nsteps;
     cout<<"acceptance rate: "<<rate<<endl;
     cout<<"tune parameter: "<<tunePar<<endl;
@@ -94,7 +98,11 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
   return; 
 }
 
+///////////////////////////////////////////////
+//Run a MCMC of length nsteps
 void histoCompare::runMCMC(int nsteps){
+
+  ///////////////////////////////////////
   //setup mcmc tools
   const int npars = thePars->nTotPars; //< total number of parameters in fit
   double par[npars]; //< container for parameters
@@ -102,11 +110,15 @@ void histoCompare::runMCMC(int nsteps){
   double result = 0.;
   markovTools* mc = new markovTools(npars); //< create markovTools object
   mc->setTuneParameter(tunePar);
+
+  ///////////////////////////////////////////////
   //fill parameter array and set uncertainties
   for (int ipar=0;ipar<npars;ipar++){
     par[ipar]=thePars->getParameter(ipar);
     mc->setParVar(ipar,thePars->parUnc[ipar]);
   }
+  
+  ///////////////////////////////////////////////////
   //set initial state
   getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
   mc->setL((double)result);//< sets the initial likelihood
@@ -117,7 +129,12 @@ void histoCompare::runMCMC(int nsteps){
     getTotLnL1D(result, npars,par);   
     mc->acceptStepLnL(result,par); //< if step is accepted, istep++, and written to histo
   }
-  mc->savePath("mcmctest.root");
+
+  ///////////////////////
+  //save results
+  mc->savePath();
+
+  //////////////////////////
   return;
 }
 
@@ -651,32 +668,12 @@ void histoCompare::LnLPreFit(){
     fit->SetParameter(ipar,pname.Data(),thePars->pars[ipar],parerr,0,0);
   }
 
-//  parindex = 0;
-//  for (int kbin=0;kbin<nBin;kbin++){
-//    for (int katt=0;katt<nAtt;katt++){
-//      for (int kcomp=0;kcomp<nComp;kcomp++){
-//        fit->SetParameter(parindex,parName[kbin][kcomp][katt][0].Data(),Par[kbin][kcomp][katt][0],parerr,0,0);
-//        parindex++;
-//        bestPar[kbin][kcomp][katt][1] = Par[kbin][kcomp][katt][1];
-//        fit->SetParameter(parindex,parName[kbin][kcomp][katt][1].Data(),Par[kbin][kcomp][katt][1],parerr,0,0);
-//        parindex++;
-//      }
-//    }
-//  }
-
   //fix all parameters
   for (int jpar=0;jpar<npars;jpar++){
     fit->FixParameter(jpar);
   }
 
-//  debugging
-//  fit->ReleaseParameter(npars-1);
-//  fit->ExecuteCommand("MIGRAD",0,0);
-//  fit->FixParameter(npars-1);
-//  fit->ExecuteCommand("MIGRAD",0,0);
-
-
-  //fit flux ans xsec
+  //release and fit flux and xsec parameters
   parindex = thePars->nTotPars-thePars->nSysPars;
   for (int isyspar=0;isyspar<thePars->nSysPars;isyspar++){
     fit->ReleaseParameter(parindex);
@@ -692,17 +689,16 @@ void histoCompare::LnLPreFit(){
   for (int jbin=0;jbin<nBin;jbin++){
     for (int jatt=0;jatt<nAtt;jatt++){
       for (int jcomp=0;jcomp<nComp;jcomp++){
-          parindex++; //starts on odd parameter (bias only)
+          parindex++; //< starts on odd parameter (bias only)
           //release biasparameter to be fit
           if (thePars->checkFixFlg(jbin,jcomp,jatt,1)==1){
-            parindex++; //do nothing if parameter is fixed
+            parindex++; //< do nothing if parameter is fixed
             continue;
           }
           fit->ReleaseParameter(parindex);
           cout<<"fitting "<<jbin<<jcomp<<jatt<<1<<" # "<<thePars->getParIndex(jbin,jcomp,jatt,1)<<endl;
           fit->ExecuteCommand("SIMPLEX",0,0);
           fit->FixParameter(parindex);
-       //   bestPar[jbin][jcomp][jatt][1] = fit->GetParameter(parindex); 
           parindex++;
       }
     }
@@ -712,10 +708,10 @@ void histoCompare::LnLPreFit(){
   for (int jbin=0;jbin<nBin;jbin++){
     for (int jatt=0;jatt<nAtt;jatt++){
       for (int jcomp=0;jcomp<nComp;jcomp++){
-          //starts on even parameter (bias only)
+          //starts on even parameter (smear only)
           //release smear parameter to be fit
           if (thePars->checkFixFlg(jbin,jcomp,jatt,0)==1){
-            parindex++; //do nothing if parameter is fixed
+            parindex++; //<do nothing if parameter is fixed
             continue;
           }
           fit->ReleaseParameter(parindex);
@@ -728,33 +724,14 @@ void histoCompare::LnLPreFit(){
     }
   }
 
-
   //print final results
   for (int ipar=0;ipar<npars;ipar++){
     thePars->setParameter(ipar,fit->GetParameter(ipar));
     cout<<"  PAR "<<ipar<<" FIT RESULT: "<<thePars->pars[ipar]<<endl;
   }
-
-
-
-/*
-  for (int pbin=0;pbin<nBin;pbin++){
-    for (int patt=0;patt<nAtt;patt++){
-      for (int pcomp=0;pcomp<nComp;pcomp++){
-        for (int pmod=0;pmod<2;pmod++){
-          cout<<"  PAR "<<parName[pbin][pcomp][patt][pmod].Data()<<" FIT RESULT: ";
-          cout<<thePars->histoPar[pbin][pcomp][patt][pmod]<<endl;
-        }
-      }
-    }
-  }
-  for (int isys=0;isys<thePars->nSysPars;isys++){
-          cout<<thePars->sysPar[isys]<<endl;
-  }
- */
-
   cout<<"$$$$$$$$$$$$$ END LNL PRE FIT $$$$$$$$$$$$$"<<endl;
 
+  return;
 }
 
 
@@ -875,6 +852,11 @@ void histoCompare::LnLFit(){
   //parameter name container
   TString parnametmp;  
 
+  //will we fix all the smearing parameters?
+  if (flgFixAllSmearPars){
+    thePars->fixAllSmearPars();
+  }
+
   double  parinit; //container to temporarily store initial values 
 
   //total number of parameters to be fit
@@ -889,6 +871,7 @@ void histoCompare::LnLFit(){
   cout<<"  PRECISION:            "<<parerr<<endl;
   cout<<"  ---------------------------------------  "<<endl;
 
+  ////////////////////////////////////////////////////////
   //setup the fitter!
   TFitter* fit = new TFitter(npars);
   //shut fitter up
@@ -898,7 +881,6 @@ void histoCompare::LnLFit(){
   }
   //specify function to be fit
   fit->SetFCN(lnLWrapper);
- 
   //setup parameters
   TString aname;
   for (int ipar=0;ipar<npars;ipar++){
@@ -908,21 +890,20 @@ void histoCompare::LnLFit(){
     aname = "parameter_";
     aname.Append(ipar);
     fit->SetParameter(ipar,aname.Data(),thePars->pars[ipar],parerr,0,0);
-  }
- 
+  } 
   parindex = 0;
   int parindextmp = 0;
+
+  ///////////////////////////////////////////////////////////////////
   //do individual fits
   for (int jbin=0;jbin<nBin;jbin++){
     for (int jatt=0;jatt<nAtt;jatt++){
       //start of fit block//
-
       //fix all parameters
       for (int jpar=0;jpar<npars;jpar++){
         fit->FixParameter(jpar);
       }
-
-      //for bin 0, double the xsec and flux parameters as well//
+      //for bin 0, fit the xsec and flux parameters as well//
       if (jbin==0){
         //release all flux and xsec pars
         for (int isyspar=(thePars->nTotPars-thePars->nSysPars);isyspar<thePars->nSysPars;isyspar++){
@@ -931,7 +912,6 @@ void histoCompare::LnLFit(){
         //fit these pars first
         fit->ExecuteCommand("SIMPLEX",0,0);
       }
-
       //release bias parameters
       for (int jcomp=0;jcomp<nComp;jcomp++){
         if (thePars->checkFixFlg(jbin,jcomp,jatt,1)!=1){
@@ -955,25 +935,6 @@ void histoCompare::LnLFit(){
       
     }
   }
-
-
-
-/*
-  //print final results
-  cout<<"  ----------------------------------------  "<<endl;
-  for (int pbin=0;pbin<nBin;pbin++){
-    for (int patt=0;patt<nAtt;patt++){
-      for (int pcomp=0;pcomp<nComp;pcomp++){
-        for (int pmod=0;pmod<2;pmod++){
-          cout<<"  PAR "<<parName[pbin][pcomp][patt][pmod].Data()<<" FIT RESULT: ";
-          cout<<thePars->histoPar[pbin][pcomp][patt][pmod]<<endl;
-     //     errParLo[pbin][pcomp][patt][pmod] = getErrLo(pbin,pcomp,patt,pmod);
-     //     errParHi[pbin][pcomp][patt][pmod] = getErrHi(pbin,pcomp,patt,pmod);
-        }
-      }
-    }
-  }
-*/
 
   //print final results
   for (int ipar=0;ipar<npars;ipar++){

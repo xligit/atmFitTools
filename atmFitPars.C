@@ -35,7 +35,7 @@ class atmFitPars{
   double sysParUnc[NSYSPARMAX];
   double pars[4000];
   double parUnc[4000];
-  int   fixPar[4000];
+  int   fixPar[4000]; //< array of fix flags for parameters
   double bestpars[4000];
   int   parIndex[NBINMAX][NCOMPMAX][NATTMAX][2];
   double norm;  
@@ -52,6 +52,7 @@ class atmFitPars{
   void setSysParUnc(int isys,double value){sysParUnc[isys]=value;}
   void fixParameter(int ipar);
   void fixParameter(int ibin,int icomp,int iatt, int imod);
+  void fixAllSmearPars(int isfixed=1);
   void setRandSysPar(); //sets systematic parameters to random values
   int  checkFixFlg(int ibin,int icomp,int iatt, int imod);
   void printParValues();
@@ -66,6 +67,20 @@ class atmFitPars{
   void printPars();
 };
 
+//////////////////////////////////////////////////
+//Set only bias and systematic pars to float in fit
+void atmFitPars::fixAllSmearPars(int isfixed){
+  //fix all smear parameters
+  for (int ibin=0;ibin<nBins;ibin++){
+    for (int icomp=0;icomp<nComponents;icomp++){
+      for (int iatt=0;iatt<nAttributes;iatt++){
+        int index = parIndex[ibin][icomp][iatt][0];
+        fixPar[index] = isfixed;
+      }
+    }
+  }
+  return;
+}
 
 //construct from parameter file
 atmFitPars::atmFitPars(const char* parfilename){

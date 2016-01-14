@@ -5,6 +5,7 @@
 #include "TTree.h"
 #include <iostream>
 #include "TFile.h"
+#include "atmFitPars.C"
 
 #define NMCMCPARS 100
 
@@ -18,35 +19,62 @@ TRandom2* randy = new TRandom2();
 //class to manage a Markov Chain Monte Carlo
 class markovTools{
    public:
-   //constructor
+   
+   ///////////////////
+   //constructors
    markovTools(int npars);
+   markovTools(atmFitPars* atmpars);
+   void Init(int pars);
+
+   ///////////////////////////
+   //variables
    TFile* fout; //< output file
    int nPars;  //< totla number of parameters
    int iStep;  //< counter for total step number
    double oldPars[NMCMCPARS]; //< array of parameters from previous step
+   int fixPar[NMCMCPARS]; //< array of fix flags for each parameter
    double oldL; //< likelihood value of previous step
-   double tuneParameter;
+   double tuneParameter; //< tunes the size of MCMC steps
+   double varPar[NMCMCPARS]; //< stores parameter standard deviations
+   TTree* pathTree;
+   atmFitPars* atmPars;
+
+   /////////////////////////
+   //setters
+   void setFixPar(int ipar, int value){fixPar[ipar]=value;}
    void setPar(int ipar,double value){oldPars[ipar]=value;}
    void setL(double value){oldL=value;}
-   double varPar[NMCMCPARS]; //< stores parameter standard deviations
    void setParVar(int ipar,double value); //< sets parameter standard deviations
+
+   /////////////////////////
+   //MCMC Functions
    void proposeStep(double* par);  //< proposes a new step from the given parameter set
    int acceptStep(double newL,double* par); 
    int acceptStepLnL(double newL,double* par);
-   void savePath(const char* filename);
-   void setTuneParameter(double value){tuneParameter=value;}
-   TTree* pathTree;
 
+   /////////////////////////
+   //I/O
+   void savePath();
+   void setTuneParameter(double value){tuneParameter=value;}
+
+   /////////////////////////
+   //debugging
    void test(int itry);
    TH1D* htest;
+
 };
 
 
 
-void markovTools::savePath(const char* filename){
+void markovTools::savePath(){
   pathTree->Write();
  // fout->Close();
-  pathTree->SaveAs("mcmcpath.root");
+//  if (filename){
+//    pathTree->SaveAs(filename);
+//  }
+//  else{
+//    pathTree->SaveAs("mcmcpath.root");
+//  }
   fout->Close();
   return;
 }
@@ -132,25 +160,59 @@ int markovTools::acceptStep(double newL,double* par){
 }
 
 
+
+/////////////////////////////////////////////////
+//takes a poiter to a parameter array and returns
+//a new array of proposed parameters
 void markovTools::proposeStep(double* par){  
   for (int i=0;i<nPars;i++){
-    //save current parameters
     oldPars[i] = par[i];
-    //set new value
-    par[i] = randy->Gaus(par[i],varPar[i]*tuneParameter);
-   // cout<<"par: "<<oldPars[i]<<endl;
-   // cout<<"parnew: "<<par[i]<<endl;
+    if (fixPar[i]!=1) par[i] = randy->Gaus(par[i],varPar[i]*tuneParameter);
   }
   return;
 }
 
-markovTools::markovTools(int npars){
-  fout = new TFile("mcmctree.root","RECREATE");
-  pathTree = new TTree("MCMCpath","MCMCpath");
+/////////////////////////////////////////////
+//initialization
+void markovTools::Init(int npars){
+
+  // set total number of parameters
   nPars = npars;
-  iStep = 0;
+
+  //current step counter
+  iStep=0;
+  
+  //branch setup
+  pathTree->Branch("npars",&nPars,"npars/I");
+  pathTree->Branch("step",&iStep,"step/I");
+  pathTree->Branch("par",oldPars,"pars[100]/F");
+
+  //done
+  return;
+}
+
+/////////////////////////////////////////////
+//constructor
+markovTools::markovTools(int npars){
+  fout = new TFile("mcmctree.root","RECREATE"); //< set output file name
+  pathTree = new TTree("MCMCpath","MCMCpath"); //< initialize new tree for steps
+  nPars = npars; //< set total # of parameters
+  iStep = 0;  //< counter of current step
+  
+  //////////////////////////////////////////
+  //branch setup
   pathTree->Branch("npars",&nPars,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
   pathTree->Branch("par",oldPars,"pars[100]/F");
 }
+
+////////////////////////////////////////////
+//construct from atmFitPars 
+markovTools::markovTools(atmFitPars* fitpars){
+  Init(fitpars->nTotPars);
+
+  return;
+}
+
+
 
