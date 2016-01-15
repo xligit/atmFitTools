@@ -136,8 +136,8 @@ void atmFitPars::savePars(const char* filename){
   TFile* fout = new TFile(filename,"RECREATE");
   //create tree to hold parameter values
   TTree* parTree = new TTree("parTree","parTree");
-  parTree->Branch("pars",pars,"pars[4000]/F");
-  parTree->Branch("parUnc",parUnc,"parUnc[4000]/F");
+  parTree->Branch("pars",pars,"pars[4000]/D");
+  parTree->Branch("parUnc",parUnc,"parUnc[4000]/D");
   parTree->Branch("nTotPars",&nTotPars,"nTotPars/I");
   parTree->Branch("nSysPars",&nSysPars,"nSysPars/I");
   parTree->Fill();

@@ -130,6 +130,7 @@ class histoCompare{
   void saveFitPars(const char* filename); //< write parameters and outputs to a file
   void readFitPars(const char* filename); //< read parameters from a file
   void tuneMCMC(int ncyles=1,int nsteps=150,double goal=0.25);
+  void tuneMCMCOld(int ncyles=1,int nsteps=150,double goal=0.25);
   //staticthis for fits
   static histoCompare* staticthis;
 };

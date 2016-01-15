@@ -27,7 +27,6 @@ void histoCompare::timetest(int ntry){
     }
   }
   double diff;
-  double result;
   int itry=0;
   t1=clock();
   while (itry<ntry){
@@ -55,24 +54,75 @@ void histoCompare::timetest(int ntry){
 
 void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
  
-  //setup mc mcmctools
+//  //setup mc mcmctools
+//  const int npars = thePars->nTotPars; //< total number of parameters in fit
+//  double par[npars]; //< container for parameters
+//  int parindex = 0;
+  double result = 0.;
+// markovTools* mc = new markovTools(npars); //< create markovTools object
+  markovTools* mc = new markovTools(thePars); //< create markovTools object
+  mc->setTuneParameter(tunePar);
+
+  //fill parameter array and set uncertainties
+  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
+   // par[ipar]=thePars->getParameter(ipar); //< parameter array
+    mc->setParVar(ipar,thePars->parUnc[ipar]); //< set parameter variance
+    mc->setFixPar(ipar,thePars->fixPar[ipar]); //< set parameter fix flag
+  }
+
+  //set initial state
+  result = getTotLnL();
+//  getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
+  mc->setL(result);//< sets the initial likelihood
+  double Linit = result;
+
+  //run tuning
+  for (int icycle=0;icycle<ncycles;icycle++){
+    double xaccepted=0.;
+    int   istep=0;
+    while (istep<nsteps){
+      istep = mc->iStep;
+      mc->proposeStep(); //< propose a new step
+      //getTotLnL1D(result, npars,par);  //< get likelihood of new step
+      result = getTotLnL();
+      cout<<result-Linit<<endl;
+      if (mc->acceptStepLnL(result)){ //< check if new step is accepted
+        xaccepted++; 
+      }
+    }
+
+    double rate = xaccepted/(double)nsteps;
+    cout<<"acceptance rate: "<<rate<<endl;
+    cout<<"tune parameter: "<<tunePar<<endl;
+    tunePar*=(rate/goal);
+    cout<<"new tune parameter: "<<tunePar<<endl;
+  }
+  return; 
+}
+
+
+void histoCompare::tuneMCMCOld(int ncycles,int nsteps,double goal){
+ 
+//  //setup mc mcmctools
   const int npars = thePars->nTotPars; //< total number of parameters in fit
   double par[npars]; //< container for parameters
   int parindex = 0;
   double result = 0.;
-  markovTools* mc = new markovTools(npars); //< create markovTools object
+ markovTools* mc = new markovTools(npars); //< create markovTools object
+//  markovTools* mc = new markovTools(thePars); //< create markovTools object
   mc->setTuneParameter(tunePar);
 
   //fill parameter array and set uncertainties
-  for (int ipar=0;ipar<npars;ipar++){
+  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
     par[ipar]=thePars->getParameter(ipar); //< parameter array
     mc->setParVar(ipar,thePars->parUnc[ipar]); //< set parameter variance
     mc->setFixPar(ipar,thePars->fixPar[ipar]); //< set parameter fix flag
   }
 
   //set initial state
+ // result = getTotLnL();
   getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
-  mc->setL((double)result);//< sets the initial likelihood
+  mc->setL(result);//< sets the initial likelihood
   double Linit = result;
 
   //run tuning
@@ -83,6 +133,7 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
       istep = mc->iStep;
       mc->proposeStep(par); //< propose a new step
       getTotLnL1D(result, npars,par);  //< get likelihood of new step
+      //result = getTotLnL();
       cout<<result-Linit<<endl;
       if (mc->acceptStepLnL(result,par)){ //< check if new step is accepted
         xaccepted++; 
@@ -98,36 +149,49 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
   return; 
 }
 
+
+
 ///////////////////////////////////////////////
 //Run a MCMC of length nsteps
 void histoCompare::runMCMC(int nsteps){
 
   ///////////////////////////////////////
   //setup mcmc tools
-  const int npars = thePars->nTotPars; //< total number of parameters in fit
-  double par[npars]; //< container for parameters
-  int parindex = 0;
-  double result = 0.;
-  markovTools* mc = new markovTools(npars); //< create markovTools object
+
+  markovTools* mc = new markovTools(thePars);
   mc->setTuneParameter(tunePar);
+//  const int npars = thePars->nTotPars; //< total number of parameters in fit
+//  double par[npars]; //< container for parameters
+//  int parindex = 0;
+  double result = 0.;
+//  markovTools* mc = new markovTools(npars); //< create markovTools object
+//  mc->setTuneParameter(tunePar);
 
   ///////////////////////////////////////////////
   //fill parameter array and set uncertainties
-  for (int ipar=0;ipar<npars;ipar++){
-    par[ipar]=thePars->getParameter(ipar);
+  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
+//    par[ipar]=thePars->getParameter(ipar);
     mc->setParVar(ipar,thePars->parUnc[ipar]);
   }
   
   ///////////////////////////////////////////////////
   //set initial state
-  getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
-  mc->setL((double)result);//< sets the initial likelihood
+
+  
+ // getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
+  result = getTotLnL();
+  mc->setL(result);//< sets the initial likelihood
+
+  //loop through steps
   int currentstep=0;
   while (currentstep<nsteps){
     currentstep = mc->iStep;
-    mc->proposeStep(par); //< fills par[] with proposed params
-    getTotLnL1D(result, npars,par);   
-    mc->acceptStepLnL(result,par); //< if step is accepted, istep++, and written to histo
+    //mc->proposeStep(par); //< fills par[] with proposed params
+    mc->proposeStep();
+    //getTotLnL1D(result, npars,par);   
+    result = getTotLnL();
+    //mc->acceptStepLnL(result,par); //< if step is accepted, istep++, and written to histo
+    mc->acceptStepLnL(result);
   }
 
   ///////////////////////
@@ -194,7 +258,7 @@ void histoCompare::saveFitPars(const char* filename){
 
 double histoCompare::getErrHi(int ipar){
   //scan through log likelihood by decreasing parameter until threshold is reached
-  double thresh = 1.0; //likelihood threshold
+//  double thresh = 1.0; //likelihood threshold
   double Ldiff = 0.;  //difference in likelihood from current value
   double Lbest = getTotLnL(); //current likelihood value
   double parbest = thePars->pars[ipar];
@@ -246,7 +310,7 @@ double histoCompare::getErrHi(int ipar){
 
 double histoCompare::getErrLo(int ipar){
   //scan through log likelihood by decreasing parameter until threshold is reached
-  double thresh = 1.0; //likelihood threshold
+  //double thresh = 1.0; //likelihood threshold
   double Ldiff = 0.;  //difference in likelihood from current value
   double Lbest = getTotLnL(); //current likelihood value
   double parbest = thePars->pars[ipar];
@@ -591,11 +655,11 @@ void histoCompare::LnLPreFit(){
   
   //individually fit each parameter
   int parindex =0;
-  int parindextmp;
+  //int parindextmp;
   //parameter name container
   TString parnametmp;  
 
-  double  parinit; //container to temporarily store initial values 
+ // double  parinit; //container to temporarily store initial values 
 
   //total number of parameters to be fit
   int npars = thePars->nTotPars;
@@ -841,7 +905,7 @@ void histoCompare::LnLFit(){
   //threshold to determine if a parameter is fit or not
   //if the MC histograms for this parameter have a size less than this value,
   //don't bother fitting them!
-  double nthresh = 50.;
+ // double nthresh = 50.;
 
   //sets the precision of the fits
   double parerr = 0.001;  
@@ -857,7 +921,7 @@ void histoCompare::LnLFit(){
     thePars->fixAllSmearPars();
   }
 
-  double  parinit; //container to temporarily store initial values 
+//  double  parinit; //container to temporarily store initial values 
 
   //total number of parameters to be fit
   int npars = thePars->nTotPars;
@@ -884,15 +948,15 @@ void histoCompare::LnLFit(){
   //setup parameters
   TString aname;
   for (int ipar=0;ipar<npars;ipar++){
-    int kbin=thePars->binOfPar[ipar];
-    int kcomp=thePars->compOfPar[ipar];
-    int katt = thePars->attOfPar[ipar];
+  //  int kbin=thePars->binOfPar[ipar];
+  //  int kcomp=thePars->compOfPar[ipar];
+  //  int katt = thePars->attOfPar[ipar];
     aname = "parameter_";
     aname.Append(ipar);
     fit->SetParameter(ipar,aname.Data(),thePars->pars[ipar],parerr,0,0);
   } 
   parindex = 0;
-  int parindextmp = 0;
+  //int parindextmp = 0;
 
   ///////////////////////////////////////////////////////////////////
   //do individual fits
@@ -1340,10 +1404,10 @@ double histoCompare::getTotLnL(){
       for (int iatt=0;iatt<nAtt;iatt++){
      //    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
      //    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
-         TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
+         TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
          TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
-         double hnorm = hData->Integral()/hPrediction->Integral();
-         totL+=getLnL(hPrediction,hData,hnorm);
+         double hnorm = hDataTmp->Integral()/hPrediction->Integral();
+         totL+=getLnL(hPrediction,hDataTmp,hnorm);
       }
     }
   }
@@ -1395,14 +1459,14 @@ double histoCompare::getSumSq(TH1D* h1, TH1D* h2){
 //evalute log-likelihood between two histograms
 double histoCompare::getLnL(TH1D* h1, TH1D* h2, double hnorm){
   double lnL = 0.;
-  double diff;
-  double term;
+//  double diff;
+//  double term;
   double c1; //data
   double c2; //mc
   double errmc; //mcerr
   double norm = hManager->normFactor; //normalization
-  double dof=0.;
-  double quaderr;
+//  double dof=0.;
+//  double quaderr;
 
 
 
