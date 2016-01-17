@@ -40,17 +40,17 @@ class preProcess{
   int nsample;
   int nbin;
   //new leaf variables
-  float towall;
-  float wall;
-  float evtweight;
-  float attribute[1000];
+  double towall;
+  double wall;
+  double evtweight;
+  double attribute[1000];
   //selections
   void fillAttributes();
   int absmode;
   int getComponent();
   int getSample();
   int getBin();
-  float getWeight();
+  double getWeight();
   void processFile(const char* fname,const char* outname="");
   void processAllFiles(TChain* chain);
   void addFile(const char* filename);

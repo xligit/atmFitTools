@@ -10,7 +10,7 @@
 
  ///////////////////////////////////////////////
  //name prefix for output files
- TString nameTag = "fake1";
+ TString nameTag = "test1";
 
  ///////////////////////////////////////////
  //director for output files

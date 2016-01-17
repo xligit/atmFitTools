@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Tue Dec  1 16:11:29 2015 by ROOT version 5.28/00c
+// Thu Jan 14 17:33:47 2016 by ROOT version 5.28/00c
 // from TTree MCMCpath/MCMCpath
 // found on file: mcmctree.root
 //////////////////////////////////////////////////////////
@@ -20,12 +20,12 @@ public :
    // Declaration of leaf types
    Int_t           npars;
    Int_t           step;
-   Float_t         par[100];
+   Double_t        par[100];
 
    // List of branches
    TBranch        *b_npars;   //!
    TBranch        *b_step;   //!
-   TBranch        *b_pars;   //!
+   TBranch        *b_par;   //!
 
    mcmcReader(TTree *tree=0);
    virtual ~mcmcReader();
@@ -101,7 +101,7 @@ void mcmcReader::Init(TTree *tree)
 
    fChain->SetBranchAddress("npars", &npars, &b_npars);
    fChain->SetBranchAddress("step", &step, &b_step);
-   fChain->SetBranchAddress("par", par, &b_pars);
+   fChain->SetBranchAddress("par", par, &b_par);
    Notify();
 }
 

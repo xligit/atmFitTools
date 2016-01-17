@@ -83,9 +83,9 @@ void preProcess::addFile(const char*filename){
   nFiles++;
 }
 
-float preProcess::getWeight(){
+double preProcess::getWeight(){
   int absmode = TMath::Abs(fq->mode);
-  float enu   = fq->pmomv[0];
+  double enu   = fq->pmomv[0];
   evtweight = 1.0;
   //CCQE norm bin1 
   if ((absmode==1)&&(enu<200.)){
@@ -210,7 +210,7 @@ void preProcess::setupNewTree(){
   trout->CopyAddresses(tr); //set addresses
   
   //add new branches
-  trout->Branch("attribute",attribute,"attribute[1000]/F");
+  trout->Branch("attribute",attribute,"attribute[1000]/D");
   trout->Branch("ncomponent",&ncomponent,"ncomponent/I");
   trout->Branch("nsample",&nsample,"nsample/I");
   trout->Branch("nbin",&nbin,"nbin/I");
@@ -224,9 +224,9 @@ void preProcess::setupNewTree(){
   trout->Branch("nvk",&vis->nvk,"nvk/I");
   trout->Branch("nvoth",&vis->nvoth,"nvoth/I");
   trout->Branch("vispid",vis->vispid,"vispid[100]/I");
-  trout->Branch("wall",&wall,"wall/F");
-  trout->Branch("towall",&towall,"towall/F");
-  trout->Branch("evtweight",&evtweight,"evtweight/F");
+  trout->Branch("wall",&wall,"wall/D");
+  trout->Branch("towall",&towall,"towall/D");
+  trout->Branch("evtweight",&evtweight,"evtweight/D");
   return;
 }
 
