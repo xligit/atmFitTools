@@ -7,4 +7,5 @@
  chmc.Add("./rootfiles/test1_MC*.root");
  TTree* trmc = (TTree*)(&chmc);
  pcalc->setMCTree(trmc);
+ pcalc->nmcevents=10000;
 }

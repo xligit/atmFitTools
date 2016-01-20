@@ -12,6 +12,9 @@
 #include "mcmcReader.C"
 #include "THStack.h"
 
+
+#define NCLASSMAX 10
+
 //This class aims to take the MCMC output and generate uncertainties in number of events 
 class postfitCalculator{
   public:
@@ -31,11 +34,17 @@ class postfitCalculator{
   fQreader* mcreader; //< points to data in mctree
   atmFitPars* fitpars; //< points to the current fit parameters object
   splineFactory* sfact; //< empty spline factory to call getEvtWeight. 
+  TFile* outfile;
+  int nmcevents;
   double pars[1000]; 
   double evtweight;
   int evtclass; //< code for event class 
   TString parFileName;
-
+  //for "nsk" tree
+  double nevents[10]; //< number of events for each event class
+  double neventstot[10]; //< total number of events for each event class
+  TTree* nsktree;
+  int selectiontype; //< code for which selection to use
   //histogrms
   TH1D* hEnuMu[10][200]; //<energy assuming muon
   TH1D* hPIDemu[10][200]; //<e/mu PID
@@ -43,14 +52,131 @@ class postfitCalculator{
   ////////////////////////////////////////////////////////
   //methods
   void  setMCTree(TTree* tr);
+  void  setSelectionType(int itype){selectiontype=itype;}
   double getEvtWeight(); //< returns the weight given the current parameters
+  void  modifyAttributes();
+  void  unmodifyAttributes();
   void  setParsFromMCMC(int istep); //< sets parameters from mcmmc cloud
-  void fillHistos(int iclass,int islot); //fills all histograms with data pointed to by mcreader
-  int makeSelection(int iselect); //select events based on various attributes;
+  void fillHistos(int iclass,int islot); //< fills all histograms with data pointed to by mcreader
+  int makeSelection(int iselect); //< select events based on various attributes;
   int getEvtClass();
   void drawBreakdown(int ihisto,int islot);
   void makeHistos(int iselection,int islot);
+  void findEvtClasses(); //< fills array of total numbers of each event class
+  void fillNskTree(int npts,int nburn=1000); //< step through MCMC cloud and fill NSK tree at each point
 };
+
+///////////////////////////////////////////////////
+//undo attribute modification
+void postfitCalculator::unmodifyAttributes(){
+
+  ////////////////////////////////////////////////////
+  //un-modify attributes
+  for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
+    //mcreader->attribute[iatt]/=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][0]; //divide by smear parameter
+    mcreader->attribute[iatt]-=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1]; //subtract bias parameter
+  }
+
+  //////////
+  return;
+}
+
+
+///////////////////////////////////////////////////
+//changes attributes of event to the modified quantities
+void postfitCalculator::modifyAttributes(){
+
+  ////////////////////////////////////////////////////
+  //modify attributes
+  for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
+    //mcreader->attribute[iatt]*=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][0]; //multiply by smear parameter
+    mcreader->attribute[iatt]+=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1]; //add bias parameter
+  }
+
+  //////////
+  return;
+}
+
+
+/////////////////////////////////////////////////
+//Fill the NSK tree at various steps in MCMC path
+void postfitCalculator::fillNskTree(int npts,int nburn){
+  
+  //get number of steps minus burn-in
+  int nsteps=mcmcpath->GetEntries()-nburn;
+  if (nsteps<(npts)){
+    cout<<"Not enough steps in MCMC path!"<<endl;
+    return;
+  }
+
+  //loop over points (uniform sampling)
+  int dstep = nsteps/npts;
+  int istep = nburn;
+  int samppts[10000];
+  //get array of sampled points
+  for (int i=0;i<npts;i++){
+    samppts[i] = istep;
+    istep+=dstep;
+  } 
+
+  //get total numbers of events
+  findEvtClasses();
+
+
+  //loop over number of points
+  for (int ipt=0;ipt<npts;ipt++){
+    setParsFromMCMC(samppts[ipt]);//< fill atmFitPars from parameters at this step
+    for (int ievt=0;ievt<nmcevents;ievt++){
+      if ((ievt%1000)==0) cout<<"pt: "<<ipt<<" ev: "<<ievt<<endl;
+      mctree->GetEntry(ievt);
+      evtclass = getEvtClass(); //< get event class
+      evtweight = getEvtWeight(); //< gets weight for event and modifies attributes   
+      modifyAttributes(); //<  modify the attributes according the the mcmc parameters
+      if (makeSelection(selectiontype)){
+        fillHistos(evtclass,ipt); //< fills the histograms
+        nevents[evtclass]++; //< increment the number of events of this class passing the cut
+      }
+    } 
+ 
+    //fill nsk
+    nsktree->Fill();
+
+    //reset nevents
+    for (int iclass=0;iclass<NCLASSMAX;iclass++){
+      nevents[iclass]=0.;
+    }
+  }
+
+  //write out output 
+  nsktree->Write();
+  outfile->Close();
+
+  ////////////////
+  return; 
+}
+
+//////////////////////////////////////////////
+//Find total numbers of events of each class
+void postfitCalculator::findEvtClasses(){
+
+  //first make sure each event class has zero events
+  for (int iclass=0;iclass<NCLASSMAX;iclass++){
+    neventstot[iclass]=0.;
+    nevents[iclass]=0.;  
+  }
+
+  //now loop through all MC events to see hou many events of each
+  //class we have
+  cout<<"Finding total # of events of each class...."<<endl;
+  for (int ievt=0;ievt<nmcevents;ievt++){
+    mctree->GetEntry(ievt);
+    evtclass=getEvtClass(); //< fills "evtclass" variable
+    neventstot[evtclass]++; //<increment the total number of events of this class
+  }
+  
+  /////////
+  return;
+}
 
 //////////////////////////////////////////////
 //Draw all event classes for a histogram
@@ -92,6 +218,8 @@ int postfitCalculator::getEvtClass(){
       (TMath::Abs(mcreader->mode)<30)&&
       (TMath::Abs(mcreader->ipnu[0])==14)) return 3; //< CCnQE nu-mu
   if ((TMath::Abs(mcreader->mode)>30)) return 4; //< NC
+
+  //////////////
   return -1;
 }
 
@@ -102,10 +230,18 @@ void postfitCalculator::makeHistos(int iselect, int islot){
     if ((ievt%1000)==0) cout<<ievt<<endl;
     mctree->GetEvent(ievt); //< load tree info
     evtweight = getEvtWeight(); //< gets weight for event and modifies attributes   
+    modifyAttributes();
     evtclass = getEvtClass(); //< get event class
-    if (makeSelection(iselect)) fillHistos(evtclass,islot); //<fills the histograms
+    if (makeSelection(iselect)){
+      fillHistos(evtclass,islot); //< fills the histograms
+      nevents[evtclass]++; //< increment the number of events of this class passing the cut
+    }
   }
 
+  //fill nsk tree for this point  
+//  nsktree->Fill();
+
+  ////////////
   return;
 }
 
@@ -171,13 +307,7 @@ double  postfitCalculator::getEvtWeight(){
   } 
   evtweight = ww;
 
-  ////////////////////////////////////////////////////
-  //modify attributes
-  for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
-//    mcreader->attribute[iatt]*=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][0]; //multiply by smear parameter
-    mcreader->attribute[iatt]+=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1]; //add bias parameter
-  }
- 
+  ///////////////
   return ww;
 }
 
@@ -185,6 +315,14 @@ double  postfitCalculator::getEvtWeight(){
 ///////////////////////////////////////////////////////////////////////////////
 //inialize some values
 void postfitCalculator::init(){
+
+  //////////////////////
+  //make tree for numbers of events
+  outfile = new TFile("nsk.root","recreate");
+  nsktree = new TTree("nsk","nsk");
+  nsktree->Branch("par",path->par,"par[100]/D");
+  nsktree->Branch("nevents",nevents,"nevents[10]/D");
+  nsktree->Branch("neventstot",neventstot,"neventstot[10]/D");
 
   //////////////////////  
   //setup histograms
@@ -213,13 +351,14 @@ void postfitCalculator::init(){
 
 
 postfitCalculator::postfitCalculator(const char* mcmcfilename,const char* parfile){
-
+  
   //set parameter file name
   parFileName = parfile;
   //get mcmc path
   TFile *mcmcfile = new TFile(mcmcfilename);
   mcmcpath = (TTree*)mcmcfile->Get("MCMCpath");
   path = new mcmcReader(mcmcpath);
+  nmcevents=0;
   init();    
 }
 

@@ -67,6 +67,7 @@ class atmFitPars{
   void printPars();
 };
 
+
 //////////////////////////////////////////////////
 //Set only bias and systematic pars to float in fit
 void atmFitPars::fixAllSmearPars(int isfixed){
