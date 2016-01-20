@@ -42,15 +42,19 @@ class postfitCalculator{
   TString parFileName;
   //for "nsk" tree
   double nevents[10]; //< number of events for each event class
+  double neventsdef[10]; //< number of events for each class in default mc
   double neventstot[10]; //< total number of events for each event class
   TTree* nsktree;
   int selectiontype; //< code for which selection to use
+  int nmcmcpts; 
   //histogrms
   TH1D* hEnuMu[10][200]; //<energy assuming muon
   TH1D* hPIDemu[10][200]; //<e/mu PID
+  TH1D* hNSK[10]; //< numbers of events after cuts
 
   ////////////////////////////////////////////////////////
   //methods
+  void  setNSKTree(TTree* tr){nsktree=tr;}
   void  setMCTree(TTree* tr);
   void  setSelectionType(int itype){selectiontype=itype;}
   double getEvtWeight(); //< returns the weight given the current parameters
@@ -64,7 +68,96 @@ class postfitCalculator{
   void makeHistos(int iselection,int islot);
   void findEvtClasses(); //< fills array of total numbers of each event class
   void fillNskTree(int npts,int nburn=1000); //< step through MCMC cloud and fill NSK tree at each point
+  void makeNSKTable();
+  void showAllHistos(int ihisto,int iclass);
 };
+
+
+/////////////////////////////////////////
+//draws all modified histograms on same pad
+void postfitCalculator::showAllHistos(int ihisto, int iclass){
+  
+  //loop over all histograms
+  hEnuMu[iclass][0]->SetLineColor(kRed);
+  if (ihisto==0)  hEnuMu[iclass][0]->Draw();
+  if (ihisto==1)  hPIDemu[iclass][0]->Draw();
+  for (int i=1;i<nmcmcpts;i++){
+    if (ihisto==0){
+      hEnuMu[iclass][i]->Draw("same");
+    }
+    if (ihisto==1){
+      hPIDemu[iclass][i]->Draw("same");
+    }
+  }
+  
+  return;
+}
+
+/////////////////////////////////////////
+//Fill table showing event numbers
+void postfitCalculator::makeNSKTable(){
+
+  //arrays to be filled
+  double NSK[NCLASSMAX];
+  double NSKRMS[NCLASSMAX];
+
+  nsktree->SetBranchAddress("nevents",nevents);
+  nsktree->SetBranchAddress("neventstot",neventstot);
+  nsktree->SetBranchAddress("neventsdef",neventsdef);
+  
+  //set initial to zero
+  for (int j=0;j<NCLASSMAX;j++){
+    NSK[j]=0.;
+    NSKRMS[j]=0.;
+  }
+
+  //loop over points to get mean
+//  for (int i=0;i<nsktree->GetEntries();i++){
+  for (int i=0;i<10;i++){
+    nsktree->GetEntry(i);
+    for (int j=0;j<NCLASSMAX;j++){
+      NSK[j]+=nevents[j];
+    }
+  }
+  for (int j=0;j<NCLASSMAX;j++){
+    if (NSK[j]>=1.0){
+      cout<<"NSK: "<<NSK[j]<<endl;
+      NSK[j]/=10.; //< normalize for average # of events
+    }
+  }
+
+  //loop over points to get RMS
+//  for (int i=0;i<nsktree->GetEntries();i++){
+  for (int i=0;i<10;i++){
+    nsktree->GetEntry(i);
+    for (int j=0;j<NCLASSMAX;j++){
+      if (nevents[j]>0.1){
+        NSKRMS[j] += ((nevents[j]-NSK[j])*(nevents[j]-NSK[j])); //< add square deviation
+      }
+    }
+  }
+  for (int j=0;j<NCLASSMAX;j++){
+    if (NSKRMS[j]>=1.0){
+      cout<<"NSKRMS: "<<NSKRMS[j]<<endl;      
+      NSKRMS[j]/=10.; //< normalize 
+      NSKRMS[j] = TMath::Sqrt( NSKRMS[j] ); //< get root mean square
+    }
+  }
+  
+  cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+  for (int j=0;j<NCLASSMAX;j++){
+    cout<<"Class: "<<j
+    <<" Ndef: "<<neventsdef[j]
+    <<" N: "<<NSK[j]
+    <<" NRMS: "<<NSKRMS[j]
+    <<" n: "<<(NSK[j]-neventsdef[j])/neventsdef[j]
+    <<" nRMS: "<<NSKRMS[j]/neventsdef[j]
+    <<endl;
+  }
+  cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+
+  return;
+}
 
 ///////////////////////////////////////////////////
 //undo attribute modification
@@ -101,6 +194,8 @@ void postfitCalculator::modifyAttributes(){
 /////////////////////////////////////////////////
 //Fill the NSK tree at various steps in MCMC path
 void postfitCalculator::fillNskTree(int npts,int nburn){
+
+  nmcmcpts = npts;
   
   //get number of steps minus burn-in
   int nsteps=mcmcpath->GetEntries()-nburn;
@@ -149,7 +244,7 @@ void postfitCalculator::fillNskTree(int npts,int nburn){
 
   //write out output 
   nsktree->Write();
-  outfile->Close();
+  //outfile->Close();
 
   ////////////////
   return; 
@@ -172,8 +267,12 @@ void postfitCalculator::findEvtClasses(){
     mctree->GetEntry(ievt);
     evtclass=getEvtClass(); //< fills "evtclass" variable
     neventstot[evtclass]++; //<increment the total number of events of this class
+    if (makeSelection(selectiontype)){
+      neventsdef[evtclass]++; //< increment the number of events of this class passing the cut
+    }
   }
-  
+ 
+ 
   /////////
   return;
 }
@@ -322,6 +421,7 @@ void postfitCalculator::init(){
   nsktree = new TTree("nsk","nsk");
   nsktree->Branch("par",path->par,"par[100]/D");
   nsktree->Branch("nevents",nevents,"nevents[10]/D");
+  nsktree->Branch("neventsdef",neventsdef,"neventsdef[10]/D");
   nsktree->Branch("neventstot",neventstot,"neventstot[10]/D");
 
   //////////////////////  
@@ -346,6 +446,11 @@ void postfitCalculator::init(){
   ////////////////////////////
   //setup spline factory
   sfact = new splineFactory();  
+
+  ////////////////////////////
+  //other defaults
+  nmcevents=0;
+  selectiontype=0;   
   return;
 }
 
@@ -358,7 +463,6 @@ postfitCalculator::postfitCalculator(const char* mcmcfilename,const char* parfil
   TFile *mcmcfile = new TFile(mcmcfilename);
   mcmcpath = (TTree*)mcmcfile->Get("MCMCpath");
   path = new mcmcReader(mcmcpath);
-  nmcevents=0;
   init();    
 }
 

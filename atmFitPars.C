@@ -55,6 +55,7 @@ class atmFitPars{
   void fixAllSmearPars(int isfixed=1);
   void setRandSysPar(); //sets systematic parameters to random values
   int  checkFixFlg(int ibin,int icomp,int iatt, int imod);
+  void resetDefaults();
   void printParValues();
   int binOfPar[4000];
   int compOfPar[4000];
@@ -66,6 +67,50 @@ class atmFitPars{
   void readPars(const char* filename);
   void printPars();
 };
+
+
+//////////////////////////////////////////////////
+//set parameters back to defaults
+void atmFitPars::resetDefaults(){
+
+  //initialize histogram pars
+  int index = 0;
+  for (int ibin=0;ibin<nBins;ibin++){
+    for (int icomp=0;icomp<nComponents;icomp++){
+      for (int iatt=0;iatt<nAttributes;iatt++){
+        histoPar[ibin][icomp][iatt][0]=1.0;
+        pars[index]=1.0;
+        parUnc[index]=0.005; //rough estimate of uncertainty
+        binOfPar[index]=ibin;
+        compOfPar[index]=icomp;
+        attOfPar[index]=iatt;
+        typeOfPar[index]=0;
+        fixPar[index]=0;
+        parIndex[ibin][icomp][iatt][0]=index;  
+        index++;
+        histoPar[ibin][icomp][iatt][1]=0.0;
+        parIndex[ibin][icomp][iatt][1]=index;
+        pars[index]=0.0;
+        parUnc[index]=1.0;  //rough estimate of uncertainty
+        binOfPar[index]=ibin;
+        compOfPar[index]=icomp;
+        attOfPar[index]=iatt;
+        typeOfPar[index]=1;
+        fixPar[index]=0;
+        index++;
+      }
+    }
+  }
+
+  //initialize systematic error parameters
+  for (int isyst=0;isyst<nSysPars;isyst++){
+    pars[index]=1.0;
+    index++;
+    sysPar[isyst]=1.0;
+  }
+
+  return;
+}
 
 
 //////////////////////////////////////////////////
