@@ -41,8 +41,9 @@
  hc->setAttName(0,"Other");
 // hc->setRebinFactor(1);
  hc->readFitPars("./rootfiles/fitpars_smooth_biasonly.root");
- hc->flgFixAllSmearPars = 1;
- hc->thePars->fixAllSmearPars(1);
+ //hc->flgFixAllSmearPars = 1;
+ hc->tunePar=0.1;
+// hc->thePars->fixAllSmearPars(1);
 // hc->LnLFit();
 // hc->saveFitPars("./rootfiles/fitpars_smooth_biasonly.root");
 // hc->addHistogram(hpidmc,0);

@@ -36,7 +36,7 @@ double getNoiseFactor(TH1D* hh){
 
 ///////////////////////////////////////////////////////////////////////////////////
 //Custom smearing method
-void mySmooth(TH1D* hh,double factor=3.){
+void mySmooth(TH1D* hh,double factor=3.2){
 
   //////////////////////////////
   //get adjecent bin weights
@@ -305,7 +305,8 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
     hh.SetBinContent(newbin,sum/sumw);
     double ss = binerr/(sum*sum);
     //set bin uncertainty..
-    hh.SetBinError(newbin,(sum*sum*sum)/(binerr));
+//    hh.SetBinError(newbin,(sum*sum*sum)/(binerr));
+    hh.SetBinError(newbin,TMath::Sqrt(sum/sumw));
   //  hh.SetBinError(newbin,ss);
   }
   htmp->Delete();
