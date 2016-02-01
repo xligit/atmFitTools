@@ -303,10 +303,12 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
     }
     if (sumw<=0) continue;
     hh.SetBinContent(newbin,sum/sumw);
-    double ss = binerr/(sum*sum);
+   // double ss = binerr/(sum*sum);
+   // double scale = htmp->Integral()/hh.Integral();
+   // hh.Scale(scale);
     //set bin uncertainty..
 //    hh.SetBinError(newbin,(sum*sum*sum)/(binerr));
-    hh.SetBinError(newbin,TMath::Sqrt(sum/sumw));
+ //   hh.SetBinError(newbin,TMath::Sqrt(sum/sumw));
   //  hh.SetBinError(newbin,ss);
   }
   htmp->Delete();

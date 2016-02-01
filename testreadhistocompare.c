@@ -40,7 +40,7 @@
  hc->setAttName(0,"emuPID");
  hc->setAttName(0,"Other");
 // hc->setRebinFactor(1);
- hc->readFitPars("./rootfiles/fitpars_smooth_biasonly.root");
+// hc->readFitPars("./rootfiles/fitpars_smooth_biasonly.root");
  //hc->flgFixAllSmearPars = 1;
  hc->tunePar=0.1;
 // hc->thePars->fixAllSmearPars(1);

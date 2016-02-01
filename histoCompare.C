@@ -631,12 +631,12 @@ void histoCompare::showFitHisto(int isamp,int ibin,int icomp,int iatt){
   cout<<"BIAS:  "<<bias<<endl;
   hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt);
   hMod->SetLineColor(kRed);
-  hMod->Draw("e");
+  hMod->Draw("eh");
   hTmp = hManager->getHistogram(isamp,ibin,icomp,iatt);
   hTmp->SetLineColor(kBlue);
 //  hMod->Smooth(1);
 //  convolveThisHisto(*hMod,hMod->GetBinWidth(2)*0.5,0.);
-  hTmp->Draw("samee");
+  hTmp->Draw("sameeh");
   return;
 }
 
