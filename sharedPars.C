@@ -28,7 +28,35 @@ class sharedPars{
   int nComponents;
   int nAttributes;
   int nSysPars;
-  
+  TString preProcessFilesMC;
+  TString preProcessFilesData;
+  TString preProcessOutDir;
+  int preProcessMCComponents;
+  int preProcessFVBinning; 
+  TString FVBinName0;
+  TString FVBinName1;
+  TString FVBinName2;
+  TString fQAttName0;
+  TString MCComponentName0;
+  TString MCComponentName1;
+  TString MCComponentName2;
+  TString MCComponentName3;
+  TString MCComponentName4;
+  TString MCComponentName5;
+  TString MCComponentName6;
+  TString sampleName0;
+  TString sampleName1;
+  TString sampleName2;
+  TString sysParName0;
+  TString sysParName1;
+  TString sysParName2;
+  TString sysParName3;
+  TString sysParName4;
+  TString sysParName5;
+  TString sysParName6;
+  TString sysParName7;
+  TString sysParName8;
+
 };
 
 void sharedPars::readParsFromFile(const char* filename){
@@ -45,17 +73,45 @@ void sharedPars::readParsFromFile(const char* filename){
   kr->readFile();
 
   //set parameters to values
+  FVBinName0= kr->getKeyS("FVBinName0");
+  FVBinName1=kr->getKeyS("FVBinName1");
+  FVBinName2=kr->getKeyS("FVBinName2");
+  fQAttName0=kr->getKeyS("fQAttName0");
+  MCComponentName0=kr->getKeyS("MCComponentName0");
+  MCComponentName1=kr->getKeyS("MCComponentName1");
+  MCComponentName2=kr->getKeyS("MCComponentName2");
+  MCComponentName3=kr->getKeyS("MCComponentName3");
+  MCComponentName4=kr->getKeyS("MCComponentName4");
+  MCComponentName5=kr->getKeyS("MCComponentName5");
+  MCComponentName6=kr->getKeyS("MCComponentName6");
+  sampleName0=kr->getKeyS("sampleName0");
+  sampleName1=kr->getKeyS("sampleName1");
+  sampleName2=kr->getKeyS("sampleName2");
+  sysParName0=kr->getKeyS("sysParName0");
+  sysParName1=kr->getKeyS("sysParName1");
+  sysParName2=kr->getKeyS("sysParName2");
+  sysParName3=kr->getKeyS("sysParName3");
+  sysParName4=kr->getKeyS("sysParName4");
+  sysParName5=kr->getKeyS("sysParName5");
+  sysParName6=kr->getKeyS("sysParName6");
+  sysParName7=kr->getKeyS("sysParName7");
+  sysParName8=kr->getKeyS("sysParName8");
   nFVBins     = kr->getKeyI("nFVBins");
   nSamples    = kr->getKeyI("nSamples");
   nComponents = kr->getKeyI("nComponents");
   nAttributes  = kr->getKeyI("nAttributes"); 
   nSysPars    = kr->getKeyI("nSysPars");
-  
+  preProcessFilesMC = kr->getKeyS("preProcessFilesMC"); 
+  preProcessOutDir = kr->getKeyS("preProcessOutDir"); 
+  preProcessFilesData = kr->getKeyS("preProcessFilesData"); 
+  preProcessMCComponents = kr->getKeyI("preProcessMCComponents");
+  preProcessFVBinning = kr->getKeyI("preProcessFVBinning");
   globalRootName = kr->getKeyS("globalRootName");
+
 }
 
 sharedPars::sharedPars(const char* parfilename){
   parFileName = parfilename;
-  readParsFromFile();
+//  readParsFromFile();
 }
 

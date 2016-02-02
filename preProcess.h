@@ -9,7 +9,7 @@
 #include "TMath.h"
 #include "TString.h"
 #include "FVCalculators.C"
-
+#include "sharedPars.C"
 
 
 
@@ -18,33 +18,61 @@ using namespace std;
 
 #define NFILEMAX 5000
 
+
+//////////////////////////////////////////////////////////////
+//Class to take care of preprocessing of all data and MC files
+//Usage:
+//  1) Specify parameters in sharedpars.dat file.  These parameters 
+//     specify the files to be run on, where the output should go,
+//     and which FV binning and MC component definitions to use
+//  2) Call runPreprocess(), perhaps useing runpreprocess.c
 class preProcess{
   public:
-  preProcess(const char* name);
+
+  /////////////////////
+  //constructors
+  preProcess();
   preProcess(TChain* chin,const char* name="");
   preProcess(TTree* trin,const char* name="");
-  void setTree(TTree* trin);
-  void setTree(TChain* trin);
+
+
+  /////////////////////
+  //internal variables
+  TChain* chmc;
+  TChain* chdat;
   TTree* tr;
   TTree* trout;
   TFile* fout;
   TString nameTag;
+  TString outDir;
   TString fileNames[NFILEMAX];
-  int nFiles;
+  TString parFileName;
   fqReader* fq;
   visRing*  vis;
-  void setupNewTree();
-  void preProcessIt();
-  int passCuts();
-  int ncomponent;
-  int nsample;
-  int nbin;
+  int MCComponents;
+  int FVBinning;
+  int nFiles;
+
+  //////////////////////
   //new leaf variables
   float towall;
   float wall;
   float evtweight;
   float attribute[1000];
-  //selections
+  int ncomponent;
+  int nsample;
+  int nbin;
+
+  
+  /////////////////////
+  //methods
+  void setTree(TTree* trin);
+  void setTree(TChain* trin);
+  void setParFileName(const char* filename){parFileName=filename;}
+  void runPreProcessing();
+  void setupNewTree();
+  void preProcessIt();
+  int passCuts();
   void fillAttributes();
   int absmode;
   int getComponent();
@@ -53,8 +81,6 @@ class preProcess{
   float getWeight();
   void processFile(const char* fname,const char* outname="");
   void processAllFiles(TChain* chain);
-  void addFile(const char* filename);
-  TString getFileRootName();
 
 };
 

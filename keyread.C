@@ -19,6 +19,7 @@
 
 using namespace std;
 
+#define LINESIZEMAX 1000
 class keyread{
 public:
  keyread(const char* afile); //initializer
@@ -62,14 +63,14 @@ void keyread::readFile(){
     cout<<fname<<" is not a good file "<<endl;
     return;
   }
-  char line[100];
+  char line[LINESIZEMAX];
   int  nread;
   TString sline;
   int nline=0;
   while(!file.eof()){
-    //cout<<"reading line: "<<nline<<endl;
+   // cout<<"reading line: "<<nline<<endl;
     nline++;
-    file.getline(line,100);
+    file.getline(line,LINESIZEMAX);
     for (int i=0;i<file.gcount();i++){
       //cout<<"appending "<<line[i]<<" to tstring"<<endl;
       sline.Append(line[i]);

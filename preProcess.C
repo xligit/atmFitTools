@@ -4,6 +4,10 @@
 #include "preProcess.h"
 #include "TObjArray.h"
 
+
+////////////////////////////////////////////////////////////
+//Takes in a chain and loops over all files in the chain.
+//For each file, a new file with a modified TTree is created
 void preProcess::processAllFiles(TChain* chain){
   int nfiles = chain->GetNtrees();
   TObjArray* listOfFiles = chain->GetListOfFiles();
@@ -17,44 +21,34 @@ void preProcess::processAllFiles(TChain* chain){
   return;
 }
 
-TString preProcess::getFileRootName(){
-  return nameTag;
-}
-
+////////////////////////////////////////
+//sets up pointers given a TChain
 void preProcess::setTree(TChain* chin){
   TTree* trin = (TTree*)chin;
   setTree(trin);
   return;
 }
 
+///////////////////////////////////////
+//sets up pointers
 void preProcess::setTree(TTree* trin){
-/*  if (vis!=NULL){
-     cout<<"delete visible ring counter"<<endl;
-     delete vis;
-     vis=NULL;
-  }
-  if (fq!=NULL){
-     cout<<"deleting fiTQun reader"<<endl;
-     delete fq;
-     fq=NULL;
-  }
-  */
   tr = trin;
   fq = new fqReader(tr);
   vis = new visRing(fq); 
   return;
 }
 
+///////////////////////////////////////////////////
+// reads in a file and processes the h1 tree inside
 void preProcess::processFile(const char* fname,const char* outname){
 
   //make output file name
-  TString outputName = nameTag.Data();
-  outputName.Append(outname);
+  TString outputName = outDir.Data(); //name of directory
+  outputName.Append(nameTag.Data()); //global name
+  outputName.Append(outname); //number of this file
   outputName.Append(".root");
-//  outputName.Append(fname);
-  //
 
-  //get tree
+  //get existing h1 tree
   cout<<"opening file: "<<fname<<endl;
   TFile* fin = new TFile(fname);
   TTree* intree = (TTree*)fin->Get("h1");
@@ -68,9 +62,8 @@ void preProcess::processFile(const char* fname,const char* outname){
 
   //fill new tree
   preProcessIt();
-//
-  //delete new tree
-  //trout->Delete();
+
+  //clean up
   fout->Write();
   fin->Close();
   fout->Close();
@@ -78,21 +71,19 @@ void preProcess::processFile(const char* fname,const char* outname){
   return;   
 }
 
-void preProcess::addFile(const char*filename){
-  fileNames[nFiles]=filename;
-  nFiles++;
-}
-
+///////////////////////////////////
+//Gets a weight for an event
+//Usefull for making fake data sets
 float preProcess::getWeight(){
-  int absmode = TMath::Abs(fq->mode);
+  absmode = TMath::Abs(fq->mode);
   float enu   = fq->pmomv[0];
   evtweight = 1.0;
   //CCQE norm bin1 
-  if ((absmode==1)&&(enu<200.)){
+//  if ((absmode==1)&&(enu<200.)){
 //    evtweight = 1.5;
-  }
+//  }
   //CCQE norm bin2 
-  if ((absmode==1)&&(enu>200.)&&(enu<400.)) evtweight*=1.2;
+//  if ((absmode==1)&&(enu>200.)&&(enu<400.)) evtweight*=1.2;
   //CCQE norm bin3 
 //  if ((absmode==1)&&(enu>400.)&&(enu<800.)) evtweight*=0.9;
   //CCQE norm bin4 
@@ -101,7 +92,10 @@ float preProcess::getWeight(){
   return evtweight;
 }
 
+///////////////////////////////////////////////
+//calculates the FV bin for an event
 int preProcess::getBin(){
+
   //calculate fiducial volume variables
   //use electron hypothesis
   TVector3 vpos;
@@ -110,17 +104,28 @@ int preProcess::getBin(){
   vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][1][1],fq->fq1rdir[0][1][2]);
   wall = calcWall(&vpos);
   towall = calcToWall(&vpos,&vdir);
-  if ((wall<200.)&&(wall>50.)) return 1;
-  if (wall<50.) return 2;
-  return 0;
+
+  //separate into bins
+  if (FVBinning==0){
+    if ((wall<200.)&&(wall>80.)) return 1;
+    if (wall<80.) return 2;
+    return 0;
+  }
+
+  return -1;
 }
 
+
+/////////////////////////////////
+//Simple initial cuts
 int preProcess::passCuts(){
   if ((fq->nhitac)>16) return 0;
   if ((fq->fqtotq[0]<80)) return 0;
   return 1;
 }
 
+///////////////////////////////
+//returns the # of subevents-1
 int preProcess::getSample(){
   if (fq->fqnse==1) return 0;
   if (fq->fqnse==2) return 1;
@@ -128,21 +133,29 @@ int preProcess::getSample(){
   return 3;
 }
 
+//////////////////////////////////////
+//get code for MC true component type
 int preProcess::getComponent(){
+
+  //useful for cuts
   absmode = TMath::Abs(fq->mode);
   int absnu   = TMath::Abs(fq->ipnu[0]);
+
   //charged current
-  if ((absmode>0)&&(absmode<30)){
-    if ((vis->nve==1)&&((vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 0; //CC single e
-    if ((vis->nvmu==1)&&((vis->nvp==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 1; //CC single mu
-    if ((vis->nve==1)&&(vis->nvmu==0)) return 2; //CC e + other
-    if ((vis->nve==0)&&(vis->nvmu==1)) return 3; //CC mu + other
-    return 4; //CC Other
+  if (MCComponents==0){
+    if ((absmode>0)&&(absmode<30)){
+      if ((vis->nve==1)&&((vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 0; //CC single e
+      if ((vis->nvmu==1)&&((vis->nvp==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 1; //CC single mu
+      if ((vis->nve==1)&&(vis->nvmu==0)) return 2; //CC e + other
+      if ((vis->nve==0)&&(vis->nvmu==1)) return 3; //CC mu + other
+      return 4; //CC Other
+    }
+    else{
+      if ((vis->nvpi0>0)) return 5;  //single pi0
+      return 6;  //NC other
+    }
   }
-  else{
-    if ((vis->nvpi0>0)) return 5;  //single pi0
-    return 6;  //NC other
-  }
+
 //  return 7;
 
 
@@ -159,6 +172,7 @@ int preProcess::getComponent(){
 //     return 5;
 //   }
 //  return 6;
+
 }
 
 //loop over all events and sort into bins, samples and components
@@ -177,16 +191,12 @@ void preProcess::preProcessIt(){
     evtweight=getWeight();
     trout->Fill();
   }
- // TString name = fname;
- // name.Append(".root");
-//  trout->SaveAs(name.Data());
- // trout->Write();
- // fout->Write();
- // fout->Close();
- // trout->Delete();
+
   return;
 }
 
+////////////////////////////////////////
+//fills fiTQun attribute array
 void preProcess::fillAttributes(){
   attribute[0] = fq->fq1rnll[0][2]-fq->fq1rnll[0][1];
   attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
@@ -203,9 +213,6 @@ void preProcess::setupNewTree(){
   //tr->SetBranchStatus("cluster*",1);
   tr->SetBranchStatus("mode",1);
   tr->SetBranchStatus("nhitac",1);
-//  TString filename=nameTag.Data();
-//  filename.Append("_preProcessOutput.root");
-//  fout = new TFile(filename.Data(),"recreate");
   trout = tr->CloneTree(0); //clone but don't copy data
   trout->CopyAddresses(tr); //set addresses
   
@@ -230,11 +237,15 @@ void preProcess::setupNewTree(){
   return;
 }
 
-preProcess::preProcess(const char* name){
-  nameTag=name;
+
+/////////////////////////////
+//empty constructor
+preProcess::preProcess(){
   nFiles=0;
 }
 
+/////////////////////////////
+//construct from TTree
 preProcess::preProcess(TTree* trin,const char* name){
   tr=trin;
   fq = new fqReader(tr);
@@ -244,6 +255,8 @@ preProcess::preProcess(TTree* trin,const char* name){
   return;
 }
 
+/////////////////////////////
+//construct from TChain
 preProcess::preProcess(TChain* chin,const char* name){
   tr=(TTree*)chin;
   nameTag=name;
@@ -253,5 +266,45 @@ preProcess::preProcess(TChain* chin,const char* name){
   return;
 }
 
+//////////////////////////////////////////
+//read in parameters and run preprocessing!
+void preProcess::runPreProcessing(){
+  
+  //read in parameters!
+  cout<<"preProcess: Reading parameters from file "<<parFileName.Data()<<endl;
+  sharedPars* runpars = new sharedPars(parFileName.Data());
+  runpars->readParsFromFile();
+  nameTag = runpars->globalRootName;
+  cout<<"nametag: "<<nameTag.Data()<<endl;
+  FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
+  MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
+
+  //create data and mc chains
+  chmc = new TChain("h1");
+  chdat = new TChain("h1");
+  chmc->Add(runpars->preProcessFilesMC.Data());
+  chdat->Add(runpars->preProcessFilesData.Data());
+  if (chmc->GetEntries()<1){
+    cout<<"preProcess ERROR: no events in MC chain"<<endl;
+    return;
+  }
+  if (chdat->GetEntries()<1){
+    cout<<"preProcess ERROR: no events in Data chain"<<endl;
+    return;
+  }
+
+  //process the files
+  outDir = runpars->preProcessOutDir.Data();
+  nameTag.Append("_ppmc");
+  processAllFiles(chmc);
+  nameTag = runpars->globalRootName.Data();
+  nameTag.Append("_ppdata");
+  processAllFiles(chdat); 
+
+  cout<<"preProcess: Complete!"<<endl;
+
+  //////////////////////////
+  return;
+}
 
 #endif
