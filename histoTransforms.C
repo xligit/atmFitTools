@@ -17,6 +17,7 @@ using namespace std;
 
 
 double getNoiseFactor(TH1D* hh){
+//  if (hh->GetEntries()==0) return 0.;
   int nbins = hh->GetNbinsX();
   double S = 0.;
   double B = 0;
@@ -27,6 +28,7 @@ double getNoiseFactor(TH1D* hh){
       B++;
     }
   }
+  if (B==0) return 0;
   S/=B;
   return 1./TMath::Sqrt(S);
 }
@@ -36,13 +38,14 @@ double getNoiseFactor(TH1D* hh){
 
 ///////////////////////////////////////////////////////////////////////////////////
 //Custom smearing method
-void mySmooth(TH1D* hh,double factor=3.2){
+void mySmooth(TH1D* hh,double factor=3.0){
 
   //////////////////////////////
   //get adjecent bin weights
   
   // use Gaussian weights
   double sigma = factor*getNoiseFactor(hh); //< set sigma using noise
+  if (sigma==0) return; //no events in histogram
   double w2 = TMath::Gaus(2,0,sigma,1);
   double w1 = TMath::Gaus(1,0,sigma,1);
   double w0 = TMath::Gaus(0,0,sigma,1);
@@ -76,6 +79,7 @@ void mySmooth(TH1D* hh,double factor=3.2){
 double B(double x,double a, double b){
   if (x<=a) return 0.;
   if (x>=b) return 1.;
+  if (a==b) return 0;
   return (x-a)/(b-a);
 }
 
@@ -290,10 +294,12 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
     for (int oldbin=1;oldbin<=nbins;oldbin++){
       xmin = htmp->GetBinLowEdge(oldbin);
       xmax = (xmin+binw);
-      weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax) ;
+      weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
+ //     cout<<weight<<endl;
       double binc = htmp->GetBinContent(oldbin);
+//      cout<<binc<<endl;
       sum+=(weight*htmp->GetBinContent(oldbin));
-
+//      cout<<"sum: "<<sum<<endl;
 //      if (binc>100)  sum+=(weight*htmp->GetBinContent(oldbin));
 //      else{
 //        sum+=(weight*(0.3333333333)*(htmp->GetBinContent(oldbin-1)+htmp->GetBinContent(oldbin)+htmp->GetBinContent(oldbin+1)));
@@ -301,8 +307,9 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
       binerr += weight*weight*(htmp->GetBinContent(oldbin)*htmp->GetBinContent(oldbin));
       sumw += weight;
     }
-    if (sumw<=0) continue;
+    if (sumw<=0.0001) continue;
     hh.SetBinContent(newbin,sum/sumw);
+//    cout<<sum/sumw<<endl;
    // double ss = binerr/(sum*sum);
    // double scale = htmp->Integral()/hh.Integral();
    // hh.Scale(scale);

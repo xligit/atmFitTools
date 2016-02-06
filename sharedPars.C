@@ -1,4 +1,8 @@
+#ifndef SHAREDPARS_C
+#define SHAREDPARS_C
+
 #include "TString.h"
+
 
 #include "keyread.C"
 
@@ -21,6 +25,14 @@ class sharedPars{
 
   //shared variables
   TString globalRootName;
+
+  //can get parameters directly by name
+  int getParI(const char*);
+  double getParD(const char*);
+  TString getParS(const char*); 
+
+  //key reading object
+  keyread* kr;
 
   //fit parameters
   int nFVBins;
@@ -56,27 +68,56 @@ class sharedPars{
   TString sysParName6;
   TString sysParName7;
   TString sysParName8;
+  TString hFactoryOutput;
+  TString hFactoryMCFiles;
+  TString hFactoryDataFiles;
+  TString splineFactoryOutput;
+  int MCMCNSteps;
+  double MCMCTunePar;
+  int useSplinesFlg;
+  int fixAllSmearFlg;
 
+  TString sysParType;
 };
+
+
+double sharedPars::getParD(const char* parname){
+  return kr->getKeyD(parname);
+}
+
+TString sharedPars::getParS(const char* parname){
+  return kr->getKeyS(parname);
+}
+
+int sharedPars::getParI(const char* parname){
+  return kr->getKeyI(parname);
+}
 
 void sharedPars::readParsFromFile(const char* filename){
   //if file name is given as argument, use it
-  if (filename!=""){
-    cout<<"sharedPars: setting input file name to : "<<filename<<endl;
-    parFileName = filename;
-  }
+//  if (filename){
+//    cout<<"sharedPars: setting input file name to : "<<filename<<endl;
+//    parFileName = filename;
+//  }
   
   //create object to read in keys from file
-  keyread* kr = new keyread(parFileName.Data());
+  kr = new keyread(parFileName.Data());
 
   //read in contents
   kr->readFile();
 
   //set parameters to values
+  useSplinesFlg = kr->getKeyI("useSplinesFlg");
+  MCMCNSteps= kr->getKeyI("MCMCNSteps");
+  MCMCTunePar = kr->getKeyD("MCMCTunePar");
+  fixAllSmearFlg = kr->getKeyI("fixAllSmearFlg");
   FVBinName0= kr->getKeyS("FVBinName0");
   FVBinName1=kr->getKeyS("FVBinName1");
   FVBinName2=kr->getKeyS("FVBinName2");
   fQAttName0=kr->getKeyS("fQAttName0");
+  hFactoryDataFiles=kr->getKeyS("hFactoryDataFiles");
+  hFactoryMCFiles=kr->getKeyS("hFactoryMCFiles");
+  hFactoryOutput=kr->getKeyS("hFactoryOutput");
   MCComponentName0=kr->getKeyS("MCComponentName0");
   MCComponentName1=kr->getKeyS("MCComponentName1");
   MCComponentName2=kr->getKeyS("MCComponentName2");
@@ -107,7 +148,8 @@ void sharedPars::readParsFromFile(const char* filename){
   preProcessMCComponents = kr->getKeyI("preProcessMCComponents");
   preProcessFVBinning = kr->getKeyI("preProcessFVBinning");
   globalRootName = kr->getKeyS("globalRootName");
-
+  splineFactoryOutput = kr->getKeyS("splineFactoryOutput");
+  sysParType = kr->getKeyS("sysParType");
 }
 
 sharedPars::sharedPars(const char* parfilename){
@@ -115,3 +157,5 @@ sharedPars::sharedPars(const char* parfilename){
 //  readParsFromFile();
 }
 
+
+#endif

@@ -1,6 +1,7 @@
 #ifndef HISTOFACTORY_H
 #define HISTOFACTORY_H
 
+#include "sharedPars.C"
 #include "histoManager.C"
 //#include "shared.h"
 
@@ -11,6 +12,7 @@ class histoFactory{
   public:
 
   histoFactory(int nsampl,int nbins,int ncomp,const char* name=""); //creates blank histogram factory
+  histoFactory(const char* parfile);//< initialize using parameters in par file
   histoManager* hManager; 
   TTree* dataTree; //tree containing data events
   TTree* mcTree;  //tree conttaining MC events
@@ -28,10 +30,9 @@ class histoFactory{
   int nMCEvents;  //number of MC events
   double normMC; //normalization factor for MC
   double att[NATTMAX]; //array of all attribute values
-  TString attNames[NATTMAX];  //array of attribute names
-  TString attType[NATTMAX];  //array of attribute type codes
+  //TString attType[NATTMAX];  //array of attribute type codes
   void init();  //initialize after attributes have been set (sets branch addresses, creates histograms)
-  void addAttribute(int iatt);  //add an attribute (fiTQun variable) to list of histograms to be made
+  //void addAttribute(int iatt);  //add an attribute (fiTQun variable) to list of histograms to be made
   TH1D* getHistogram(int iatt,const char* thename); //returns pointer to MC histogram
   TH1D* getHistogramData(int iatt,const char* thename); //returns pointer to Data histogram
   void fillAttributesData(); //fills all data histograms
@@ -47,6 +48,9 @@ class histoFactory{
   TString getOutputFileName(){return outputFileName;}
   void setOutputFileName(const char *name){outputFileName=name;}
   void normalizeHistos(double scale=-1.);
+  void runHistoFactory();
+  TString parFileName;
+  sharedPars* runpars;
 };
 
 

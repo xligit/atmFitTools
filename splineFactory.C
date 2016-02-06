@@ -2,6 +2,7 @@
 //#include "shared.h"
 //#include "fQreader.C"
 #include "histoManager.C"
+#include "sharedPars.C"
 
 #define NSYSTMAX 10
 #define NHBINSMAX 300
@@ -14,10 +15,12 @@ class splineFactory{
   public:
   //constructor
   splineFactory(int nsamp, int nbin, int ncomp, int natt, int nsyst, const char* name);
+  splineFactory(const char* parfile);//< initialize using parameters in par file
   splineFactory(){;}
   
   //internal vars
-  TString nameTag; //set in constructor. this is the prefix for the output file
+  TString parFileName; //< name of parameter file
+  TString nameTag; //< set in constructor. this is the prefix for the output file
   TTree* mcTree; 
   fQreader* mcEvt;
   histoManager* hManager; //manages all default histograms
@@ -31,10 +34,12 @@ class splineFactory{
   int nComp;
   int nAtt;
   int nSyst;
+  TString sysParType; //< code denoting the type of parameterization used, see setupSysPar
   double sysPar[NSYSTMAX]; //systematic parameter values
   double sysUnc[NSYSTMAX];  //systematic parameter uncertainties
   double attribute[NATTMAX];
   double eventWeight;
+  sharedPars* runpars; //< runtime parameters
 
   //for output tree
   TTree* splineTree;
@@ -64,12 +69,37 @@ class splineFactory{
   //debugging
   void debugtest();
 
+  //do everything
+  void runSplineFactory();
+
 //  private:
   void fillAttributes();
   void setupHistos();
   void setupSystPars(); //sets up systematic parameters
   void incrementSystPars(double nsig);
 };
+
+////////////////////////////////////////////////
+//run spline factory using parameters from file
+void splineFactory::runSplineFactory(){
+  
+  //create histogram manager from file with prefilled histograms
+  makeManagerFromFile(runpars->hFactoryOutput.Data());
+  setupHistos();
+  setupSystPars();
+  
+  //get pointer to MC tree
+  TChain chmc("h1");
+  chmc.Add(runpars->hFactoryMCFiles.Data());
+  setMCTree((TTree*)&chmc);
+  
+  //make them splines
+  buildTheSplines();
+
+  ////////////////////
+  return;
+}
+
 
 void splineFactory::resetModHistos(){
   for (int ibin=0;ibin<nBin;ibin++){
@@ -211,59 +241,48 @@ void splineFactory::incrementSystPars(double nsig){
 }
 
 void splineFactory::setupSystPars(){
-  nSyst=0;
-  /*
-  //debug par 1
-  sysPar[0] = 1.0;
-  sysUnc[0] = 0.1;
-  nSyst++;
-  //debug par 2
-  sysPar[1] = 1.0;
-  sysUnc[1] = 0.1;
-  nSyst++;
-  //debug par 3
-  sysPar[2] = 1.0;
-  sysUnc[2] = 0.1;
-  nSyst++;
-  */
 
-  //CCQE xsec norm bin 1//
-  sysPar[nSyst] = 1.0;
-  sysUnc[nSyst] = 1.0;
-  nSyst++;
-  //CCQE xsec norm  bin 2//
-  sysPar[nSyst] = 1.0;
-  sysUnc[nSyst] = 0.25;
-  nSyst++;
-  //CCQE xsec norm bin 3//
-  sysPar[nSyst] = 1.0;
-  sysUnc[nSyst] = 0.1;
-  nSyst++;
-  //CCQE xsec norm bin 4//
-  sysPar[nSyst] = 1.0;
-  sysUnc[nSyst] = 0.05;
-  nSyst++;
-  //SubGeV flux norm//
-  sysPar[nSyst] = 1.0;
-  sysUnc[nSyst] = 0.25;
-  nSyst++;
-  //MultiGeV flux norm//
-  sysPar[nSyst] = 1.0;
-  sysUnc[nSyst] = 0.15;
-  nSyst++;
-  //CCnQE xsec norm//
-  sysPar[nSyst] = 1.0;
-  sysUnc[nSyst] = 0.2;
-  nSyst++;
-  //NC xsec norm
-  sysPar[nSyst] = 1.0;
-  sysUnc[nSyst] = 0.2;
-  nSyst++;
-  //mu/e xsec ratio
-  sysPar[nSyst] = 1.0;
-  sysUnc[nSyst] = 0.05;
-  nSyst++;
-  return;
+  if (!sysParType.CompareTo("tn186")){
+    nSyst=0;
+    //CCQE xsec norm bin 1//
+    sysPar[nSyst] = 1.0;
+    sysUnc[nSyst] = 1.0;
+    nSyst++;
+    //CCQE xsec norm  bin 2//
+    sysPar[nSyst] = 1.0;
+    sysUnc[nSyst] = 0.25;
+    nSyst++;
+    //CCQE xsec norm bin 3//
+    sysPar[nSyst] = 1.0;
+    sysUnc[nSyst] = 0.1;
+    nSyst++;
+    //CCQE xsec norm bin 4//
+    sysPar[nSyst] = 1.0;
+    sysUnc[nSyst] = 0.05;
+    nSyst++;
+    //SubGeV flux norm//
+    sysPar[nSyst] = 1.0;
+    sysUnc[nSyst] = 0.25;
+    nSyst++;
+    //MultiGeV flux norm//
+    sysPar[nSyst] = 1.0;
+    sysUnc[nSyst] = 0.15;
+    nSyst++;
+    //CCnQE xsec norm//
+    sysPar[nSyst] = 1.0;
+    sysUnc[nSyst] = 0.2;
+    nSyst++;
+    //NC xsec norm
+    sysPar[nSyst] = 1.0;
+    sysUnc[nSyst] = 0.2;
+    nSyst++;
+    //mu/e xsec ratio
+    sysPar[nSyst] = 1.0;
+    sysUnc[nSyst] = 0.05;
+    nSyst++;
+  }
+
+    return;
 }
 
 void splineFactory::setupHistos(){
@@ -333,52 +352,46 @@ double splineFactory::getEvtWeight(fQreader* mcEvt,int ipar,double value){
   double ww = mcEvt->evtweight;
   int absmode = TMath::Abs(mcEvt->mode);
   double Enu     = mcEvt->pmomv[0];
-  int  nutype  = TMath::Abs(mcEvt->ipnu[0]);
-//  if (ipar==0){
-//   if (mcEvt->ncomponent==0) ww*=sysPar[0];
-//  } 
-//  if (ipar==1){
-//   if (mcEvt->ncomponent==1) ww*=sysPar[1];
-//  }
-//  if (ipar==2){
-//   if (mcEvt->ncomponent==2) ww*=sysPar[2];
-//  }
-   
-  //CCQE norm bin1 
-  if (ipar==0){
-    if ((absmode==1)&&(Enu<200.)) ww*=value;
-  }
-  //CCQE norm bin2 
-  if (ipar==1){
-    if ((absmode==1)&&(Enu>200.)&&(Enu<400.)) ww*=value;
-  }
-  //CCQE norm bin3 
-  if (ipar==2){
-    if ((absmode==1)&&(Enu>400.)&&(Enu<800.)) ww*=value;
-  }
-  //CCQE norm bin4 
-  if (ipar==3){
-    if ((absmode==1)&&(Enu>800.)) ww*=value;
-  }
-  //SubGevFlux
-  if (ipar==4){
-    if (Enu<1000.) ww*=value;
-  }
-  //MultiGeVFlux
-  if (ipar==5){
-    if (Enu>1000.) ww*=value;
-  }
-  //CCnQE
-  if (ipar==6){
-    if ((absmode>1)&&(absmode<30)) ww*=value;
-  }
-  //NC
-  if (ipar==7){
-    if (absmode>=30) ww*=value;
-  }
-  //mu2e ratio
-  if (ipar==8){
-    if (nutype==14) ww*=value;
+  int  nutype  = TMath::Abs(mcEvt->ipnu[0]);  
+ 
+  //simple TN186 parameterization
+  if (!sysParType.CompareTo("tn186")){ 
+    //CCQE norm bin1 
+    if (ipar==0){
+      if ((absmode==1)&&(Enu<200.)) ww*=value;
+    }
+    //CCQE norm bin2 
+    if (ipar==1){
+      if ((absmode==1)&&(Enu>200.)&&(Enu<400.)) ww*=value;
+    }
+    //CCQE norm bin3 
+    if (ipar==2){
+      if ((absmode==1)&&(Enu>400.)&&(Enu<800.)) ww*=value;
+    }
+    //CCQE norm bin4 
+    if (ipar==3){
+      if ((absmode==1)&&(Enu>800.)) ww*=value;
+    }
+    //SubGevFlux
+    if (ipar==4){
+      if (Enu<1000.) ww*=value;
+    }
+    //MultiGeVFlux
+    if (ipar==5){
+      if (Enu>1000.) ww*=value;
+    }
+    //CCnQE
+    if (ipar==6){
+      if ((absmode>1)&&(absmode<30)) ww*=value;
+    }
+    //NC
+    if (ipar==7){
+      if (absmode>=30) ww*=value;
+    }
+    //mu2e ratio
+    if (ipar==8){
+      if (nutype==14) ww*=value;
+    }
   }
   if (ww<0.) ww = 0.;
   eventWeight = ww;
@@ -443,6 +456,26 @@ double splineFactory::getEvtWeight(int ipar){
   eventWeight = ww;
   return ww;
 };
+
+////////////////////////////////
+//construct from parameter file
+splineFactory::splineFactory(const char*  parfile){
+  parFileName = parfile;
+  cout<<"splineFactory: Parameter File: "<<parfile<<endl;
+  runpars = new sharedPars(parFileName.Data());
+  runpars->readParsFromFile();
+  nSamp=runpars->nSamples;
+  nBin=runpars->nFVBins;
+  nComp=runpars->nComponents;
+  nAtt=runpars->nAttributes;
+  nSyst=runpars->nSysPars;
+  nameTag=runpars->globalRootName.Data();
+  foutName = runpars->splineFactoryOutput.Data();
+  sysParType = runpars->sysParType;
+//  foutName->Append(runpars->globalRootName.Data());
+ // foutName->Append("_splines.root");
+  return;
+}
 
 splineFactory::splineFactory(int isamp, int ibin, int icomp, int iatt, int isyst, const char* name){
   nameTag = name;

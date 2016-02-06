@@ -1407,6 +1407,10 @@ double histoCompare::getTotLnL(){
          TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
          TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
          double hnorm = hDataTmp->Integral()/hPrediction->Integral();
+
+   //      double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
+   //      cout<<"partialL :"<<partialL<<endl;     
+
          totL+=getLnL(hPrediction,hDataTmp,hnorm);
       }
     }
@@ -1561,8 +1565,8 @@ void  histoCompare::initialize(histoManager* hm, atmFitPars* apars){
 }
 
 
-histoCompare::histoCompare(const char* thename){
-  nameTag = thename;
+histoCompare::histoCompare(){
+  nameTag = "manualSetup";
   nMCHist=0;
   nDataHist=0;
   cout<<"created comparison object: "<<nameTag.Data()<<endl;
@@ -1577,4 +1581,44 @@ histoCompare::histoCompare(const char* thename){
   useLnLType=0;
   return;
 }
+
+histoCompare::histoCompare(const char* parfile){
+  runPars = new sharedPars(parfile);
+  runPars->readParsFromFile();
+  nameTag= runPars->globalRootName.Data();
+
+  //setup canvas
+  cc = new TCanvas("cc","cc",700,600);
+  
+  //set LnL definition
+  useLnLType=0;
+
+  //MCMC tuning parameter
+  tunePar = runPars->MCMCTunePar;
+
+  //MCMC nsteps;
+  MCMCNSteps = runPars->MCMCNSteps;
+
+  //read in pre-filled histograms
+  int nbins = runPars->nFVBins;
+  int ncomponents = runPars->nComponents;
+  int nsamples = runPars->nSamples;
+  int nattributes  = runPars->nAttributes;
+  int nsyspars = runPars->nSysPars;
+  TString histofilename = runPars->hFactoryOutput;
+  readFromFile(histofilename.Data(),nsamples,nbins,ncomponents,nattributes); 
+
+  //setup fit parameters
+  thePars = new atmFitPars(nsamples,nbins,ncomponents,nattributes,runPars->sysParType.Data());
+  hManager->setFitPars(thePars);
+
+  
+  //read in splines if you're into that
+  if (runPars->useSplinesFlg){
+    setupSplines(runPars->splineFactoryOutput.Data(),nsyspars);
+  }
+
+
+}
+
 #endif

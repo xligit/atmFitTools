@@ -6,6 +6,17 @@
   gROOT->ProcessLine(".L splineFactory.C++");
   gROOT->ProcessLine(".x ~/style.c");
 
+  //run histo factory from parameter file
+//  histoFactory* hfact = new histoFactory("sharedpars.dat");
+//  hfact->runHistoFactory();
+
+
+  //run spline factory form parameter file
+  splineFactory *sfact = new splineFactory("sharedpars.dat");
+  sfact->runSplineFactory();
+
+/* //run histo factory
+
   //////////////////////////////////////////////////////
   //prefix for output files
   TString nametag = "nom2";
@@ -43,8 +54,11 @@
   hfact->saveToFile();
   TString factoryoutputname = hfact->getOutputFileName();
  
+*/
+
+   //spline factory
   ///////////////////////////////////////////////
-  //create and run spline factory 
+/*  //create and run spline factory 
   TString splinename = "./rootfiles/";
   splinename.Append(nametag.Data());
   splineFactory* s = new splineFactory(3,3,7,1,1,splinename.Data());
@@ -54,5 +68,5 @@
   s->setupSystPars();
   s->setMCTree(trmc);
   s->buildTheSplines();
-
+ */ 
 }

@@ -302,6 +302,7 @@ void atmFitPars::initPars(const char* systype){
   //initialize systematic error parameters
   TString stype = systype;
   nSysPars=0;
+
   if (!stype.CompareTo("tn186")){
     //CCQE xsec norm bin 1//
     sysPar[nSysPars] = 1.0;

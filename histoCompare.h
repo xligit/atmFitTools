@@ -18,7 +18,8 @@ class histoCompare{
   public:
 
   //constructors//
-  histoCompare(const char* thename);  //standard constructor
+  histoCompare(const char* parfile);  //construct from parameter file
+  histoCompare();  //standard constructor
 
   //internal variables
   TString nameTag;  //name associated with this instance
@@ -33,8 +34,8 @@ class histoCompare{
   histoManager* hManager;
   //atmospheric pars
   atmFitPars* thePars;
-
-  
+  sharedPars* runPars;
+  int MCMCNSteps;
   double Norm;
   double Par[NBINMAX][NCOMPMAX][NATTMAX][2];
   double sysPar[NSYSPARMAX];

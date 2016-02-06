@@ -12,6 +12,50 @@
 //  return hTot;
 //}
 
+///////////////////////////////////////////////////
+//make some useful histograms for debugging
+void histoManager::showSysParVariation(int isamp, int ibin, int icomp, int iatt, int ipar){
+
+   //get array for parameter values to try
+   const int npts = 15;
+   double testval[npts];
+   double minval =  fitPars->parUnc[ipar] - 3.*fitPars->parUnc[ipar];
+   double maxval =  fitPars->parUnc[ipar] + 3.*fitPars->parUnc[ipar];
+   double dval  = (maxval-minval)/((double)npts);
+   double val = 0.;
+   double currentval = fitPars->getParameter(ipar);
+   for (int ipt=0;ipt<npts;ipt++){
+     testval[ipt]= minval + val;
+     val+=dval;
+   } 
+   cout<<"histoManager: Trying variations of param: "<<ipar<<" from "<<minval<<" to "<<maxval<<endl;
+
+   //make 2D histogram
+   int nbinsy = npts;
+   TH1D* htemplate = getHistogram(isamp,ibin,icomp,iatt);
+   int nbinsx = htemplate->GetNbinsX();
+   double xbinmin = htemplate->GetBinLowEdge(1);
+   double xbinmax = htemplate->GetBinLowEdge(nbinsx) + htemplate->GetBinWidth(nbinsx);
+   h2d = new TH2D("h2d","h2d",nbinsx,xbinmin,xbinmax,nbinsy,minval,maxval);
+
+   cout<<"filling histogram..."<<endl;
+   //fill 2D histogram
+   for (int ipt=0;ipt<npts;ipt++){
+     fitPars->setParameter(ipar,testval[ipt]);
+     cout<<"parval: "<<testval[ipt]<<endl;
+     TH1D* htemp = getModHistogram(isamp,ibin,icomp,iatt);
+     for (int ibin=1;ibin<=nbinsx;ibin++){
+       h2d->SetBinContent(ibin,ipt,htemp->GetBinContent(ibin));
+     } 
+   }
+
+   //draw 2D histogram
+   h2d->GetZaxis()->SetRangeUser(0,h2d->GetMaximum());
+   h2d->SetContour(50);
+   h2d->Draw("lego2");
+   fitPars->setParameter(ipar,currentval); 
+   return;
+}
 
 //////////////////////////////////////////////////////////////////////////
 //calculate sum of all modified components to compare to data
@@ -89,6 +133,7 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
       //double daweight = getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
       //cout<<daweight<<endl;
       //
+      //cout<<"par "<<isyspar<<endl;
       weightsum+=getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
     } 
     weightsum = weightsum -(double)fitPars->nSysPars + 1.; 
@@ -301,6 +346,7 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
   nComponents = ncomp;
   nAttributes  = natt;
   TString filename = rootname;
+
   //file containing histograms 
   fin = new TFile(filename.Data());
   ///////////////////////////////////////////////

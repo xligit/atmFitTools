@@ -1,4 +1,8 @@
+#ifndef KEYREAD_C 
+#define KEYREAD_C
+
 //class to read inputs from card files
+
 #include<iostream>
 #include<fstream>
 #include<string>
@@ -138,31 +142,4 @@ void keyread::processLine(TString sline){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
+#endif 

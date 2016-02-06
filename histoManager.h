@@ -51,6 +51,7 @@ class histoManager{
   hSplines* theSplines[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //splines for flux/xsec params
   TH1D* hData[NSAMPMAX][NBINMAX][NATTMAX];  //array of all Data histograms
   TLegend* Leg;  //for histogram drawing methods
+  TH2D* h2d; //for 2D debugging histograms
 
   ///////////////////////////
   //parametrs
@@ -87,6 +88,7 @@ class histoManager{
   ///////////////////////////
   //debugging
   void showErrorComparison(int isamp, int ibin, int iatt);
+  void showSysParVariation(int isamp, int ibin, int icomp, int iatt, int isys);
 };
 
 #endif
