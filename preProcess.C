@@ -6,7 +6,7 @@
 
 
 ////////////////////////////////////////////////////////////
-//Takes in a chain and loops over all files in the chain.
+//Takes in a chain and loops over all files in the chain
 //For each file, a new file with a modified TTree is created
 void preProcess::processAllFiles(TChain* chain){
   int nfiles = chain->GetNtrees();
@@ -105,12 +105,28 @@ int preProcess::getBin(){
   wall = calcWall(&vpos);
   towall = calcToWall(&vpos,&vdir);
 
+
+
   //separate into bins
+  //"simple" FV Binning
   if (FVBinning==0){
     if ((wall<200.)&&(wall>80.)) return 1;
     if (wall<80.) return 2;
     return 0;
   }
+
+
+  //cosmic binning
+  if (FVBinning==1){
+    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
+    double Zrec = fq->fq1rpos[0][2][2];
+    double Zcut = 1410;
+    double Rcut = 1290;
+    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
+    if ((Zrec<Zcut)) return 1; //< side entering
+    if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
+  }
+
 
   return -1;
 }
@@ -119,17 +135,52 @@ int preProcess::getBin(){
 /////////////////////////////////
 //Simple initial cuts
 int preProcess::passCuts(){
-  if ((fq->nhitac)>16) return 0;
+ 
+  //OD cut for atmospheric evetns
+  if (MCComponents==0){
+    if ((fq->nhitac)>16) return 0;
+  }
+
+  //minimum energy cut
   if ((fq->fqtotq[0]<80)) return 0;
+
+  //cosmic cuts
+  if (MCComponents==1){
+    if ((fq->fqnse)!=2) return 0;
+  }
+
+
+
   return 1;
 }
 
 ///////////////////////////////
 //returns the # of subevents-1
 int preProcess::getSample(){
-  if (fq->fqnse==1) return 0;
-  if (fq->fqnse==2) return 1;
-  if (fq->fqnse>2)  return 2;
+
+  //atmospheric selections
+  if (MCComponents==0){
+    if (fq->fqnse==1) return 0;
+    if (fq->fqnse==2) return 1;
+    if (fq->fqnse>2)  return 2;
+  }
+  
+  
+  //cosmic selectoin
+  if (MCComponents==1){
+    int nsubev = fq->fqnse;
+    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
+    double ingatethresh = 1000.;
+    return 0;
+   // if (nsubev<2) return 0; //< no decay e
+ //   if ((nsubev==2)&&(tdecay>ingatethresh)) return 0; //<decay e
+//    else{
+//      return 1;
+ //   }
+  //  if ((nsubev>=2)&&(tdecay<=ingatethresh)) return 2; //<in-gate decay
+  }
+
+
   return 3;
 }
 
@@ -140,7 +191,8 @@ int preProcess::getComponent(){
   //useful for cuts
   absmode = TMath::Abs(fq->mode);
   int absnu   = TMath::Abs(fq->ipnu[0]);
-
+ 
+  //visible event selection
   //charged current
   if (MCComponents==0){
     if ((absmode>0)&&(absmode<30)){
@@ -156,22 +208,11 @@ int preProcess::getComponent(){
     }
   }
 
-//  return 7;
 
-
-//  if ((absmode)<30){
-//     if ((absmode==1)&&(absnu==14)) return 1;
-//     if ((absmode==1)&&(absnu==12)) return 0;
-  //   if ((vis->nvpip==0)&&(vis->nvpip+vis->nvpi0+vis->nvk)==0) return 1; //CC1e
- //    if ((vis->nvmu==1)&&(vis->nvpip+vis->nvpi0+vis->nvk)==0) return 2; //CC1mu
-//     if (TMath::Abs((int)fq->ipnu[0])==14) return 3; //CCmuOther
-//     if (TMath::Abs((int)fq->ipnu[0])==12) return 2; //CCeOther
-//  }
-//  else{
-//     if ((vis->nvpi0==1)&&(vis->nvpip==0)) return 4;
-//     return 5;
-//   }
-//  return 6;
+  //cosmic selectoin
+  if (MCComponents==1){
+    return 0;
+  }
 
 }
 
@@ -199,9 +240,18 @@ void preProcess::preProcessIt(){
 //fills fiTQun attribute array
 void preProcess::fillAttributes(){
   attribute[0] = fq->fq1rnll[0][2]-fq->fq1rnll[0][1];
-  attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
+//  attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
   attribute[2] = fq->fq1rmom[0][1];
   attribute[3] = fq->fq1rmom[0][2];
+//  attribute[4] = fq->fq1rmom[1][1];
+  if (fq->fqnse>1){
+    attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
+    attribute[4] = fq->fq1rmom[1][1];
+  }
+  else{
+    attribute[1] = 0.;
+    attribute[4] = 0.;
+  }
   return;
 }
 

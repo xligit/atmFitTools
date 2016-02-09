@@ -311,8 +311,8 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
     hh.SetBinContent(newbin,sum/sumw);
 //    cout<<sum/sumw<<endl;
    // double ss = binerr/(sum*sum);
-   // double scale = htmp->Integral()/hh.Integral();
-   // hh.Scale(scale);
+    double scale = htmp->Integral()/hh.Integral();
+    hh.Scale(scale);
     //set bin uncertainty..
 //    hh.SetBinError(newbin,(sum*sum*sum)/(binerr));
  //   hh.SetBinError(newbin,TMath::Sqrt(sum/sumw));

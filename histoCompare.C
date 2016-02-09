@@ -592,10 +592,12 @@ void histoCompare::showFitResult(int isamp,int ibin,int iatt){
   return;
 }
 
+//Show the effect of varying a single bias or smear parameter
 void histoCompare::showFitEffect(int isamp,int ibin,int icomp,int iatt){
   //sum up mc components
   hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt); //gets the modified histogram
-  hTmp = hManager->getSumHistogram(isamp,ibin,iatt);
+
+  hTmp = hManager->getSumHistogram(isamp,ibin,iatt); //get the sum histogram
 
 //  double smear = bestPar[ibin][icomp][iatt][0];
 //  double bias  = bestPar[ibin][icomp][iatt][1];
@@ -1478,7 +1480,7 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2, double hnorm){
   //assume poisson errors
  // for (int ibin=10;ibin<=(10);ibin++){
 
-  for (int ibin=3;ibin<=(h1->GetNbinsX()-3);ibin++){
+  for (int ibin=5;ibin<=(h1->GetNbinsX()-5);ibin++){
     c1 = h1->GetBinContent(ibin); //MC
     c2 = h2->GetBinContent(ibin); //data
     errmc = h1->GetBinError(ibin);
@@ -1583,6 +1585,8 @@ histoCompare::histoCompare(){
 }
 
 histoCompare::histoCompare(const char* parfile){
+
+  //read in parameter file
   runPars = new sharedPars(parfile);
   runPars->readParsFromFile();
   nameTag= runPars->globalRootName.Data();

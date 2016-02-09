@@ -7,13 +7,14 @@
   gROOT->ProcessLine(".x ~/style.c");
 
   //run histo factory from parameter file
-//  histoFactory* hfact = new histoFactory("sharedpars.dat");
+  histoFactory* hfact = new histoFactory("cosmicpars.dat");
 //  hfact->runHistoFactory();
 
 
   //run spline factory form parameter file
-  splineFactory *sfact = new splineFactory("sharedpars.dat");
-  sfact->runSplineFactory();
+//  splineFactory *sfact = new splineFactory("sharedpars.dat"); //< atmospheric pars
+//  splineFactory *sfact = new splineFactory("cosmicpars.dat"); //< cosmic pars
+//  sfact->runSplineFactory();
 
 /* //run histo factory
 

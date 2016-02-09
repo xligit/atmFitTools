@@ -96,7 +96,7 @@ void histoFactory::init(){
 //  }
 //  outputFileName = runpars->hFactoryOuputDir.Data();
   outputFileName = runpars->hFactoryOutput.Data();
-  outputFileName.Append( nameTag.Data() );
+ // outputFileName.Append( nameTag.Data() );
   fout = new TFile(outputFileName.Data(),"RECREATE");
 
 
@@ -244,10 +244,12 @@ void histoFactory::normalizeHistos(double scale){
 void histoFactory::fillHistos(){
   int nevdata = dataTree->GetEntries();
   int nevmc   = mcTree->GetEntries();
+  cout<<"histoFactory: Number of Data entries: "<<nevdata<<endl;
+  cout<<"histoFactory: Number of MC entries: "<<nevmc<<endl;
   //fill data histos
   for (int i=0;i<nevdata;i++){
     dataTree->GetEntry(i);
-    fillAttributesData();
+    //fillAttributesData();
     for (int iatt=0;iatt<nAttributes;iatt++){
       hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,
                                   fqData->attribute[iatt],fqData->evtweight);
@@ -296,6 +298,7 @@ void histoFactory::setMCTree(TChain* ch){
 
 //writes all histograms to output file
 void histoFactory::saveToFile(){
+  cout<<"histoFactory: Saving file: "<<fout->GetPath()<<endl;
   fout->Write();
   return;
 }

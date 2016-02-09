@@ -35,22 +35,22 @@ void makeCov::buildMatrix(){
   }
   //calc mean
   float norm=1./(float)partree->GetEntries();
-  cout<<"norm: "<<norm<<endl;
+ // cout<<"norm: "<<norm<<endl;
   for (int iev=0;iev<partree->GetEntries();iev++){
     partree->GetEntry(iev);
     for (int ipar=0;ipar<npartot;ipar++){
       mean[ipar]+= (par[ipar]*norm);
-      cout<<"par: "<<ipar<<" "<<par[ipar]<<endl;
+      //cout<<"par: "<<ipar<<" "<<par[ipar]<<endl;
     }
   }
   
   for (int kk=0;kk<npartot;kk++){
-      cout<<"mean: "<<kk<<" "<<mean[kk]<<endl;
+//      cout<<"mean: "<<kk<<" "<<mean[kk]<<endl;
   }
 
   //calc matrix
   norm = 1./((float)partree->GetEntries()-1.);
-  cout<<"norm: "<<norm<<endl;
+ // cout<<"norm: "<<norm<<endl;
   for (int jev=0;jev<partree->GetEntries();jev++){
     partree->GetEntry(jev);
     for (int i0=0;i0<npartot;i0++){
@@ -60,7 +60,7 @@ void makeCov::buildMatrix(){
     }
   }
   for (int kk=0;kk<npartot;kk++){
-      cout<<"matrix: "<<kk<<" "<<matrix[kk][kk]<<endl;
+  //    cout<<"matrix: "<<kk<<" "<<matrix[kk][kk]<<endl;
   }
 
   //fill matrix histogram

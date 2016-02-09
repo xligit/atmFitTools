@@ -341,6 +341,11 @@ void atmFitPars::initPars(const char* systype){
     sysParUnc[nSysPars] = 0.05;
     nSysPars++;
   }
+
+  if (!stype.CompareTo("none")){
+    nSysPars=0;
+  }
+
   //fix 1D parameter arrays
   for (int isys=0;isys<nSysPars;isys++){
     pars[index]=sysPar[isys];

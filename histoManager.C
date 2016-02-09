@@ -335,6 +335,11 @@ void histoManager::fillHistogram(int isamp, int ibin, int icomp, int iatt, doubl
 }
 
 void histoManager::fillHistogramData(int isamp, int ibin, int iatt, double value,double weight){
+//  cout<<"sample: "<<isamp<<endl;
+ // cout<<"bin"<<ibin<<endl;
+ // cout<<"att"<<iatt<<endl;
+//  cout<<"value"<<value<<endl;
+ // cout<<"weight"<<weight<<endl;
   hData[isamp][ibin][iatt]->Fill(value,weight); 
   return;
 }
