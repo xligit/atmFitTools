@@ -11,6 +11,7 @@
 #include "splineFactory.C"
 #include "mcmcReader.C"
 #include "THStack.h"
+#include "sharedPars.C"
 
 
 #define NCLASSMAX 10
@@ -23,45 +24,56 @@ class postfitCalculator{
   //initialize using the file name that the contains the mcmc tree to be analyzed
   //the optional parameter is the name of the shared paremeter file for creating the
   //atmFitPars object.
-  postfitCalculator(const char* mcmcfilename,const char* parfile="");
+  postfitCalculator(const char* mcmcfilename,const char* parfile);
+  postfitCalculator(const char* parfile); //< construct from parameter file
   void init(); //< called by constructor to initialize histograms, trees, etc
 
   /////////////////////////////////////////////////////////////
   //internal variables
   TTree* mcmcpath; //< points to tree containing the mcmc steps
   TTree* mctree;  //< points to the tree containg the mc events
-  mcmcReader* path; //< points to data in mcmcpath
-  fQreader* mcreader; //< points to data in mctree
+  TTree* datatree; //< for data events
+  fQreader* datareader; //< points t
+  mcmcReader* path; //< points to a step in mcmcpath
+  fQreader* mcreader; //< points to an event in mctree
   atmFitPars* fitpars; //< points to the current fit parameters object
   splineFactory* sfact; //< empty spline factory to call getEvtWeight. 
-  TFile* outfile;
-  int nmcevents;
+  TFile* outFile; //< outputfile
+  int NMCEvents; //< limits # of MC events to use to speed up histo filling
   double pars[1000]; 
   double evtweight;
   int evtclass; //< code for event class 
-  TString parFileName;
+  TString parFileName;  //< name of parameter file
   //for "nsk" tree
   double nevents[10]; //< number of events for each event class
   double neventsdef[10]; //< number of events for each class in default mc
   double neventstot[10]; //< total number of events for each event class
-  TTree* nsktree;
+  TTree* nsktree; //< tree to hold # of events for each MCMC point
   int selectiontype; //< code for which selection to use
-  int nmcmcpts; 
-  //histogrms
+  int NMCMCPts; //< number of points to sample from
+  int MCMCBurnIn; //< number of burn-in points
+  sharedPars* runPars;
+  int currentMCMCPoint;
+  int currentMCEvent;
+
+  //histogrms of interest
   TH1D* hEnuMu[10][200]; //<energy assuming muon
+//  TH1D* hPIDemuSE2[10][200]; //< e/mu PID of second subev
   TH1D* hPIDemu[10][200]; //<e/mu PID
   TH1D* hNSK[10]; //< numbers of events after cuts
+  
 
   ////////////////////////////////////////////////////////
   //methods
-  void  setNSKTree(TTree* tr){nsktree=tr;}
+  // modfies the values of the current MC event using parameters from current MCMC point
+  void  modifyCurrentEvent();
   void  setMCTree(TTree* tr);
   void  setSelectionType(int itype){selectiontype=itype;}
   double getEvtWeight(); //< returns the weight given the current parameters
   void  modifyAttributes();
   void  unmodifyAttributes();
   void  setParsFromMCMC(int istep); //< sets parameters from mcmmc cloud
-  void fillHistos(int iclass,int islot); //< fills all histograms with data pointed to by mcreader
+  void fillHistos(int iclass,int islot); //< fills all histograms 
   int makeSelection(int iselect); //< select events based on various attributes;
   int getEvtClass();
   void drawBreakdown(int ihisto,int islot);
@@ -70,8 +82,151 @@ class postfitCalculator{
   void fillNskTree(int npts,int nburn=1000); //< step through MCMC cloud and fill NSK tree at each point
   void makeNSKTable();
   void showAllHistos(int ihisto,int iclass);
+  void MCMCLooperTemplate();
+  void cosmicPostFitAnalysis();
+//  void runPostFit();
 };
 
+
+
+void  postfitCalculator::cosmicPostFitAnalysis(){
+
+
+  //get number of total steps minus burn-in
+  int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
+  if (nsteps<(NMCMCPts)){
+    cout<<"Not enough steps in MCMC path!"<<endl;
+    return;
+  }
+
+  //loop over points (uniform sampling)
+  int dstep = nsteps/NMCMCPts;
+  int istep = MCMCBurnIn;
+  int samppts[10000];
+
+  //get array of points to sample from
+  for (int i=0;i<NMCMCPts;i++){
+    samppts[i] = istep;
+    istep+=dstep;
+  } 
+
+    //find the number of MC events to use
+  if ((NMCEvents<=0)||(NMCEvents>mctree->GetEntries())) NMCEvents = mctree->GetEntries(); 
+
+  int NmuID[100];
+  int NmuMisID[100];
+  int NeID[100];
+  int NeMisID[100];
+ 
+  //set number of mis ied events to zer
+  for (int i=0;i<100;i++){
+    NmuID[i]=0.;
+    NmuMisID[i]=0.;
+    NeID[i]=0.;
+    NeMisID[i]=0.;
+  }
+ 
+  //loop over number of MCMC points
+  for (int ipt=0;ipt<NMCMCPts;ipt++){
+    currentMCMCPoint = samppts[ipt];
+    //loop over MC events
+    for (int ievt=0;ievt<NMCEvents;ievt++){
+      currentMCEvent = ievt;
+      if ((ievt%1000)==0) cout<<"pt: "<<ipt<<" ev: "<<ievt<<endl;
+      if (ipt!=0) modifyCurrentEvent();//< all attributes are modified and eventWeight is calculated
+      //feel free to do things here, like fill histograms or something  
+      hPIDemu[0][ipt]->Fill(mcreader->attribute[0]);
+      hPIDemu[1][ipt]->Fill(mcreader->attribute[1]);
+      if (makeSelection(1)){
+        NmuID[ipt]++;
+      }
+      else{
+        NmuMisID[ipt]++;
+      }
+      if (makeSelection(2)){
+        NeID[ipt]++;
+      }
+      else{
+        NeMisID[ipt]++;
+      }
+    } 
+  }
+
+  double muratemean=0.;
+  double eratemean=0.;
+  double muratevar=0.;
+  double eratevar=0.;
+  for (int jpt=0;jpt<NMCMCPts;jpt++){
+    float muRate = (float)NmuMisID[jpt]/((float)NmuMisID[jpt]+(float)NmuID[jpt]);
+    float eRate = (float)NeMisID[jpt]/((float)NeMisID[jpt]+(float)NeID[jpt]);
+    cout<<" NmuID  "<<NmuID[jpt]<<" NmuMISID  "<<NmuMisID[jpt]<<" NeID  "<<NeID[jpt]<<" NeMisID  "
+    <<NeMisID[jpt]<<" muRate  "<<muRate<<" eRate  "<<eRate<<endl;
+    if (jpt!=0) muratemean+=muRate;
+    if (jpt!=0) eratemean+=eRate;
+  }
+
+  muratemean/=(float)(NMCMCPts-1);
+  eratemean/=(float)(NMCMCPts-1);
+
+  for (int jpt=0;jpt<NMCMCPts;jpt++){
+    float muRate = (float)NmuMisID[jpt]/((float)NmuMisID[jpt]+(float)NmuID[jpt]);
+    float eRate = (float)NeMisID[jpt]/((float)NeMisID[jpt]+(float)NeID[jpt]);
+    if (jpt!=0) muratevar+=(muRate-muratemean)*(muRate-muratemean);
+    if (jpt!=0) eratevar+=(eRate-eratemean)*(eRate-eratemean);
+  }
+
+ 
+  muratevar=TMath::Sqrt(muratevar);
+  eratevar=TMath::Sqrt(muratevar);
+  muratevar/=(float)(NMCMCPts-2);
+  eratevar/=(float)(NMCMCPts-2);
+
+
+
+  cout<<"avg muon misID rate: "<<muratemean<<endl;
+  cout<<"muon misID var: "<<muratevar<<endl;
+  
+  cout<<"avg electron misID rate: "<<eratemean<<endl;
+  cout<<"electron misID var: "<<eratevar<<endl;
+
+
+ 
+  return;
+
+}
+
+//void postfitCalculator::runPostFit(){
+
+ // return;
+//}
+
+postfitCalculator::postfitCalculator(const char* parfile){
+  
+  //read in parameters
+  runPars = new sharedPars(parfile);
+  runPars->readParsFromFile();
+
+  NMCMCPts = runPars->NMCMCPts;  
+  MCMCBurnIn = runPars->MCMCBurnIn;
+  NMCEvents = runPars->NMCEvents;
+  //set parameter file name
+  parFileName = parfile;
+
+  //get mcmc path tree
+  TString mcmcfilename = runPars->MCMCFile;
+  TFile *mcmcfile = new TFile(mcmcfilename.Data());
+  mcmcpath = (TTree*)mcmcfile->Get("MCMCpath");
+  path = new mcmcReader(mcmcpath);
+
+
+  //setup atmFitpars
+  fitpars = new atmFitPars(parfile); 
+
+  //initialize histograms
+  init();    
+
+
+}
 
 /////////////////////////////////////////
 //draws all modified histograms on same pad
@@ -81,7 +236,7 @@ void postfitCalculator::showAllHistos(int ihisto, int iclass){
   hEnuMu[iclass][0]->SetLineColor(kRed);
   if (ihisto==0)  hEnuMu[iclass][0]->Draw();
   if (ihisto==1)  hPIDemu[iclass][0]->Draw();
-  for (int i=1;i<nmcmcpts;i++){
+  for (int i=1;i<NMCMCPts;i++){
     if (ihisto==0){
       hEnuMu[iclass][i]->Draw("same");
     }
@@ -178,10 +333,11 @@ void postfitCalculator::unmodifyAttributes(){
 ///////////////////////////////////////////////////
 //changes attributes of event to the modified quantities
 void postfitCalculator::modifyAttributes(){
-
+//  cout<<"N "<<fitpars->nAttributes<<endl;
   ////////////////////////////////////////////////////
   //modify attributes
   for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
+//    cout<<"attribute mod: "<<fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1]<<endl;
     //mcreader->attribute[iatt]*=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][0]; //multiply by smear parameter
     mcreader->attribute[iatt]+=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1]; //add bias parameter
   }
@@ -190,12 +346,71 @@ void postfitCalculator::modifyAttributes(){
   return;
 }
 
+///////////////////////////////////////////////
+// modfies the values of the current MC event using parameters from current MCMC point
+void postfitCalculator::modifyCurrentEvent(){
+//  cout<<"test"<<endl;
+  setParsFromMCMC(currentMCMCPoint); //< sets parameters from current step of MCMC path
+
+  mctree->GetEntry(currentMCEvent); //< read in default MC event
+
+  getEvtWeight(); //< gets the event weight form the current flux and xsec parameters
+
+  modifyAttributes(); //< modifies each attribute according to the current MCMC point 
+  
+  return;
+}
+
+/////////////////////////////////////////////////////////////
+//template for looping over MCMC points and modifying the MC
+void postfitCalculator::MCMCLooperTemplate(){
+
+  //get number of total steps minus burn-in
+  int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
+  if (nsteps<(NMCMCPts)){
+    cout<<"Not enough steps in MCMC path!"<<endl;
+    return;
+  }
+
+  //loop over points (uniform sampling)
+  int dstep = nsteps/NMCMCPts;
+  int istep = MCMCBurnIn;
+  int samppts[10000];
+
+  //get array of points to sample from
+  for (int i=0;i<NMCMCPts;i++){
+    samppts[i] = istep;
+    istep+=dstep;
+  } 
+
+  //find the number of MC events to use
+  if ((NMCEvents<=0)||(NMCEvents>mctree->GetEntries())) NMCEvents = mctree->GetEntries(); 
+
+  //loop over number of MCMC points
+  for (int ipt=0;ipt<NMCMCPts;ipt++){
+    currentMCMCPoint = samppts[ipt];
+    //loop over MC events
+    for (int ievt=0;ievt<NMCEvents;ievt++){
+      currentMCEvent = ievt;
+      if ((ievt%1000)==0) cout<<"pt: "<<ipt<<" ev: "<<ievt<<endl;
+      modifyCurrentEvent();//< all attributes are modified and eventWeight is calculated
+
+      //feel free to do things here, like fill histograms or something  
+ 
+    } 
+  }
+ 
+  return;
+
+}
+
+
 
 /////////////////////////////////////////////////
 //Fill the NSK tree at various steps in MCMC path
 void postfitCalculator::fillNskTree(int npts,int nburn){
 
-  nmcmcpts = npts;
+  NMCMCPts = npts;
   
   //get number of steps minus burn-in
   int nsteps=mcmcpath->GetEntries()-nburn;
@@ -221,7 +436,7 @@ void postfitCalculator::fillNskTree(int npts,int nburn){
   //loop over number of points
   for (int ipt=0;ipt<npts;ipt++){
     setParsFromMCMC(samppts[ipt]);//< fill atmFitPars from parameters at this step
-    for (int ievt=0;ievt<nmcevents;ievt++){
+    for (int ievt=0;ievt<NMCEvents;ievt++){
       if ((ievt%1000)==0) cout<<"pt: "<<ipt<<" ev: "<<ievt<<endl;
       mctree->GetEntry(ievt);
       evtclass = getEvtClass(); //< get event class
@@ -244,7 +459,7 @@ void postfitCalculator::fillNskTree(int npts,int nburn){
 
   //write out output 
   nsktree->Write();
-  //outfile->Close();
+  //outFile->Close();
 
   ////////////////
   return; 
@@ -263,7 +478,7 @@ void postfitCalculator::findEvtClasses(){
   //now loop through all MC events to see hou many events of each
   //class we have
   cout<<"Finding total # of events of each class...."<<endl;
-  for (int ievt=0;ievt<nmcevents;ievt++){
+  for (int ievt=0;ievt<NMCEvents;ievt++){
     mctree->GetEntry(ievt);
     evtclass=getEvtClass(); //< fills "evtclass" variable
     neventstot[evtclass]++; //<increment the total number of events of this class
@@ -363,6 +578,29 @@ int postfitCalculator::makeSelection(int iselect){
     if (mcreader->fqmrnring[0]!=1) return 0;
   }
 
+
+  /////////////////////////////
+  //cosmic mu mock selection
+  if (iselect==1){
+    //PID cut
+    if ((-1.*mcreader->attribute[0])<0.2*mcreader->fq1rmom[0][1]) return 0;
+    //nring cut
+  //  if (mcreader->attribute[2]>0) return 0;
+    //evis cut
+    if (mcreader->fq1rmom[0][1]<30) return 0;
+  }
+
+  /////////////////////////////
+  //cosmic decay e mock selection
+  if (iselect==2){
+    //PID cut
+    if ((-1.*mcreader->attribute[1])>0.2*mcreader->fq1rmom[1][1]) return 0;
+    //nring cut
+  //  if (mcreader->attribute[2]>0) return 0;
+    //evis cut
+    if (mcreader->fq1rmom[0][1]<30) return 0;
+  }
+
   //event has passed cuts
   return 1;
 }
@@ -395,12 +633,13 @@ void postfitCalculator::setMCTree(TTree* tr){
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-//get event weights and modify attributes according to parameters
+//get event weight according to the current flux and xsec parameters
 double  postfitCalculator::getEvtWeight(){
 
   /////////////////////////////////////////////
   //get event weights
   double ww = 1.0;
+  //loop over all flux and xsec parameters
   for (int isyspar=0;isyspar<fitpars->nSysPars;isyspar++){
     ww*=sfact->getEvtWeight(mcreader,isyspar,fitpars->sysPar[isyspar]);
   } 
@@ -417,7 +656,7 @@ void postfitCalculator::init(){
 
   //////////////////////
   //make tree for numbers of events
-  outfile = new TFile("nsk.root","recreate");
+  outFile = new TFile("nsk.root","recreate");
   nsktree = new TTree("nsk","nsk");
   nsktree->Branch("par",path->par,"par[100]/D");
   nsktree->Branch("nevents",nevents,"nevents[10]/D");
@@ -438,10 +677,11 @@ void postfitCalculator::init(){
       hPIDemu[iclass][i] = new TH1D(Form("PIDemu_class%d_%d",iclass,i),Form("PIDemu_class%d_%d",iclass,i) ,nbins,xminpid,xmaxpid);
     }
   }
+
   ////////////////////////////
   //setup atm fit pars
-  fitpars = new atmFitPars(parFileName.Data());
-  fitpars->initPars("tn186");
+//  fitpars = new atmFitPars(parFileName.Data());
+//  fitpars->initPars("tn186");
 
   ////////////////////////////
   //setup spline factory
@@ -449,7 +689,7 @@ void postfitCalculator::init(){
 
   ////////////////////////////
   //other defaults
-  nmcevents=0;
+  NMCEvents=0;
   selectiontype=0;   
   return;
 }

@@ -12,19 +12,19 @@ $	'd' -> double
 $	's' -> string
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ GLOBAL PARAMETERS $$$$$$$
-i,nSamples=2;
+i,nSamples=1;
 i,nFVBins=3;
 i,nComponents=1;
-i,nAttributes=5;
-i,nSysPars=0;
-s,globalRootName=cosmicmu_mgev_run2;
-s,FVBinName0=entertop;
-s,FVBinName1=enterside;
-s,FVBinName2=entercorner;
+i,nAttributes=3;
+i,nSysPars=2;
+s,globalRootName=cosmicmu_fv;
+s,FVBinName0=towall_lt500;
+s,FVBinName1=towall_500to1000;
+s,FVBinName2=towall_gt1000;
 s,fQAttName0=PIDse1;
 s,fQAttName1=PIDse2;
-s,fQAttName2=EMomse1;
-s,fQAttName3=MuMomse1;
+s,fQAttName2=RCparam;
+s,fQAttName3=NRingMuLike;
 s,fQAttname4=EMomse2;
 s,MCComponentName0=Total;
 s,sampleName0=NoDeccay;
@@ -33,12 +33,12 @@ s,sampleName2=InGate;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ PREPROC PARAMETERS $$$$$$
 s,preProcessOutDir=./rootfiles/;
-s,preProcessFilesMC=/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/mc/stopmu_mc_1390_for_atmnu_test_063*fQ.root;
+s,preProcessFilesMC=/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/mc/stopmu_mc_1390_for_atmnu_test_064*fQ.root;
 s,preProcessFilesData=/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/data/patmue.run072*.root;
 $ CODE FOR FV BINNING
 $   0 -> SIMPLE (3 FV BINS BASED ON WALL CUTS)
 $   1 -> COSMIC (SORT BY SIDE VS TOP ENTERING)
-i,preProcessFVBinning=1;
+i,preProcessFVBinning=3;
 $ MC COMPONENT DEFINITIONS
 $   0 -> VISIBLE (CUTS ON VISBLE # RINGS FROM VISRING
 $   1 -> COSMIC  (CUTS ON SUBEV #)
@@ -46,22 +46,22 @@ i,preProcessMCComponents=1;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HFACTORY PARAMETERS $$$$$
 s,hFactoryOuputDir=./rootfiles/;
-s,hFactoryOutput=./rootfiles/cosmicmu_histograms.root;
-s,hFactoryMCFiles=./rootfiles/cosmicmu*_ppmc*.root;
-s,hFactoryDataFiles=./rootfiles/cosmicmu*_ppdata*.root;
+s,hFactoryOutput=./rootfiles/cosmicmu_towall1_histograms.root;
+s,hFactoryMCFiles=./rootfiles/cosmicmu_towall*_ppmc*.root;
+s,hFactoryDataFiles=./rootfiles/cosmicmu_towall*_ppdata*.root;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HISTOGRAM BINNING $$$$$$$
-i,nBinsAtt0=50;
-i,nBinsAtt1=50;
-i,nBinsAtt2=50;
-i,nBinsAtt3=50;
-i,nBinsAtt4=50;
-d,xMinAtt0=-4000.;
-d,xMaxAtt0=2000.;
-d,xMinAtt1=-500.;
+i,nBinsAtt0=20;
+i,nBinsAtt1=20;
+i,nBinsAtt2=20;
+i,nBinsAtt3=20;
+i,nBinsAtt4=20;
+d,xMinAtt0=-1000.;
+d,xMaxAtt0=1000.;
+d,xMinAtt1=-400.;
 d,xMaxAtt1=600.;
-d,xMinAtt2=-1000.;
-d,xMaxAtt2=9000;
+d,xMinAtt2=-2000.;
+d,xMaxAtt2=1000;
 d,xMinAtt3=-1000.;
 d,xMaxAtt3=9000;
 d,xMinAtt4=-100.;
@@ -78,3 +78,9 @@ i,MCMCNSteps=10000;
 d,MCMCTunePar=0.1;
 i,fixAllSmearFlg=0;
 i,useSplinesFlg=0;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ POSTFIT PARAMETERS $$$$$$$$$
+s,MCMCFile=mcmctree.root;
+i,MCMCBurnIn=10000;
+i,NMCEvents=50000;
+i,NMCMCPts=9;

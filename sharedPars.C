@@ -76,7 +76,10 @@ class sharedPars{
   double MCMCTunePar;
   int useSplinesFlg;
   int fixAllSmearFlg;
-
+  int NMCMCPts;
+  int MCMCBurnIn;
+  int NMCEvents;
+  TString MCMCFile;
   TString sysParType;
 };
 
@@ -150,6 +153,10 @@ void sharedPars::readParsFromFile(const char* filename){
   globalRootName = kr->getKeyS("globalRootName");
   splineFactoryOutput = kr->getKeyS("splineFactoryOutput");
   sysParType = kr->getKeyS("sysParType");
+  NMCMCPts = kr->getKeyI("NMCMCPts");
+  MCMCBurnIn=kr->getKeyI("MCMCBurnIn");
+  NMCEvents=kr->getKeyI("NMCEvents");
+  MCMCFile=kr->getKeyS("MCMCFile");
 }
 
 sharedPars::sharedPars(const char* parfilename){

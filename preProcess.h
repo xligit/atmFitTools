@@ -79,6 +79,7 @@ class preProcess{
   int getComponent();
   int getSample();
   int getBin();
+  int getBest2RFitID();
   float getWeight();
   void processFile(const char* fname,const char* outname="");
   void processAllFiles(TChain* chain);

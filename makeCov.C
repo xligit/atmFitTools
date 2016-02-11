@@ -5,53 +5,85 @@
 #include <iostream>
 using namespace std;
 
+
+/////////////////////////////////////////////////////////
+//make covariance on correlation matrix from markov chain
 class makeCov{
+
   public:
+
+  ////////////////
+  //constructor
   makeCov();
+
+  /////////////////
+  //tree of mcmc steps
   TTree* partree;
+
+  ////////////////////////////////////////
+  //set parametet tree
   void setParTree(TTree* tr){partree=tr;}
+
+  ///////////////////////////////////////////
+  //set the number of burn in steps to ignore
+  int nburn;
+
+  /////////////////////
+  //matricies
   TH2F* cov;
   TH2F* cor;
+
+  /////////////////////////
+  //build that matrix
   void buildMatrix();
 };
 
+
+
 void makeCov::buildMatrix(){
-  //setup tree stuff
-  float par[1000];
-  float mean[1000];
+
+  //setup mcmc trees
+  double par[1000];
+  double mean[1000];
   int npar;
   partree->SetBranchAddress("par",par);
   partree->SetBranchAddress("npars",&npar);
   partree->GetEntry(0); //fills npar
-  cov = new TH2F("cov","cov",npar,0.,(float)npar,npar,0.,(float)npar);
-  cor = new TH2F("cor","cor",npar,0.,(float)npar,npar,0.,(float)npar);
+  cout<<"Total # of parameters: "<<npar<<endl;
+  cout<<"Total # of steps: "<<partree->GetEntries()<<endl;
+  cout<<"Burn-in: "<<nburn<<endl;
+
+  //create matrix templates
+  cov = new TH2F("cov","cov",npar,0.,(double)npar,npar,0.,(double)npar);
+  cor = new TH2F("cor","cor",npar,0.,(double)npar,npar,0.,(double)npar);
+
+  //set initial values to zero
   const int npartot = npar;
-  float matrix[npartot][npartot];
+  double matrix[npartot][npartot];
   for (int i0=0;i0<npartot;i0++){
     mean[i0]=0.;
     for (int j0=0;j0<npartot;j0++){
       matrix[i0][j0] = 0.;
     }
   }
-  //calc mean
-  float norm=1./(float)partree->GetEntries();
- // cout<<"norm: "<<norm<<endl;
-  for (int iev=0;iev<partree->GetEntries();iev++){
+
+  //calc means
+  int npts = partree->GetEntries()-nburn;
+  double norm=1./(double)npts;
+  cout<<"norm: "<<norm<<endl;
+  for (int iev=nburn;iev<partree->GetEntries();iev++){
     partree->GetEntry(iev);
     for (int ipar=0;ipar<npartot;ipar++){
       mean[ipar]+= (par[ipar]*norm);
-      //cout<<"par: "<<ipar<<" "<<par[ipar]<<endl;
     }
   }
-  
   for (int kk=0;kk<npartot;kk++){
-//      cout<<"mean: "<<kk<<" "<<mean[kk]<<endl;
+      cout<<"mean: "<<kk<<" "<<mean[kk]<<endl;
   }
 
   //calc matrix
-  norm = 1./((float)partree->GetEntries()-1.);
- // cout<<"norm: "<<norm<<endl;
-  for (int jev=0;jev<partree->GetEntries();jev++){
+  norm = 1./((double)npts-1.);
+  for (int jev=nburn;jev<partree->GetEntries();jev++){
     partree->GetEntry(jev);
     for (int i0=0;i0<npartot;i0++){
       for (int j0=0;j0<npartot;j0++){
@@ -60,20 +92,17 @@ void makeCov::buildMatrix(){
     }
   }
   for (int kk=0;kk<npartot;kk++){
-  //    cout<<"matrix: "<<kk<<" "<<matrix[kk][kk]<<endl;
+      cout<<"matrix: "<<kk<<" "<<matrix[kk][kk]<<endl;
   }
 
-  //fill matrix histogram
+  //fill histogram of matrix values
   for (int j=0;j<npartot;j++){
     for (int k=0;k<npartot;k++){
       cov->SetBinContent(j+1,k+1,matrix[j][k]);
-      cor->SetBinContent(j+1,k+1, matrix[j][k]/sqrt( (matrix[j][j]*matrix[k][k]) ));
+      cor->SetBinContent(j+1,k+1, ((matrix[j][k])/sqrt( (matrix[j][j]*matrix[k][k]) )));
     }
-//    for (int l=0;l>j;l++){
-//      cov->SetBinContent(j,l,matrix[l][j]);
-//      cor->SetBinContent(j,l,matrix[l][j]/(matrix[j][j]*matrix[l][l]));
-//    }
   }
+  cor->SetContour(100);
   cor->Draw("colz");
   return;
 

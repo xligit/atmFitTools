@@ -64,7 +64,7 @@ void preProcess::processFile(const char* fname,const char* outname){
   preProcessIt();
 
   //clean up
-  fout->Write();
+  if (trout->GetEntries()>0) fout->Write();
   fin->Close();
   fout->Close();
   
@@ -92,6 +92,8 @@ float preProcess::getWeight(){
   return evtweight;
 }
 
+
+
 ///////////////////////////////////////////////
 //calculates the FV bin for an event
 int preProcess::getBin(){
@@ -110,23 +112,33 @@ int preProcess::getBin(){
   //separate into bins
   //"simple" FV Binning
   if (FVBinning==0){
-    if ((wall<200.)&&(wall>80.)) return 1;
-    if (wall<80.) return 2;
+  //  if ((wall<200.)&&(wall>80.)) return 1;
+   // if (wall<80.) return 2;
     return 0;
   }
 
 
   //cosmic binning
-  if (FVBinning==1){
-    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
-    double Zrec = fq->fq1rpos[0][2][2];
-    double Zcut = 1410;
-    double Rcut = 1290;
-    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
-    if ((Zrec<Zcut)) return 1; //< side entering
-    if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
-  }
+//  if (FVBinning==1){
+//    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
+//    double Zrec = fq->fq1rpos[0][2][2];
+//    double Zcut = 1410;
+//    double Rcut = 1290;
+//    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
+//    if ((Zrec<Zcut)) return 1; //< side entering
+ //   if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
+//  }
 
+
+  //no binning
+//  if (FVBinning==2){return 0;}
+
+  //towall binning
+  if (FVBinning==3){
+    if (towall<500.) return 0;
+    if ((towall>-500)&&(towall<1000)) return 1;
+    if (towall>=1000) return 2;
+  }
 
   return -1;
 }
@@ -137,16 +149,25 @@ int preProcess::getBin(){
 int preProcess::passCuts(){
  
   //OD cut for atmospheric evetns
-  if (MCComponents==0){
-    if ((fq->nhitac)>16) return 0;
-  }
+//  if (MCComponents==0){
+//    if ((fq->nhitac)>16) return 0;
+//  }
 
   //minimum energy cut
   if ((fq->fqtotq[0]<80)) return 0;
 
   //cosmic cuts
   if (MCComponents==1){
+    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
+    double ingatethresh = 1000.;
     if ((fq->fqnse)!=2) return 0;
+    if (tdecay<ingatethresh) return 0;
+    if (fq->fq1rmom[0][1]<100.) return 0;
+    if (fq->fq1rmom[1][1]>100.) return 0;
+    if (fq->fq1rmom[1][1]<15.)  return 0;
+
+    //towall cuts
+    if (towall<0.) return 0; 
   }
 
 
@@ -223,12 +244,13 @@ void preProcess::preProcessIt(){
     //get info for event
     if ((i%1000)==0) cout<<i<<endl;
     tr->GetEntry(i);
+    nbin=getBin();
     if (!passCuts()) continue;
     vis->fillVisVar(); //get visible ring information
     fillAttributes();
     ncomponent=getComponent();
     nsample=getSample();
-    nbin=getBin();
+//    nbin=getBin();
     evtweight=getWeight();
     trout->Fill();
   }
@@ -236,22 +258,46 @@ void preProcess::preProcessIt(){
   return;
 }
 
+///////////////////////////////////////
+//returns the index of the best 2R fit
+int preProcess::getBest2RFitID(){
+  
+  int nfits = fq->fqnmrfit;
+
+  double ngLnLBest = 1000000.;
+  int bestindex = 0;
+
+  for (int ifit=0;ifit<nfits;ifit++){
+    int fitID = fq->fqmrifit[ifit]; //< fit fit ID code
+    if ((fitID-320000000)<0) continue; //< we want best 2R fits
+    if (fq->fqmrnll[ifit]<ngLnLBest) bestindex = ifit;
+  }
+  return bestindex;
+}
+
 ////////////////////////////////////////
 //fills fiTQun attribute array
 void preProcess::fillAttributes(){
   attribute[0] = fq->fq1rnll[0][2]-fq->fq1rnll[0][1];
-//  attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
-  attribute[2] = fq->fq1rmom[0][1];
-  attribute[3] = fq->fq1rmom[0][2];
-//  attribute[4] = fq->fq1rmom[1][1];
-  if (fq->fqnse>1){
-    attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
-    attribute[4] = fq->fq1rmom[1][1];
-  }
+  if (fq->fqnse>1) attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
   else{
     attribute[1] = 0.;
-    attribute[4] = 0.;
   }
+  int ibest = getBest2RFitID();
+  double best1Rnglnl = fmin(fq->fq1rnll[0][1],fq->fq1rnll[0][2]);
+  attribute[2] = best1Rnglnl-fq->fqmrnll[ibest];
+//  attribute[3] = -fq->fqmrnll[ibest];
+//  attribute[2] = fq->fq1rmom[0][1];
+//  attribute[3] = fq->fq1rmom[0][2];
+//  attribute[4] = fq->fq1rmom[1][1];
+//  if (fq->fqnse>1){
+//    attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
+//    attribute[4] = fq->fq1rmom[1][1];
+//  }
+//  else{
+//    attribute[1] = 0.;
+//    attribute[4] = 0.;
+//  }
   return;
 }
 

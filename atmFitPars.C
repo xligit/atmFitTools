@@ -25,6 +25,7 @@ class atmFitPars{
   int nAttributes;
   int nSysPars;
   int nTotPars;
+  sharedPars* runpars;
 
   ///////////////////////////////////////////////////////////////////
   //parameter values
@@ -133,17 +134,21 @@ atmFitPars::atmFitPars(const char* parfilename){
   /////////////////////////////////////
   //fill shared parameters from file
   cout<<"atmFitPars: reading parameter file: "<<parfilename<<endl;
-  sharedPars sharedpar(parfilename);
-  nSamples = sharedpar.nSamples;
+  runpars = new sharedPars(parfilename);
+  runpars->readParsFromFile();
+  nSamples = runpars->nSamples;
   cout<<"  nSamples: "<<nSamples<<endl;
-  nComponents = sharedpar.nComponents;
+  nComponents = runpars->nComponents;
   cout<<"  nComponents: "<<nComponents<<endl;
-  nBins = sharedpar.nFVBins;
+  nBins = runpars->nFVBins;
   cout<<"  nBins: "<<nBins<<endl;
-  nSysPars = sharedpar.nSysPars;
+  nSysPars = runpars->nSysPars;
   cout<<"  nSysPars: "<<nSysPars<<endl;
-  nAttributes = sharedpar.nAttributes;
+  nAttributes = runpars->nAttributes;
   cout<<"  nAttributes: "<<nAttributes<<endl;
+
+  TString sysType = runpars->sysParType;
+  initPars(sysType.Data());
 
 }
 

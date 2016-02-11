@@ -8,7 +8,7 @@
 
   //run histo factory from parameter file
   histoFactory* hfact = new histoFactory("cosmicpars.dat");
-//  hfact->runHistoFactory();
+  hfact->runHistoFactory();
 
 
   //run spline factory form parameter file
