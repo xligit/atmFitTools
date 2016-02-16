@@ -100,6 +100,9 @@ void keyread::processLine(TString sline){
   else if (sline(0)=='$'){
     return;
   }
+  else if (sline(0)==' '){
+    return;
+  }
   else {
     cout<<sline(0)<<" is not a valid type!!"<<endl;
     return;

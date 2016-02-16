@@ -55,6 +55,7 @@ class postfitCalculator{
   sharedPars* runPars;
   int currentMCMCPoint;
   int currentMCEvent;
+  double normFactor;
 
   //histogrms of interest
   TH1D* hEnuMu[10][200]; //<energy assuming muon
@@ -68,6 +69,7 @@ class postfitCalculator{
   // modfies the values of the current MC event using parameters from current MCMC point
   void  modifyCurrentEvent();
   void  setMCTree(TTree* tr);
+  void  setDataTree(TTree* tr);
   void  setSelectionType(int itype){selectiontype=itype;}
   double getEvtWeight(); //< returns the weight given the current parameters
   void  modifyAttributes();
@@ -88,12 +90,14 @@ class postfitCalculator{
 };
 
 
-
+///////////////////////////////////////////////////
+//runs a post-fit analysis for the stopping cosmics
 void  postfitCalculator::cosmicPostFitAnalysis(){
 
 
   //get number of total steps minus burn-in
   int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
+  cout<<"postfitCalculator: # of steps after burn-in: "<<nsteps<<endl;
   if (nsteps<(NMCMCPts)){
     cout<<"Not enough steps in MCMC path!"<<endl;
     return;
@@ -113,17 +117,25 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
     //find the number of MC events to use
   if ((NMCEvents<=0)||(NMCEvents>mctree->GetEntries())) NMCEvents = mctree->GetEntries(); 
 
-  int NmuID[100];
-  int NmuMisID[100];
-  int NeID[100];
-  int NeMisID[100];
- 
-  //set number of mis ied events to zer
+  double NmuID[100];
+  double NmuMisID[100];
+  double NeID[100];
+  double NeMisID[100];
+  double NmuIDdata[100];
+  double NmuMisIDdata[100];
+  double NeIDdata[100];
+  double NeMisIDdata[100]; 
+
+  //set number of mis ied events in MC and Data
   for (int i=0;i<100;i++){
-    NmuID[i]=0.;
-    NmuMisID[i]=0.;
-    NeID[i]=0.;
-    NeMisID[i]=0.;
+    NmuID[i]=0.; //< # of correctly IDed muons
+    NmuMisID[i]=0.; //< # of incorrectly IDed muons
+    NeID[i]=0.; //< # of correctly IDed electrons
+    NeMisID[i]=0.; //< # of incorrectly IDed electrons
+    NmuIDdata[i]=0.;  //< # of correctly IDed muons (data)
+    NmuMisIDdata[i]=0.; //< # of incorrectly IDed muons (data)
+    NeIDdata[i]=0.; //< # of correctly IDed electrons (data)
+    NeMisIDdata[i]=0.; //< # of incorrectly IDed electrons (data)
   }
  
   //loop over number of MCMC points
@@ -134,9 +146,10 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
       currentMCEvent = ievt;
       if ((ievt%1000)==0) cout<<"pt: "<<ipt<<" ev: "<<ievt<<endl;
       if (ipt!=0) modifyCurrentEvent();//< all attributes are modified and eventWeight is calculated
-      //feel free to do things here, like fill histograms or something  
+      //fill histograms
       hPIDemu[0][ipt]->Fill(mcreader->attribute[0]);
       hPIDemu[1][ipt]->Fill(mcreader->attribute[1]);
+      //find number of misID events
       if (makeSelection(1)){
         NmuID[ipt]++;
       }
@@ -152,25 +165,31 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
     } 
   }
 
+  ////////////////////////////////////////////////////
+  //now loop over data events and fill histograms
+
+
+  ////////////////////////////////////////////////////
+  //calculate Mis ID rates and print them out
   double muratemean=0.;
   double eratemean=0.;
   double muratevar=0.;
   double eratevar=0.;
   for (int jpt=0;jpt<NMCMCPts;jpt++){
-    float muRate = (float)NmuMisID[jpt]/((float)NmuMisID[jpt]+(float)NmuID[jpt]);
-    float eRate = (float)NeMisID[jpt]/((float)NeMisID[jpt]+(float)NeID[jpt]);
+    double muRate = NmuMisID[jpt]/(NmuMisID[jpt]+NmuID[jpt]);
+    double eRate = NeMisID[jpt]/(NeMisID[jpt]+NeID[jpt]);
     cout<<" NmuID  "<<NmuID[jpt]<<" NmuMISID  "<<NmuMisID[jpt]<<" NeID  "<<NeID[jpt]<<" NeMisID  "
     <<NeMisID[jpt]<<" muRate  "<<muRate<<" eRate  "<<eRate<<endl;
     if (jpt!=0) muratemean+=muRate;
     if (jpt!=0) eratemean+=eRate;
   }
 
-  muratemean/=(float)(NMCMCPts-1);
-  eratemean/=(float)(NMCMCPts-1);
+  muratemean/=(double)(NMCMCPts-1);
+  eratemean/=(double)(NMCMCPts-1);
 
   for (int jpt=0;jpt<NMCMCPts;jpt++){
-    float muRate = (float)NmuMisID[jpt]/((float)NmuMisID[jpt]+(float)NmuID[jpt]);
-    float eRate = (float)NeMisID[jpt]/((float)NeMisID[jpt]+(float)NeID[jpt]);
+    double muRate = NmuMisID[jpt]/(NmuMisID[jpt]+NmuID[jpt]);
+    double eRate = NeMisID[jpt]/(NeMisID[jpt]+NeID[jpt]);
     if (jpt!=0) muratevar+=(muRate-muratemean)*(muRate-muratemean);
     if (jpt!=0) eratevar+=(eRate-eratemean)*(eRate-eratemean);
   }
@@ -178,8 +197,8 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
  
   muratevar=TMath::Sqrt(muratevar);
   eratevar=TMath::Sqrt(muratevar);
-  muratevar/=(float)(NMCMCPts-2);
-  eratevar/=(float)(NMCMCPts-2);
+  muratevar/=(double)(NMCMCPts-2);
+  eratevar/=(double)(NMCMCPts-2);
 
 
 
@@ -188,6 +207,8 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
   
   cout<<"avg electron misID rate: "<<eratemean<<endl;
   cout<<"electron misID var: "<<eratevar<<endl;
+
+
 
 
  
@@ -200,6 +221,9 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
  // return;
 //}
 
+
+////////////////////////////////////////////////////////
+//construct from parameters in parameter file
 postfitCalculator::postfitCalculator(const char* parfile){
   
   //read in parameters
@@ -209,16 +233,33 @@ postfitCalculator::postfitCalculator(const char* parfile){
   NMCMCPts = runPars->NMCMCPts;  
   MCMCBurnIn = runPars->MCMCBurnIn;
   NMCEvents = runPars->NMCEvents;
+
   //set parameter file name
   parFileName = parfile;
 
   //get mcmc path tree
   TString mcmcfilename = runPars->MCMCFile;
+  cout<<"postfitCalculator: getting mcmcpath from file: "<<mcmcfilename.Data()<<endl;
   TFile *mcmcfile = new TFile(mcmcfilename.Data());
   mcmcpath = (TTree*)mcmcfile->Get("MCMCpath");
   path = new mcmcReader(mcmcpath);
 
-
+  //get mc and data trees
+  cout<<"postfitCalculator: setting up data and MC trees from files:"<<endl;
+  cout<<"    "<<runPars->hFactoryMCFiles.Data()<<endl;
+  cout<<"    "<<runPars->hFactoryDataFiles.Data()<<endl;
+  TChain* chmc = new  TChain("h1");
+  chmc->Add(runPars->hFactoryMCFiles.Data());
+  cout<<"postfitCalculator: # of MC events: "<<chmc->GetEntries()<<endl;
+  TChain* chdat = new TChain("h1");
+  chdat->Add(runPars->hFactoryDataFiles.Data());
+  cout<<"postfitCalculator: # of Data events: "<<chdat->GetEntries()<<endl;;
+  TTree* trmc = (TTree*)(chmc);
+  TTree* trdata = (TTree*)(chdat);
+  setMCTree(trmc);
+  setDataTree(trdata);
+  normFactor = (double)datatree->GetEntries()/(double)mctree->GetEntries(); 
+  cout<<"postfitCalculator: normalization: "<<normFactor<<endl;
   //setup atmFitpars
   fitpars = new atmFitPars(parfile); 
 
@@ -623,6 +664,14 @@ void  postfitCalculator::setParsFromMCMC(int istep){
   return;
 }
 
+void postfitCalculator::setDataTree(TTree* tr){
+  datatree = tr;
+  datareader = new fQreader(datatree);
+  datatree->GetEntry(0);
+  return;
+}
+
+
 
 void postfitCalculator::setMCTree(TTree* tr){
   mctree = tr;
@@ -689,8 +738,8 @@ void postfitCalculator::init(){
 
   ////////////////////////////
   //other defaults
-  NMCEvents=0;
-  selectiontype=0;   
+//  NMCEvents=0;
+//  selectiontype=0;   
   return;
 }
 

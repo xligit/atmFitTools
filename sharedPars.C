@@ -45,6 +45,13 @@ class sharedPars{
   TString preProcessOutDir;
   int preProcessMCComponents;
   int preProcessFVBinning; 
+  int PreProcFCCut;
+  double PreProcEVisCut;
+  double PreProcWallMinCut;
+  double PreProcToWallMinCut;
+  int    PreProcNseMax0;
+  int    PreProcNseMin;
+  double  PreProcInGateCut;
   TString FVBinName0;
   TString FVBinName1;
   TString FVBinName2;
@@ -157,6 +164,13 @@ void sharedPars::readParsFromFile(const char* filename){
   MCMCBurnIn=kr->getKeyI("MCMCBurnIn");
   NMCEvents=kr->getKeyI("NMCEvents");
   MCMCFile=kr->getKeyS("MCMCFile");
+  PreProcFCCut=kr->getKeyI("PreProcFCCut");;
+  PreProcEVisCut=kr->getKeyD("PreProcEVisCut");
+  PreProcWallMinCut=kr->getKeyD("PreProcWallMinCut");
+  PreProcToWallMinCut=kr->getKeyD("PreProcToWallMinCut");
+  PreProcNseMax0=kr->getKeyI("PreProcNseMax");
+  PreProcNseMin=kr->getKeyI("PreProcNseMin");
+  PreProcInGateCut=kr->getKeyD("PreProcInGateCut");
 }
 
 sharedPars::sharedPars(const char* parfilename){

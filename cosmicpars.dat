@@ -1,9 +1,8 @@
-{
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $  PARAMETER FILE FOR FITS $
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
-$  FORMAT:<type>,<name>=<value>
+$  FORMAT:<type>,<name>=<value>;
 $  FIRST CHARACTER DENOTES DATA TYPE
 $  SUPPORTED TYPES:
 $	'i' -> integer
@@ -16,7 +15,7 @@ i,nSamples=1;
 i,nFVBins=3;
 i,nComponents=1;
 i,nAttributes=3;
-i,nSysPars=2;
+i,nSysPars=0;
 s,globalRootName=cosmicmu_fv;
 s,FVBinName0=towall_lt500;
 s,FVBinName1=towall_500to1000;
@@ -46,9 +45,9 @@ i,preProcessMCComponents=1;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HFACTORY PARAMETERS $$$$$
 s,hFactoryOuputDir=./rootfiles/;
-s,hFactoryOutput=./rootfiles/cosmicmu_towall1_histograms.root;
-s,hFactoryMCFiles=./rootfiles/cosmicmu_towall*_ppmc*.root;
-s,hFactoryDataFiles=./rootfiles/cosmicmu_towall*_ppdata*.root;
+s,hFactoryOutput=./rootfiles/cosmicmu_fv_histograms.root;
+s,hFactoryMCFiles=./rootfiles/cosmicmu_fv*_ppmc*.root;
+s,hFactoryDataFiles=./rootfiles/cosmicmu_fv*_ppdata*.root;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HISTOGRAM BINNING $$$$$$$
 i,nBinsAtt0=20;

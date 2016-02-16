@@ -75,8 +75,8 @@ void preProcess::processFile(const char* fname,const char* outname){
 //Gets a weight for an event
 //Usefull for making fake data sets
 float preProcess::getWeight(){
-  absmode = TMath::Abs(fq->mode);
-  float enu   = fq->pmomv[0];
+//  absmode = TMath::Abs(fq->mode);
+//  float enu   = fq->pmomv[0];
   evtweight = 1.0;
   //CCQE norm bin1 
 //  if ((absmode==1)&&(enu<200.)){
@@ -154,22 +154,40 @@ int preProcess::passCuts(){
 //  }
 
   //minimum energy cut
-  if ((fq->fqtotq[0]<80)) return 0;
+//  if ((fq->fqtotq[0]<80)) return 0;
 
   //cosmic cuts
-  if (MCComponents==1){
-    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
-    double ingatethresh = 1000.;
-    if ((fq->fqnse)!=2) return 0;
-    if (tdecay<ingatethresh) return 0;
-    if (fq->fq1rmom[0][1]<100.) return 0;
-    if (fq->fq1rmom[1][1]>100.) return 0;
-    if (fq->fq1rmom[1][1]<15.)  return 0;
+//  if (MCComponents==1){
+//    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
+//    double ingatethresh = 1000.;
+//    if ((fq->fqnse)!=2) return 0;
+//    if (tdecay<ingatethresh) return 0;
+//    if (fq->fq1rmom[0][1]<100.) return 0;
+//    if (fq->fq1rmom[1][1]>100.) return 0;
+//    if (fq->fq1rmom[1][1]<15.)  return 0;
 
     //towall cuts
-    if (towall<0.) return 0; 
-  }
+ //   if (towall<0.) return 0; 
+//  }
 
+
+  //Fully Contained Cut
+  if (fq->nhitac>NHITACMax) return 0;
+
+  //Visible Energy Cut
+  if (fq->fq1rmom[0][1]<EVisMin) return 0;
+
+  //FV Basic Cuts
+  if (wall<WallMin) return 0; 
+  if (towall<ToWallMin) return 0;
+
+  //Number of subevent cuts
+  if (fq->fqnse>NSEMax) return 0;
+  if (fq->fqnse<NSEMin) return 0;
+ 
+  //In-gate cut
+  double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
+  if (tdecay<InGateMin) return 0;
 
 
   return 1;
@@ -187,22 +205,12 @@ int preProcess::getSample(){
   }
   
   
-  //cosmic selectoin
+  //cosmic selection
   if (MCComponents==1){
-    int nsubev = fq->fqnse;
-    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
-    double ingatethresh = 1000.;
     return 0;
-   // if (nsubev<2) return 0; //< no decay e
- //   if ((nsubev==2)&&(tdecay>ingatethresh)) return 0; //<decay e
-//    else{
-//      return 1;
- //   }
-  //  if ((nsubev>=2)&&(tdecay<=ingatethresh)) return 2; //<in-gate decay
   }
 
-
-  return 3;
+  return -1;
 }
 
 //////////////////////////////////////
@@ -250,7 +258,6 @@ void preProcess::preProcessIt(){
     fillAttributes();
     ncomponent=getComponent();
     nsample=getSample();
-//    nbin=getBin();
     evtweight=getWeight();
     trout->Fill();
   }
@@ -279,13 +286,14 @@ int preProcess::getBest2RFitID(){
 //fills fiTQun attribute array
 void preProcess::fillAttributes(){
   attribute[0] = fq->fq1rnll[0][2]-fq->fq1rnll[0][1];
-  if (fq->fqnse>1) attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
-  else{
-    attribute[1] = 0.;
-  }
+//  if (fq->fqnse>1) attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
+//  else{
+//    attribute[1] = 0.;
+//  }
   int ibest = getBest2RFitID();
   double best1Rnglnl = fmin(fq->fq1rnll[0][1],fq->fq1rnll[0][2]);
-  attribute[2] = best1Rnglnl-fq->fqmrnll[ibest];
+  attribute[1] = best1Rnglnl-fq->fqmrnll[ibest];
+
 //  attribute[3] = -fq->fqmrnll[ibest];
 //  attribute[2] = fq->fq1rmom[0][1];
 //  attribute[3] = fq->fq1rmom[0][2];
@@ -374,6 +382,13 @@ void preProcess::runPreProcessing(){
   cout<<"nametag: "<<nameTag.Data()<<endl;
   FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
   MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
+  NHITACMax = runpars->PreProcFCCut;
+  EVisMin = runpars->PreProcEVisCut;
+  WallMin = runpars->PreProcWallMinCut;
+  ToWallMin = runpars->PreProcToWallMinCut;
+  NSEMax = runpars->PreProcNseMax0;
+  NSEMin = runpars->PreProcNseMin;
+  InGateMin = runpars->PreProcInGateCut; 
 
   //create data and mc chains
   chmc = new TChain("h1");

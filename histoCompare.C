@@ -7,6 +7,28 @@
 
 histoCompare* histoCompare::staticthis;
 
+
+/////////////////////////////////////////////
+//get a rough estimation (fron 1D likelihood proflie)
+//of the uncertainty of each fit parameter
+//Requires a guess of parUnc[] in atmFitPars initialization
+//This should be run before running MCMC, since these
+//rough uncertainties are used to proposes MCMC steps
+void histoCompare::calcRoughParErr(){
+
+   cout<<"histoCompare: "<<"calculating rough uncertainties"<<endl;  
+
+  //print final results
+  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
+ //   thePars->setParameter(ipar,fit->GetParameter(ipar));
+    errParLo[ipar]=getErrLo(ipar);
+    errParHi[ipar]=getErrHi(ipar);
+    thePars->parUnc[ipar]=(errParHi[ipar]-errParLo[ipar]);
+    cout<<"  PAR "<<ipar<<" FIT RESULT: "<<thePars->pars[ipar]<<" +/- : "<<thePars->parUnc[ipar]<<endl;
+  }
+  return;
+}
+
 void histoCompare::readFitPars(const char* filename){
   thePars->readPars(filename);
   return;
@@ -261,20 +283,27 @@ double histoCompare::getErrHi(int ipar){
 //  double thresh = 1.0; //likelihood threshold
   double Ldiff = 0.;  //difference in likelihood from current value
   double Lbest = getTotLnL(); //current likelihood value
+ // cout<<"lbest: "<<Lbest<<endl;
   double parbest = thePars->pars[ipar];
   double parval = thePars->pars[ipar]; 
-  double dpar = thePars->parUnc[ipar]/2.;
+  double dpar = thePars->parUnc[ipar]/5.;
   double hierr;
   int ntry = 0;
-  int ntrymax=1000;
+  int ntrymax=100;
   //coarse search
   while (Ldiff<1){
+  //  cout<<"oldpar: "<<parval<<endl;
     parval+=dpar;
+ //   cout<<"newpar: "<<parval<<endl;
     thePars->setParameter(ipar,parval); //modify parameter
-    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
+ //   double Lnew = getTotLnL();
+ //   cout<<"Lnew: "<<Lnew<<endl;
+    Ldiff = TMath::Abs(Lbest-getTotLnL()); //check L difference
+ //   cout<<"Ldiff: "<<Ldiff<<endl;
     ntry++;
     if (ntry>ntrymax) break;
   }
+//  cout<<"ntry: "<<ntry<<endl;
   parval-=dpar;
   thePars->setParameter(ipar,parval);
   Ldiff = 0;
@@ -300,7 +329,7 @@ double histoCompare::getErrHi(int ipar){
 //    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
 //    ntry++;
 //  }
- // cout<<"ntry: "<<ntry<<endl;
+//  cout<<"ntry: "<<ntry<<endl;
   hierr = thePars->pars[ipar];
   thePars->setParameter(ipar,parbest);
   return hierr; 
@@ -315,11 +344,11 @@ double histoCompare::getErrLo(int ipar){
   double Lbest = getTotLnL(); //current likelihood value
   double parbest = thePars->pars[ipar];
   double parval = thePars->pars[ipar]; 
-  double dpar = thePars->parUnc[ipar]/10.;
+  double dpar = thePars->parUnc[ipar]/5.;
 //  cout<<"dpar: "<<dpar<<endl;
   double loerr;
   int ntry = 0;
-  int ntrymax=1000;
+  int ntrymax=100;
   //coarse search
   while (Ldiff<1){
     parval-=dpar;
@@ -559,8 +588,8 @@ void histoCompare::showModHiso(int isamp,int ibin, int icomp, int iatt, double s
 }
 
 TH1D* histoCompare::showSmear(TH1D* h, double smear, double bias){
-  TH1D* hh = smearIt(h,smear,bias);
-  return hh;
+//  TH1D* hh = smearIt(h,smear,bias);
+  return h;
 }
 
 void histoCompare::showFitResult(int isamp,int ibin,int iatt){
@@ -1005,11 +1034,14 @@ void histoCompare::LnLFit(){
   //print final results
   for (int ipar=0;ipar<npars;ipar++){
     thePars->setParameter(ipar,fit->GetParameter(ipar));
-    errParLo[ipar]=getErrLo(ipar);
-    errParHi[ipar]=getErrHi(ipar);
-    thePars->parUnc[ipar]=(errParHi[ipar]-errParLo[ipar]);
-    cout<<"  PAR "<<ipar<<" FIT RESULT: "<<thePars->pars[ipar]<<" +/- : "<<thePars->parUnc[ipar]<<endl;
+//    errParLo[ipar]=getErrLo(ipar);
+//    errParHi[ipar]=getErrHi(ipar);
+//    thePars->parUnc[ipar]=(errParHi[ipar]-errParLo[ipar]);
+ //   cout<<"  PAR "<<ipar<<" FIT RESULT: "<<thePars->pars[ipar]<<" +/- : "<<thePars->parUnc[ipar]<<endl;
   }
+
+  //calculate rough errors and print results
+  calcRoughParErr();
 
   //end
   cout<<"  ----------------------------------------  "<<endl;
@@ -1179,32 +1211,33 @@ void histoCompare::sumSqPrefit(){
 
 
 double histoCompare::getNDiff(){
-  hTot = smearIt(hMC[0],parDebug[0][0],parDebug[0][1]);
-  for (int i=1;i<nMCHist;i++){
-    hTot->Add(smearIt(hMC[i],parDebug[i][0],parDebug[i][1]));
-  }
-  double xcut = 100.;
-  int   cutbin = hTot->FindBin(xcut);
-  int   binmax = hTot->GetNbinsX();
-  double diff1 = hTot->Integral(1,cutbin)-hData[0]->Integral(1,cutbin);
-  double diff2 = hTot->Integral(cutbin,binmax)-hData[0]->Integral(cutbin,binmax);
-  return diff1*diff1 + diff2*diff2;
+//  hTot = smearIt(hMC[0],parDebug[0][0],parDebug[0][1]);
+//  for (int i=1;i<nMCHist;i++){
+//    hTot->Add(smearIt(hMC[i],parDebug[i][0],parDebug[i][1]));
+//  }
+//  double xcut = 100.;
+//  int   cutbin = hTot->FindBin(xcut);
+//  int   binmax = hTot->GetNbinsX();
+//  double diff1 = hTot->Integral(1,cutbin)-hData[0]->Integral(1,cutbin);
+//  double diff2 = hTot->Integral(cutbin,binmax)-hData[0]->Integral(cutbin,binmax);
+ //return diff1*diff1 + diff2*diff2;
+   return 0;
 }
 
 void histoCompare::showMod(int imchist){
-  hMod = smearIt(hMC[imchist],parDebug[imchist][0],parDebug[imchist][1]);
-  hMod->Draw();
+ // hMod = smearIt(hMC[imchist],parDebug[imchist][0],parDebug[imchist][1]);
+ // hMod->Draw();
   return;
 }
 
 void histoCompare::drawResult(int ihist){
-  hModDebug = smearIt(hMC[ihist],parDebug[ihist][0],parDebug[ihist][1]);
-  hModDebug->SetLineColor(kBlue);
-  hModDebug->Draw();
-  hMC[ihist]->SetLineColor(kRed);
-  hMC[ihist]->Draw("same");
-  hData[ihist]->Draw("same");
-  return;
+//  hModDebug = smearIt(hMC[ihist],parDebug[ihist][0],parDebug[ihist][1]);
+//  hModDebug->SetLineColor(kBlue);
+//  hModDebug->Draw();
+//  hMC[ihist]->SetLineColor(kRed);
+//  hMC[ihist]->Draw("same");
+//  hData[ihist]->Draw("same");
+//  return;
 }
 
 void histoCompare::getTotLnL1D(double& result,int npar, double par[]){
@@ -1433,21 +1466,21 @@ double histoCompare::getTotLnL(){
 
 double histoCompare::getTotSumSq(){
   double totsumsq = 0.;
-  for (int isamp=0;isamp<nSamp;isamp++){
-    for (int ibin=0;ibin<nBin;ibin++){
-      for (int iatt=0;iatt<nAtt;iatt++){
-         //get modfied MC prediction
-         hMod = smearIt(hManager->hMC[isamp][ibin][0][iatt],Par[ibin][0][iatt][0],Par[ibin][0][iatt][1]);      
-         for (int icomp = 1;icomp<nComp;icomp++){
-           hMod->Add(smearIt(hManager->hMC[isamp][ibin][icomp][iatt],Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]));
-         }
+//  for (int isamp=0;isamp<nSamp;isamp++){
+//    for (int ibin=0;ibin<nBin;ibin++){
+//      for (int iatt=0;iatt<nAtt;iatt++){
+//         //get modfied MC prediction
+//         hMod = smearIt(hManager->hMC[isamp][ibin][0][iatt],Par[ibin][0][iatt][0],Par[ibin][0][iatt][1]);      
+//         for (int icomp = 1;icomp<nComp;icomp++){
+//           hMod->Add(smearIt(hManager->hMC[isamp][ibin][icomp][iatt],Par[ibin][icomp][iatt][0],Par[ibin][icomp][iatt][1]));
+//         }
          //add error to total
         // hMod->Scale(Norm);
-         totsumsq+=getSumSq(hMod,hManager->hData[isamp][ibin][iatt]);
-      }
-    }
-  }
-  return totsumsq;
+//         totsumsq+=getSumSq(hMod,hManager->hData[isamp][ibin][iatt]);
+//      }
+//    }
+//  }
+//  return totsumsq;
 }
 
 
@@ -1603,7 +1636,7 @@ histoCompare::histoCompare(const char* parfile){
   //MCMC nsteps;
   MCMCNSteps = runPars->MCMCNSteps;
 
-  //read in pre-filled histograms
+  //read in pre-filled histograms using histoManager
   int nbins = runPars->nFVBins;
   int ncomponents = runPars->nComponents;
   int nsamples = runPars->nSamples;
@@ -1613,7 +1646,7 @@ histoCompare::histoCompare(const char* parfile){
   readFromFile(histofilename.Data(),nsamples,nbins,ncomponents,nattributes); 
 
   //setup fit parameters
-  thePars = new atmFitPars(nsamples,nbins,ncomponents,nattributes,runPars->sysParType.Data());
+  thePars = new atmFitPars(parfile);
   hManager->setFitPars(thePars);
 
   

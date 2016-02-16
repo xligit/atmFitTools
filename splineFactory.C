@@ -138,6 +138,7 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
    nsample = isamp;
    nbin = ibin;
    ncomponent=icomp;
+   nattribute=iatt;
    nhistobins = hMC[isamp][ibin][icomp][iatt][0]->GetNbinsX();
    npoints = NPTSMAX;
    nsystpar = isyst;
@@ -187,7 +188,7 @@ void splineFactory::buildTheSplines(){
   
 
   //setup systematic deviations
-  double sigvals[5] = {-5.,-2.,0.,2.,5.};
+  double sigvals[5] = {-4.,-2.,0.,2.,4.};
 
   cout<<"creating spines"<<endl; 
 

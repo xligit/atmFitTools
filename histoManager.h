@@ -52,6 +52,7 @@ class histoManager{
   TH1D* hData[NSAMPMAX][NBINMAX][NATTMAX];  //array of all Data histograms
   TLegend* Leg;  //for histogram drawing methods
   TH2D* h2d; //for 2D debugging histograms
+  double binContents[1000]; //< stores temporary bin contents for faster modificatoins
 
   ///////////////////////////
   //parametrs
@@ -77,6 +78,7 @@ class histoManager{
   hSplines* getSplines(int isamp, int ibin, int icomp, int iatt){return theSplines[isamp][ibin][icomp][iatt];}
   TH1D* getSumHistogram(int isamp, int ibin, int att, int normFlg=1);
   TH1D* getSumHistogramMod(int isamp, int ibin, int att, int normFlg=1);
+  TH1D* getSplineModifiedHisto(int isamp, int ibin, int icomp, int iatt);
 
   ///////////////////////////  
   //plotting

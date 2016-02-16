@@ -132,6 +132,7 @@ class histoCompare{
   void readFitPars(const char* filename); //< read parameters from a file
   void tuneMCMC(int ncyles=1,int nsteps=150,double goal=0.25);
   void tuneMCMCOld(int ncyles=1,int nsteps=150,double goal=0.25);
+  void calcRoughParErr();
   //staticthis for fits
   static histoCompare* staticthis;
 };

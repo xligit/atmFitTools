@@ -1,0 +1,124 @@
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$  PARAMETER FILE FOR FITS $
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$  FORMAT:<type>,<name>=<value>;
+$  FIRST CHARACTER DENOTES DATA TYPE
+$  SUPPORTED TYPES:
+$	'i' -> integer
+$	'f' -> float
+$	'd' -> double
+$	's' -> string
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ GENERAL PARAMETERS $$$$$$$
+i,nSamples=3;
+i,nFVBins=3;
+i,nComponents=7;
+i,nAttributes=1;
+i,nSysPars=9;
+s,globalRootName=atmfit;
+s,FVBinName0=wall_lt_100;
+s,FVBinName1=wall_100_to_200;
+s,FVBinName2=wall_gt_200;
+s,fQAttName0=ElectronMuonPIDSubEv0;
+s,fQAttName1=NRingPar;
+s,MCComponentName0=CC1e;
+s,MCComponentName1=CC1mu;
+s,MCComponentName2=CCeOther;
+s,MCComponentName3=CCmuOther;
+s,MCComponentName4=CCOther;
+s,MCComponentName5=NCpi0;
+s,MCComponentName6=NCOther;
+s,sampleName0=1subevent;
+s,sampleName1=2subevent;
+s,sampleName2=gt3subevent;
+s,sysParName0=CCQE_0to200_xsec;
+s,sysParName1=CCQE_200to400_xsec;
+s,sysParName2=CCQE_400to800_xsec;
+s,sysParName3=CCQE_gt800_xsec;
+s,sysParName4=subGeVFluxNorm;
+s,sysParName5=multiGeVFluxNorm;
+s,sysParName6=CCnonQE_xsec;
+s,sysParName7=NC_xsec;
+s,sysParName8=Mu_vs_E_ratio;
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ PREPROCESS PARAMETERS $$$$$$
+$ DIRECTORY WHERE PREPROCESSED OUTPUT FILES ARE WRITTEN
+s,preProcessOutDir=./rootfiles/;
+$ FILE NAMES FOR MONTE CARLO FILES
+s,preProcessFilesMC=/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.00*.root;
+$ FILE NAMES FOR DATA FILES
+s,preProcessFilesData=/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.07*.root;
+$ CODE FOR FV BINNING
+$   0 -> SIMPLE (3 FV BINS BASED ON WALL CUTS)
+$   1 -> COSMIC (SORT BY SIDE VS TOP ENTERING)
+$   3 -> NO FV BINNING (ONE BIN)
+i,preProcessFVBinning=0;
+$ MC COMPONENT DEFINITIONS
+$   0 -> VISIBLE (CUTS ON VISBLE # RINGS FROM VISRING)
+$   1 -> COSMIC  (CUTS ON SUBEV #)
+i,preProcessMCComponents=0;
+$ NHITAC CUT FOR FC EVENTS
+i,PreProcFCCut=16;
+$ VISIBLE ENERGY CUT
+d,PreProcEVisCut=30.;
+$ MIN WALL CUT
+d,PreProcWallMinCut=0;
+$ MIN TOWALL Cut
+d,PreProcToWallMinCut=0;
+$ MAX SUBEVENTS
+i,PreProcNseMax=100;
+$ MIN SUBEVENTS
+i,PreProcNseMin=1;
+$ MIN TIME BETWEEN FIRST TWO SUBEVENTS (INGATE CUT)
+d,PreProcInGateCut=0
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ HFACTORY PARAMETERS $$$$$
+s,hFactoryOuputDir=./rootfiles/;
+s,hFactoryOutput=./rootfiles/atmfit_histograms.root;
+s,hFactoryMCFiles=./rootfiles/atmfit*_ppmc*.root;
+s,hFactoryDataFiles=./rootfiles/atmfit*_ppdat*.root;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ HISTOGRAM BINNING $$$$$$$
+i,nBinsAtt0=30;
+i,nBinsAtt1=30;
+i,nBinsAtt2=30;
+i,nBinsAtt3=30;
+i,nBinsAtt4=30;
+d,xMinAtt0=-2000.;
+d,xMaxAtt0=2000.;
+d,xMinAtt1=-1000.;
+d,xMaxAtt1=1000.;
+d,xMinAtt2=-2000.;
+d,xMaxAtt2=1000;
+d,xMinAtt3=-1000.;
+d,xMaxAtt3=9000;
+d,xMinAtt4=-100.;
+d,xMaxAtt4=200;
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ SPLINE FACTORY PARAMETERS $$
+s,splineFactoryOutput=./rootfiles/atmfit_splines.root;
+$  CODE FOR THE TYPE OF SYSTEMATIC ERROR PARAMETERIZATION
+$    tn186 -> SIMPLE TN186 PARAMETERIZATION 
+$    none  -> NO FLUX/XSEC PARAMETERS 
+s,sysParType=tn186;
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ FIT & MCMC PARAMETERS $$$$$$
+i,MCMCNSteps=10000;
+d,MCMCTunePar=0.1;
+i,fixAllSmearFlg=0;
+i,useSplinesFlg=1;
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ POSTFIT PARAMETERS $$$$$$$$$
+s,MCMCFile=mcmctree.root;
+i,MCMCBurnIn=10000;
+i,NMCEvents=50000;
+i,NMCMCPts=9;
+

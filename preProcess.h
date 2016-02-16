@@ -25,7 +25,7 @@ using namespace std;
 //  1) Specify parameters in sharedpars.dat file.  These parameters 
 //     specify the files to be run on, where the output should go,
 //     and which FV binning and MC component definitions to use
-//  2) Call runPreprocess(), perhaps useing runpreprocess.c
+//  2) Call runPreprocess()
 
 class preProcess{
   public:
@@ -54,8 +54,19 @@ class preProcess{
   int FVBinning;
   int nFiles;
 
+
+  ////////////////////////
+  //for cuts
+  int NHITACMax;
+  double EVisMin;
+  double WallMin;
+  double ToWallMin;
+  int NSEMax;
+  int NSEMin;
+  double InGateMin; 
+
   //////////////////////
-  //new leaf variables
+  //new branch variables
   float towall;
   float wall;
   float evtweight;
