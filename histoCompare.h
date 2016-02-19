@@ -100,7 +100,7 @@ class histoCompare{
 //  double getLDebug(); 
  
   double cScale; //correction scale for likelihood
-
+  void printFitResults(const char* directory);
 
   //////////////////////////////////////////////////////////
   //flags

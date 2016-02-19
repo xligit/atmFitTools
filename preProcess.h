@@ -74,6 +74,7 @@ class preProcess{
   int ncomponent;
   int nsample;
   int nbin;
+  int best2RID;
 
   
   /////////////////////

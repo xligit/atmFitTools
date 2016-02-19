@@ -9,40 +9,40 @@
 using namespace std;
 
 //FV CALCULATORS//////////////////////////////////////////////
-float calcWall(TVector3* vpos){
-  float xx = vpos->X();
-  float yy = vpos->Y();
-  float zz = vpos->Z();
-  float Rmax = 1690.;
-  float Zmax = 1810.;
-  float rr   = sqrt(xx*xx + yy*yy);
-  float signflg = 1;
+double calcWall(TVector3* vpos){
+  double xx = vpos->X();
+  double yy = vpos->Y();
+  double zz = vpos->Z();
+  double Rmax = 1690.;
+  double Zmax = 1810.;
+  double rr   = sqrt(xx*xx + yy*yy);
+  double signflg = 1;
   if ((rr>Rmax)||(fabs(zz)>Zmax)) signflg  = -1;
-  float wall = signflg*fmin(fabs(Zmax-fabs(zz)),fabs(Rmax-rr));
+  double wall = signflg*fmin(fabs(Zmax-fabs(zz)),fabs(Rmax-rr));
   if (wall<-3000.) return 3000.;
   return wall;
 }
 
 
 
-float calcToWallCustom(TVector3 *vpos, TVector3 *vdir, float dt){
+double calcToWallCustom(TVector3 *vpos, TVector3 *vdir, double dt){
 
-  float R = 1690.0;
-  float Z = 1810.0;
-  float x0 = vpos->X();
-  float y0 = vpos->Y();
-  float z0 = vpos->Z();
-  float dirx = vdir->X();
-  float diry = vdir->Y();
-  float dirz = vdir->Z();
-  float r=0;
-  float z=z0;
-  float x=x0;
-  float y=y0;
-  float t=0.;
+  double R = 1690.0;
+  double Z = 1810.0;
+  double x0 = vpos->X();
+  double y0 = vpos->Y();
+  double z0 = vpos->Z();
+  double dirx = vdir->X();
+  double diry = vdir->Y();
+  double dirz = vdir->Z();
+  double r=0;
+  double z=z0;
+  double x=x0;
+  double y=y0;
+  double t=0.;
   int    flg =0;
-  float tmax = 10000.;
-  float sign = 1.;
+  double tmax = 10000.;
+  double sign = 1.;
   if (fabs(z0)>Z) return -10000;;
   if (sqrt(x0*x0+y0*y0)>R) return -10000;
   while ((flg==0)&&(t<tmax)){
@@ -70,7 +70,7 @@ float calcToWallCustom(TVector3 *vpos, TVector3 *vdir, float dt){
   return t*sign;
 }
 
-float calcPerimeter(TVector3 *vpos, TVector3* vdir){
+double calcPerimeter(TVector3 *vpos, TVector3* vdir){
   int npts = 20;
   TVector3 P[20]; //position vector for points
   for (int i=0;i<npts;i++){
@@ -81,9 +81,9 @@ float calcPerimeter(TVector3 *vpos, TVector3* vdir){
   zhat.SetXYZ(0.,0.,1.);
   TVector3 perp; //vector perpendicular to direction
   perp = zhat.Cross(*vdir);
-  float changle = 0.72245;
-  float dangle = (2*3.14159)/(float)npts;
-  float angle = 0.;
+  double changle = 0.72245;
+  double dangle = (2*3.14159)/(double)npts;
+  double angle = 0.;
   TVector3 vdirtmp;
   vdirtmp.SetXYZ(vdir->X(),vdir->Y(),vdir->Z());
   TVector3 dir0 =vdirtmp;
@@ -93,7 +93,7 @@ float calcPerimeter(TVector3 *vpos, TVector3* vdir){
     D[j].Rotate(angle,vdirtmp);
     angle+=dangle;
   }
-  float perim = 0;
+  double perim = 0;
   for (int k=0;k<npts;k++){
     calcToWallCustom(&P[k],&D[k],1.0); //sets P to value at ID wall
   }
@@ -104,8 +104,8 @@ float calcPerimeter(TVector3 *vpos, TVector3* vdir){
   return perim;
 }
 
-float calcToWall(TVector3* vpostmp, TVector3* vdirtmp){
-  float towallval = 0.;
+double calcToWall(TVector3* vpostmp, TVector3* vdirtmp){
+  double towallval = 0.;
   TVector3 thepos;
   TVector3 thedir;
   thepos.SetXYZ(vpostmp->X(),vpostmp->Y(),vpostmp->Z());
@@ -116,13 +116,13 @@ float calcToWall(TVector3* vpostmp, TVector3* vdirtmp){
   return towallval;
 }
 
-float calcPhiWall(TVector3* vpos, TVector3* vdir){
-  float Rmax = 1690.;
-  float Zmax = 1810.;
-  float sign = -1.;
-  float R = sqrt((vpos->X()*vpos->X())+
+double calcPhiWall(TVector3* vpos, TVector3* vdir){
+  double Rmax = 1690.;
+  double Zmax = 1810.;
+  double sign = -1.;
+  double R = sqrt((vpos->X()*vpos->X())+
                   (vpos->Y()*vpos->Y()));
-  float Z = vpos->Z();
+  double Z = vpos->Z();
   TVector3 wallnorm;
   TVector3 rcdir;
   rcdir.SetXYZ(vdir->X(),vdir->Y(),vdir->Z());

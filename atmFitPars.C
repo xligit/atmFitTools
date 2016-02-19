@@ -33,6 +33,7 @@ class atmFitPars{
   double histoParUncLo[NBINMAX][NCOMPMAX][NATTMAX][2];
   double histoParUncHi[NBINMAX][NCOMPMAX][NATTMAX][2];
   double sysPar[NSYSPARMAX];
+  double sysParDefault[NSYSPARMAX];
   double sysParUnc[NSYSPARMAX];
   double pars[4000];
   double parUnc[4000];
@@ -75,7 +76,7 @@ class atmFitPars{
 void atmFitPars::resetDefaults(){
 
   //initialize histogram pars
-  int index = 0;
+  int index = 0; //< running 1D index
   for (int ibin=0;ibin<nBins;ibin++){
     for (int icomp=0;icomp<nComponents;icomp++){
       for (int iatt=0;iatt<nAttributes;iatt++){
@@ -105,9 +106,9 @@ void atmFitPars::resetDefaults(){
 
   //initialize systematic error parameters
   for (int isyst=0;isyst<nSysPars;isyst++){
-    pars[index]=1.0;
+    pars[index]=sysParDefault[isyst];
     index++;
-    sysPar[isyst]=1.0;
+    sysPar[isyst]=sysParDefault[isyst];
   }
 
   return;
@@ -312,37 +313,46 @@ void atmFitPars::initPars(const char* systype){
     //CCQE xsec norm bin 1//
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
     nSysPars++;
     //CCQE xsec norm  bin 2//
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.25;
+    sysParDefault[nSysPars] = 1.0;
     nSysPars++;
     //CCQE xsec norm bin 3//
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.1;
+    sysParDefault[nSysPars] = 1.0;
     nSysPars++;
     //CCQE xsec norm bin 4//
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.05;
+    sysParDefault[nSysPars] = 1.0;
     nSysPars++;
     //SubGeV flux norm//
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.25;
+    sysParDefault[nSysPars] = 1.0;
     nSysPars++;
     //MultiGeV flux norm//
     sysPar[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.15;
     nSysPars++;
     //CCnQE xsec norm//
     sysPar[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.2;
     nSysPars++;
     //NC xsec norm
     sysPar[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.2;
     nSysPars++;
     //mu/e xsec ratio
     sysPar[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 0.05;
     nSysPars++;
   }

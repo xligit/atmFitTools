@@ -929,6 +929,22 @@ void histoCompare::singleParFit(int ipar){
   return;
 }
 
+
+void histoCompare::printFitResults(const char* directory){
+  for (int isamp=0;isamp<nSamp;isamp++){
+    for (int ibin=0;ibin<nBin;ibin++){
+      for (int iatt=0;iatt<nAtt;iatt++){
+        showFitResult(isamp,ibin,iatt);
+        TString plotname = directory;
+        plotname.Append(hTmp->GetName());
+        plotname.Append(".png");
+        cc->Print(plotname.Data()); 
+      }
+    }
+  }
+  return;
+}
+
 void histoCompare::LnLFit(){
   //setup static this so wrapper doesn't segfault
   staticthis = this;
@@ -1025,6 +1041,7 @@ void histoCompare::LnLFit(){
         }
       }
       fit->ExecuteCommand("SIMPLEX",0,0); //run the fit for ALL parameters
+  //    fit->ExecuteCommand("MIGRAD",0,0); //run the fit for ALL parameters
 
       //end of fit block//
       

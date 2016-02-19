@@ -207,7 +207,14 @@ int preProcess::getSample(){
   
   //cosmic selection
   if (MCComponents==1){
-    return 0;
+    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
+    double Zrec = fq->fq1rpos[0][2][2];
+    double Zcut = 1410;
+    double Rcut = 1290;
+    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
+    if ((Zrec<Zcut)) return 1; //< side entering
+    if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
+ //   return 0;
   }
 
   return -1;
@@ -271,14 +278,21 @@ int preProcess::getBest2RFitID(){
   
   int nfits = fq->fqnmrfit;
 
-  double ngLnLBest = 1000000.;
+  double ngLnLBest = 10000000.;
   int bestindex = 0;
 
   for (int ifit=0;ifit<nfits;ifit++){
-    int fitID = fq->fqmrifit[ifit]; //< fit fit ID code
-    if ((fitID-320000000)<0) continue; //< we want best 2R fits
-    if (fq->fqmrnll[ifit]<ngLnLBest) bestindex = ifit;
+    int fitID = TMath::Abs(fq->fqmrifit[ifit]); //< fit fit ID code
+    int diff = (TMath::Abs(fitID-20000000));
+//    cout<<"diff: "<<diff<<endl;
+//    cout<<"ifit: "<<ifit<<endl;
+    if ((TMath::Abs(fitID-20000000))>100) continue; //< we want best 2R fits
+    if (fq->fqmrnll[ifit]<ngLnLBest){
+      bestindex = ifit;
+      ngLnLBest=fq->fqmrnll[ifit];
+    }
   }
+  best2RID = fq->fqmrifit[bestindex];
   return bestindex;
 }
 
@@ -286,26 +300,15 @@ int preProcess::getBest2RFitID(){
 //fills fiTQun attribute array
 void preProcess::fillAttributes(){
   attribute[0] = fq->fq1rnll[0][2]-fq->fq1rnll[0][1];
-//  if (fq->fqnse>1) attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
-//  else{
-//    attribute[1] = 0.;
-//  }
   int ibest = getBest2RFitID();
   double best1Rnglnl = fmin(fq->fq1rnll[0][1],fq->fq1rnll[0][2]);
   attribute[1] = best1Rnglnl-fq->fqmrnll[ibest];
-
-//  attribute[3] = -fq->fqmrnll[ibest];
-//  attribute[2] = fq->fq1rmom[0][1];
-//  attribute[3] = fq->fq1rmom[0][2];
-//  attribute[4] = fq->fq1rmom[1][1];
-//  if (fq->fqnse>1){
-//    attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
-//    attribute[4] = fq->fq1rmom[1][1];
-//  }
-//  else{
-//    attribute[1] = 0.;
-//    attribute[4] = 0.;
-//  }
+  attribute[5] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
+  attribute[2] = fq->fq1rmom[0][2];
+  attribute[3] = fq->fq1rpos[0][2][2];
+  double xx = fq->fq1rpos[0][2][0];
+  double yy = fq->fq1rpos[0][2][1];
+  attribute[4] = TMath::Sqrt(xx*xx + yy*yy);
   return;
 }
 
@@ -338,6 +341,7 @@ void preProcess::setupNewTree(){
   trout->Branch("wall",&wall,"wall/F");
   trout->Branch("towall",&towall,"towall/F");
   trout->Branch("evtweight",&evtweight,"evtweight/F");
+  trout->Branch("best2RID",&best2RID,"best2RID/I");
   return;
 }
 

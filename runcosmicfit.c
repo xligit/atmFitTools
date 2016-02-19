@@ -6,7 +6,7 @@
  gROOT->ProcessLine(".x ~/style.c");
 
  histoCompare* hc= new histoCompare("cosmicpars.dat");
- hc->LnLFit();
+// hc->LnLFit();
 
 }
 

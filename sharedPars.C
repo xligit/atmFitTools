@@ -56,6 +56,10 @@ class sharedPars{
   TString FVBinName1;
   TString FVBinName2;
   TString fQAttName0;
+  TString fQAttName1;
+  TString fQAttName2;
+  TString fQAttName3;
+  TString fQAttName4;
   TString MCComponentName0;
   TString MCComponentName1;
   TString MCComponentName2;
@@ -88,6 +92,7 @@ class sharedPars{
   int NMCEvents;
   TString MCMCFile;
   TString sysParType;
+  int NDataEvents;
 };
 
 
@@ -125,6 +130,11 @@ void sharedPars::readParsFromFile(const char* filename){
   FVBinName1=kr->getKeyS("FVBinName1");
   FVBinName2=kr->getKeyS("FVBinName2");
   fQAttName0=kr->getKeyS("fQAttName0");
+  fQAttName1=kr->getKeyS("fQAttName1");
+  fQAttName2=kr->getKeyS("fQAttName2");
+  fQAttName3=kr->getKeyS("fQAttName3");
+  fQAttName4=kr->getKeyS("fQAttName4");
+
   hFactoryDataFiles=kr->getKeyS("hFactoryDataFiles");
   hFactoryMCFiles=kr->getKeyS("hFactoryMCFiles");
   hFactoryOutput=kr->getKeyS("hFactoryOutput");
@@ -171,6 +181,7 @@ void sharedPars::readParsFromFile(const char* filename){
   PreProcNseMax0=kr->getKeyI("PreProcNseMax");
   PreProcNseMin=kr->getKeyI("PreProcNseMin");
   PreProcInGateCut=kr->getKeyD("PreProcInGateCut");
+  NDataEvents = kr->getKeyI("NDataEvents");
 }
 
 sharedPars::sharedPars(const char* parfilename){

@@ -38,8 +38,10 @@ class postfitCalculator{
   fQreader* mcreader; //< points to an event in mctree
   atmFitPars* fitpars; //< points to the current fit parameters object
   splineFactory* sfact; //< empty spline factory to call getEvtWeight. 
+  histoManager* hManager; //< use this for histogram templates and comparing to data
   TFile* outFile; //< outputfile
   int NMCEvents; //< limits # of MC events to use to speed up histo filling
+  int NDataEvents; //< limits # of Data events to use to speed up histo filling
   double pars[1000]; 
   double evtweight;
   int evtclass; //< code for event class 
@@ -56,17 +58,22 @@ class postfitCalculator{
   int currentMCMCPoint;
   int currentMCEvent;
   double normFactor;
+  int nAttributes;
 
   //histogrms of interest
   TH1D* hEnuMu[10][200]; //<energy assuming muon
 //  TH1D* hPIDemuSE2[10][200]; //< e/mu PID of second subev
   TH1D* hPIDemu[10][200]; //<e/mu PID
   TH1D* hNSK[10]; //< numbers of events after cuts
-  
-
+  TH1D* hMCMod[3][3][5][20];
+  TH1D* hPostFit[3][3][5];
+  TH1D* hPassFail[100];
+  TH1D* hPassFailData;
+  TH1D* hPassFailAvg;
   ////////////////////////////////////////////////////////
   //methods
   // modfies the values of the current MC event using parameters from current MCMC point
+  void  initHistos();
   void  modifyCurrentEvent();
   void  setMCTree(TTree* tr);
   void  setDataTree(TTree* tr);
@@ -76,7 +83,7 @@ class postfitCalculator{
   void  unmodifyAttributes();
   void  setParsFromMCMC(int istep); //< sets parameters from mcmmc cloud
   void fillHistos(int iclass,int islot); //< fills all histograms 
-  int makeSelection(int iselect); //< select events based on various attributes;
+  int makeSelection(int iselect,int dataflg =0); //< select events based on various attributes;
   int getEvtClass();
   void drawBreakdown(int ihisto,int islot);
   void makeHistos(int iselection,int islot);
@@ -86,15 +93,405 @@ class postfitCalculator{
   void showAllHistos(int ihisto,int iclass);
   void MCMCLooperTemplate();
   void cosmicPostFitAnalysis();
+  void attributeAnalysis();
+  void makeHistoArray(TH1D* harr[], int nhistos, const char* name, int npts, double xmin, double xmax);
+  void drawPostFitHisto(int isamp,int ibin, int iatt);
+  void drawPostFitHistoAll(int isamp,int ibin, int iatt);
+  void calcPostFitHistos(int errtype=0);
+  void printPostFitHistos(const char* directory);
 //  void runPostFit();
 };
 
+void postfitCalculator::printPostFitHistos(const char* directory){
+  
+  //setup canvas
+  TCanvas* cc = new TCanvas("cc","cc",800,700);
+
+  //loop over histos and pring
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+         TString plotname = directory;
+         plotname.Append(runPars->globalRootName.Data());
+         plotname.Append(Form("_postfit_samp%d_bin%d_att%d",isamp,ibin,iatt));
+         plotname.Append(".png");
+         drawPostFitHisto(isamp,ibin,iatt); //< draw all plots
+         cc->Print(plotname.Data());
+      }
+    }
+  }
+
+  return;
+
+}
+
+
+void postfitCalculator::calcPostFitHistos(int errtype){
+
+  /////////////////////////////////////////
+  //initialize hisotgrams
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        TString hname = Form("hMCMCPostfit_samp%d_bin%d_iatt%d",isamp,ibin,iatt);
+        hPostFit[isamp][ibin][iatt] = (TH1D*)hMCMod[isamp][ibin][iatt][0]->Clone(hname.Data());
+        hPostFit[isamp][ibin][iatt]->SetLineColor(kCyan+1);
+        hPostFit[isamp][ibin][iatt]->SetFillColor(kCyan+1);
+      }
+    }
+  }
+
+  ////////////////////////////////////////////////////
+  //calculate mean 
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        for (int ipt=1;ipt<NMCMCPts;ipt++){
+          //add all other histograms to first one
+          hPostFit[isamp][ibin][iatt]->Add(hMCMod[isamp][ibin][iatt][ipt]);
+        }
+      }
+    }
+  }
+  //now we normalize to get average
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        TString hname = Form("hMCMCPostfit_samp%d_bin%d_iatt%d",isamp,ibin,iatt);
+        hPostFit[isamp][ibin][iatt]->Scale(1./(double)NMCMCPts);
+      }
+    }
+  }
+
+  ////////////////////////////////////////////////////////
+  //calculate RMS:
+  double rms[3][3][5][100];
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        for (int ipt=1;ipt<NMCMCPts;ipt++){
+          for (int hbin=0;hbin<hMCMod[isamp][ibin][iatt][ipt]->GetNbinsX();hbin++){
+            //set initial rms to zero
+            rms[isamp][ibin][iatt][hbin] = 0.;
+          }
+        }
+      }
+    }
+  }
+  //now we fill rms array
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        for (int ipt=1;ipt<NMCMCPts;ipt++){
+          for (int hbin=0;hbin<hMCMod[isamp][ibin][iatt][ipt]->GetNbinsX();hbin++){
+            double diff = hMCMod[isamp][ibin][iatt][ipt]->GetBinContent(hbin) - hPostFit[isamp][ibin][iatt]->GetBinContent(hbin);
+            double norm = 1./(double)(NMCMCPts-1);
+            rms[isamp][ibin][iatt][hbin] += TMath::Sqrt((diff*diff))*norm;
+          }
+        }
+      }
+    }
+  }
+  //now set error equal to rms
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        for (int hbin=0;hbin<hPostFit[isamp][ibin][iatt]->GetNbinsX();hbin++){
+          double staterr = hPostFit[isamp][ibin][iatt]->GetBinError(hbin);
+          double systerr = rms[isamp][ibin][iatt][hbin];
+          double toterr  = TMath::Sqrt(( staterr*staterr) + (systerr*systerr) );
+          if (errtype==1) hPostFit[isamp][ibin][iatt]->SetBinError(hbin,staterr);
+          else if (errtype==2) hPostFit[isamp][ibin][iatt]->SetBinError(hbin,systerr);
+          else{
+            hPostFit[isamp][ibin][iatt]->SetBinError(hbin,toterr);
+          }
+        }
+      }
+    }
+  }
+
+
+  return;
+
+}
+
+void postfitCalculator::drawPostFitHisto(int isamp, int ibin, int iatt){
+  double norm = (double)datatree->GetEntries()/(double)NMCEvents;
+//  hMCMod[isamp][ibin][iatt][0]->SetLineColor(kRed);
+//  hMCMod[isamp][ibin][iatt][0]->Scale(norm);
+//  for (int ipt=1;ipt<NMCMCPts;ipt++){
+ //   hMCMod[isamp][ibin][iatt][ipt]->SetLineColor(kCyan+1);
+ //   hMCMod[isamp][ibin][iatt][ipt]->Scale(norm);        
+ // }
+  hManager->getHistogramData(isamp,ibin,iatt)->SetMarkerStyle(8);   
+  hManager->getHistogramData(isamp,ibin,iatt)->SetLineWidth(3);   
+  hManager->getHistogramData(isamp,ibin,iatt)->Draw();   
+  hPostFit[isamp][ibin][iatt]->Draw("samee2");
+  hMCMod[isamp][ibin][iatt][0]->SetMarkerStyle(8);
+  hMCMod[isamp][ibin][iatt][0]->SetMarkerColor(kRed);
+  hMCMod[isamp][ibin][iatt][0]->SetLineWidth(2);
+  hMCMod[isamp][ibin][iatt][0]->Draw("same");
+//  hPostFit[isamp][ibin][iatt]->Draw("samee2");
+  hManager->getHistogramData(isamp,ibin,iatt)->Draw("same");   
+
+ // for (int ipt=0;ipt<NMCMCPts;ipt++){
+ //   hMCMod[isamp][ibin][iatt][ipt]->Scale(1./norm);        
+//  }
+
+  return; 
+}
+
+void postfitCalculator::drawPostFitHistoAll(int isamp, int ibin, int iatt){
+  double norm = (double)datatree->GetEntries()/(double)NMCEvents;
+//  hMCMod[isamp][ibin][iatt][0]->SetLineColor(kRed);
+//  hMCMod[isamp][ibin][iatt][0]->Scale(norm);
+//  for (int ipt=1;ipt<NMCMCPts;ipt++){
+ //   hMCMod[isamp][ibin][iatt][ipt]->SetLineColor(kCyan+1);
+ //   hMCMod[isamp][ibin][iatt][ipt]->Scale(norm);        
+ // }
+  hManager->getHistogramData(isamp,ibin,iatt)->SetMarkerStyle(8);   
+  hManager->getHistogramData(isamp,ibin,iatt)->SetLineWidth(3);   
+  hManager->getHistogramData(isamp,ibin,iatt)->Draw();   
+
+  for (int ipt=1;ipt<NMCMCPts;ipt++){
+    hMCMod[isamp][ibin][iatt][ipt]->SetLineWidth(3);        
+    hMCMod[isamp][ibin][iatt][ipt]->Draw("samehisto");        
+  }
+  hMCMod[isamp][ibin][iatt][0]->SetMarkerStyle(8);
+  hMCMod[isamp][ibin][iatt][0]->SetMarkerColor(kRed);
+  hMCMod[isamp][ibin][iatt][0]->SetLineWidth(2);
+  hMCMod[isamp][ibin][iatt][0]->Draw("same");
+
+ // for (int ipt=0;ipt<NMCMCPts;ipt++){
+ //   hMCMod[isamp][ibin][iatt][ipt]->Scale(1./norm);        
+//  }
+
+  return; 
+}
+
+void postfitCalculator::initHistos(){
+
+  //initialize an array of histograms to be filled at each MCMC pt
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        for (int ipt=0;ipt<NMCMCPts;ipt++){
+          TString hname = Form("hMCMCMod_samp%d_bin%d_iatt%d_mcmcpt%d",isamp,ibin,iatt,ipt);
+          hMCMod[isamp][ibin][iatt][ipt] = (TH1D*)hManager->getHistogram(isamp,ibin,0,iatt)->Clone(hname.Data());
+          hMCMod[isamp][ibin][iatt][ipt]->Reset();
+        }
+      }
+    }
+  }
+
+  return;
+}
+
+void postfitCalculator::makeHistoArray(TH1D* harr[], int nhistos, const char* name, int npts, double xmin, double xmax){
+
+  
+  for (int i=0;i<nhistos;i++){
+    TString hname = name;
+    hname.Append(Form("_%d",i));
+    harr[i] = new TH1D(hname.Data(),hname.Data(),npts,xmin,xmax);
+  }
+
+  return;
+}
+
+void postfitCalculator::attributeAnalysis(){
+
+  //get number of total steps minus burn-in
+  int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
+  if (nsteps<(NMCMCPts)){
+    cout<<"Not enough steps in MCMC path!"<<endl;
+    return;
+  }
+
+  //loop over points (uniform sampling)
+  int dstep = nsteps/NMCMCPts;
+  int istep = MCMCBurnIn;
+  int samppts[10000];
+
+  //get array of points to sample from
+  for (int i=0;i<NMCMCPts;i++){
+    samppts[i] = istep;
+    istep+=dstep;
+  } 
+
+  //find the number of MC events to use
+  if ((NMCEvents<=0)||(NMCEvents>mctree->GetEntries())) NMCEvents = mctree->GetEntries(); 
+
+
+  //setup histograms to be filled
+/*  int    nbinatt0=50;
+  double xminatt0=-2000;
+  double xmaxatt0=2000;
+  int    nbinatt1=50;
+  double xminatt1=-1000;
+  double xmaxatt1=1000;
+  int    nbinatt2=50;
+  double xminatt2=-1000;
+  double xmaxatt2=1000;
+  int    nbinatt3=50;
+  double xminatt3=-1000;
+  double xmaxatt3=1000;
+  const int NHISTO = NMCMCPts;
+  TH1D* hatt0[NHISTO];
+  TH1D* hatt1[NHISTO];
+  TH1D* hatt0data;
+  TH1D* hatt1data;
+  TString attname0  = runPars->fQAttName0;
+  TString attname1  = runPars->fQAttName1;
+  makeHistoArray(hatt0,NMCMCPts,attname0.Data(),nbinatt0,xminatt0,xmaxatt0);
+  makeHistoArray(hatt1,NMCMCPts,attname1.Data(),nbinatt1,xminatt1,xmaxatt1);
+  hatt0data = new TH1D("hatt0data","hatt0data",nbinatt0,xminatt0,xmaxatt0);
+  hatt1data = new TH1D("hatt1data","hatt1data",nbinatt1,xminatt1,xmaxatt1); */
+
+  
+  //loop for MC defaults
+  fitpars->resetDefaults(); //< set parameters to default values (no modifications to MC)
+  for (int ievt=0;ievt<NMCEvents;ievt++){
+    mctree->GetEntry(ievt);
+    for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+      hMCMod[mcreader->nsample][mcreader->nbin][iatt][0]->Fill(mcreader->attribute[iatt]);
+    }
+  }
+  //loop over data and fill histos
+//  for (int ievt=0;ievt<NDataEvents;ievt++){
+//    datatree->GetEvent(ievt);
+//    hatt0data->Fill(datareader->attribute[0]);
+//    hatt1data->Fill(datareader->attribute[1]);
+//  }
+
+  //loop over number of MCMC points
+  for (int ipt=1;ipt<NMCMCPts;ipt++){
+    currentMCMCPoint = samppts[ipt];
+    //loop over MC events
+    for (int ievt=0;ievt<NMCEvents;ievt++){
+      currentMCEvent = ievt;
+      if ((ievt%1000)==0) cout<<"pt: "<<ipt<<" ev: "<<ievt<<endl;
+      modifyCurrentEvent();//< all attributes are modified and eventWeight is calculated
+      //feel free to do things here, like fill histograms or something  
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        hMCMod[mcreader->nsample][mcreader->nbin][iatt][ipt]->Fill(mcreader->attribute[iatt]);
+      }
+    } 
+  }
+
+
+  double norm = (double)datatree->GetEntries()/(double)NMCEvents;
+
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        hMCMod[isamp][ibin][iatt][0]->SetLineColor(kRed);
+        hMCMod[isamp][ibin][iatt][0]->Scale(norm);
+        for (int ipt=1;ipt<NMCMCPts;ipt++){
+          hMCMod[isamp][ibin][iatt][ipt]->SetLineColor(kCyan+1);
+          hMCMod[isamp][ibin][iatt][ipt]->Scale(norm);        
+        }
+      }
+    }
+  }
+
+  //draw it all on same canvas
+/*  TCanvas* cc = new TCanvas("cc","cc",800,700);
+  hatt0data->Draw();
+  hatt0[0]->SetLineColor(kRed);
+  hatt0[0]->Draw("same");
+  for (int ipt =1;ipt<NMCMCPts;ipt++){
+    hatt0[ipt]->SetLineColor(kCyan+1);
+    hatt0[ipt]->Draw("same");
+  }
+  cc->Print("att0.png");
+  hatt1data->Draw();
+  hatt1[0]->SetLineColor(kRed);
+  hatt1[0]->Draw("same");
+  for (int ipt =1;ipt<NMCMCPts;ipt++){
+    hatt1[ipt]->SetLineColor(kCyan+1);
+    hatt1[ipt]->Draw("same");
+  }
+  cc->Print("att1.png");
+*/
+
+  return;
+
+}
 
 ///////////////////////////////////////////////////
 //runs a post-fit analysis for the stopping cosmics
 void  postfitCalculator::cosmicPostFitAnalysis(){
 
+  //get number of total steps minus burn-in
+  int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
+  if (nsteps<(NMCMCPts)){
+    cout<<"Not enough steps in MCMC path!"<<endl;
+    return;
+  }
 
+  //loop over points (uniform sampling)
+  int dstep = nsteps/NMCMCPts;
+  int istep = MCMCBurnIn;
+  int samppts[10000];
+
+  //get array of points to sample from
+  for (int i=0;i<NMCMCPts;i++){
+    samppts[i] = istep;
+    istep+=dstep;
+  } 
+
+  //find the number of MC events to use
+  if ((NMCEvents<=0)||(NMCEvents>mctree->GetEntries())) NMCEvents = mctree->GetEntries(); 
+
+  //histogram setup
+  hPassFailData =  new TH1D("hpassfaildata","hpassfaildata",2,0,1.1);
+  hPassFailAvg =  new TH1D("hpassfailavg","hpassfailavg",2,0,1.1);
+  for (int ipt=0;ipt<NMCMCPts;ipt++){
+    TString hname = "passfail";
+    hname.Append("_point%d",ipt);
+    hPassFail[ipt] = new TH1D(hname.Data(),hname.Data(),2,0,1.1);
+  }
+
+  //loop over number of MCMC points
+  for (int ipt=0;ipt<NMCMCPts;ipt++){
+    currentMCMCPoint = samppts[ipt];
+    //loop over MC events
+    for (int ievt=0;ievt<NMCEvents;ievt++){
+      currentMCEvent = ievt;
+      if ((ievt%1000)==0) cout<<"pt: "<<ipt<<" ev: "<<ievt<<endl;
+      modifyCurrentEvent();//< all attributes are modified and eventWeight is calculated
+      if (makeSelection(1)){
+        hPassFail[ipt]->Fill(1);
+      }
+      else{
+        hPassFail[ipt]->Fill(0);
+      }
+      //feel free to do things here, like fill histograms or something   
+    } 
+  }
+  //loop over data
+  for (int ievt=0;ievt<NDataEvents;ievt++){
+    datatree->GetEntry(ievt);
+    if (makeSelection(1,1)){
+       hPassFailData->Fill(1);
+    }
+    else{
+      hPassFailData->Fill(0);
+    }
+    //feel free to do things here, like fill histograms or something   
+  } 
+  //normalize MC
+  double norm = (double)NDataEvents/(double)NMCEvents; 
+  for (int ipt=0;ipt<NMCMCPts;ipt++){
+    hPassFail[ipt]->Scale(norm);
+  }
+
+  return;
+
+
+  
+  /*
   //get number of total steps minus burn-in
   int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
   cout<<"postfitCalculator: # of steps after burn-in: "<<nsteps<<endl;
@@ -156,17 +553,16 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
       else{
         NmuMisID[ipt]++;
       }
-      if (makeSelection(2)){
-        NeID[ipt]++;
-      }
-      else{
-        NeMisID[ipt]++;
-      }
+//      if (makeSelection(2)){
+//        NeID[ipt]++;
+//      }
+//      else{
+//        NeMisID[ipt]++;
+//      }
     } 
   }
 
-  ////////////////////////////////////////////////////
-  //now loop over data events and fill histograms
+
 
 
   ////////////////////////////////////////////////////
@@ -209,7 +605,7 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
   cout<<"electron misID var: "<<eratevar<<endl;
 
 
-
+  */
 
  
   return;
@@ -233,9 +629,19 @@ postfitCalculator::postfitCalculator(const char* parfile){
   NMCMCPts = runPars->NMCMCPts;  
   MCMCBurnIn = runPars->MCMCBurnIn;
   NMCEvents = runPars->NMCEvents;
+  NDataEvents = runPars->NDataEvents;
 
   //set parameter file name
   parFileName = parfile;
+
+  //setup histogram manager
+  hManager = new histoManager(runPars->hFactoryOutput.Data(),
+                              runPars->nSamples,
+                              runPars->nFVBins,
+                              runPars->nComponents,
+                              runPars->nAttributes);
+  initHistos(); //< initilize attribute histograms using hmanager as a template 
+
 
   //get mcmc path tree
   TString mcmcfilename = runPars->MCMCFile;
@@ -262,6 +668,9 @@ postfitCalculator::postfitCalculator(const char* parfile){
   cout<<"postfitCalculator: normalization: "<<normFactor<<endl;
   //setup atmFitpars
   fitpars = new atmFitPars(parfile); 
+
+  //get number of attributes in post fit
+  nAttributes = runPars->nAttributes;  
 
   //initialize histograms
   init();    
@@ -540,7 +949,7 @@ void postfitCalculator::drawBreakdown(int ihisto,int islot){
   ///////////////////
   //pid histograms
   if (ihisto==0){
-    hPIDemu[0][islot]->SetFillColor(kBlue);
+    hPIDemu[0][islot]->SetFillColor(kCyan+1);
     hPIDemu[1][islot]->SetFillColor(kRed);
     hPIDemu[2][islot]->SetFillColor(kCyan);
     hPIDemu[3][islot]->SetFillColor(kOrange);
@@ -550,7 +959,7 @@ void postfitCalculator::drawBreakdown(int ihisto,int islot){
   ///////////////////
   //Enu (mu) histograms
   if (ihisto==1){
-    hEnuMu[0][islot]->SetFillColor(kBlue);
+    hEnuMu[0][islot]->SetFillColor(kCyan+1);
     hEnuMu[1][islot]->SetFillColor(kRed);
     hEnuMu[2][islot]->SetFillColor(kCyan);
     hEnuMu[3][islot]->SetFillColor(kOrange);
@@ -604,19 +1013,25 @@ void postfitCalculator::makeHistos(int iselect, int islot){
 ///////////////////////////////////////////////////////////////////////////////////
 //make various event selections, indexed by "iselect"
 //returns 1 if all cuts are passed, 0 otherwise
-int postfitCalculator::makeSelection(int iselect){
+int postfitCalculator::makeSelection(int iselect,int dataflg){
+
+  fQreader* reader;
+  if (dataflg) reader = datareader;
+  else{
+    reader = mcreader;   
+  }
 
   ///////////////////////////
   //mock 1R numu calculation
   if (iselect==0){
     //Evis cut
-    if (mcreader->attribute[2]<100.) return 0;
+    if (reader->attribute[2]<100.) return 0;
     //FC cut
-    if (mcreader->nhitac>16) return 0;
+    if (reader->nhitac>16) return 0;
     //PID cut
-    if (mcreader->attribute[0]>0.) return 0;
+    if (reader->attribute[0]>0.) return 0;
     //nring cut
-    if (mcreader->fqmrnring[0]!=1) return 0;
+    if (reader->fqmrnring[0]!=1) return 0;
   }
 
 
@@ -624,22 +1039,22 @@ int postfitCalculator::makeSelection(int iselect){
   //cosmic mu mock selection
   if (iselect==1){
     //PID cut
-    if ((-1.*mcreader->attribute[0])<0.2*mcreader->fq1rmom[0][1]) return 0;
+    if ((-1.*reader->attribute[0])<0.2*reader->fq1rmom[0][1]) return 0;
     //nring cut
   //  if (mcreader->attribute[2]>0) return 0;
     //evis cut
-    if (mcreader->fq1rmom[0][1]<30) return 0;
+    if (reader->fq1rmom[0][1]<30) return 0;
   }
 
   /////////////////////////////
   //cosmic decay e mock selection
   if (iselect==2){
     //PID cut
-    if ((-1.*mcreader->attribute[1])>0.2*mcreader->fq1rmom[1][1]) return 0;
+    if ((-1.*reader->attribute[1])>0.2*reader->fq1rmom[1][1]) return 0;
     //nring cut
-  //  if (mcreader->attribute[2]>0) return 0;
+  //  if (reader->attribute[2]>0) return 0;
     //evis cut
-    if (mcreader->fq1rmom[0][1]<30) return 0;
+    if (reader->fq1rmom[0][1]<30) return 0;
   }
 
   //event has passed cuts
@@ -702,6 +1117,7 @@ double  postfitCalculator::getEvtWeight(){
 ///////////////////////////////////////////////////////////////////////////////
 //inialize some values
 void postfitCalculator::init(){
+
 
   //////////////////////
   //make tree for numbers of events
