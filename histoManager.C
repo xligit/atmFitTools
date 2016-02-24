@@ -188,8 +188,15 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
 */
 
   //modify histogram according to smear and bias parameters
- // smearThisHisto( (*hMCModified[isamp][ibin][icomp][iatt]), fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
-  smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),binContents, fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
+  smearThisHisto( (*hMCModified[isamp][ibin][icomp][iatt]), fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
+//  smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),binContents, fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
+  //Use predetermined mean for scaling
+  smearThisHistoFastMean( (*hMCModified[isamp][ibin][icomp][iatt]),
+                          binContents, 
+                          fitPars->histoPar[ibin][icomp][iatt][0],
+                          hMCMean[isamp][ibin][icomp][iatt],
+                          fitPars->histoPar[ibin][icomp][iatt][1]);
+
   
   return hMCModified[isamp][ibin][icomp][iatt];
 }
@@ -432,7 +439,6 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
       }
     }
   }
-///  TString hmodname; //name for modified histogram
   //setup mc histos
   for (int isamp=0;isamp<nSamples;isamp++){
     for (int ibin=0;ibin<nBins;ibin++){
@@ -442,15 +448,19 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
            hname.Append(Form("samp%d_bin%d_comp%d_att%d",isamp,ibin,icomp,iatt));
            cout<<"Getting histogram: "<<hname.Data()<<endl;
            hMC[isamp][ibin][icomp][iatt] = (TH1D*)fin->Get(hname.Data());
-   //        hmodname = hMC[isamp][ibin][icomp][iatt]->GetName();
-   //        hmodname.Append("_modified");
-   //        hMCModified[isamp][ibin][icomp][iatt] = (TH1D*)hMC[isamp][ibin][icomp][iatt]->Clone(hmodname.Data());
-   //        hMCModified[isamp][ibin][icomp][iatt]->Reset();
+           //set histogram mean array
+           hMCMean[isamp][ibin][icomp][iatt] = hMC[isamp][ibin][icomp][iatt]->GetMean();
         }
       }
     }
   }
+
+  ///////////////////////////////////////////////////////////////
+  //initialize arrays of modified histograms using the histograms
+  //from the file as templates
   initHistos(); 
+
+  /////////////////////////////////////////////////////
   return;
 }
 

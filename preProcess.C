@@ -4,6 +4,31 @@
 #include "preProcess.h"
 #include "TObjArray.h"
 
+/////////////////////////////////////////////////////////////////
+//Create a TGraph that is used to make weights to see effect of
+//correcting for cosmic flux mis-modeling
+void  preProcess::setWeightHistogram(const char* file, const char * name){
+
+  //read in histogram
+  TFile* hfile = new TFile(file);
+  hWeight = (TH1D*)hfile->Get(name);
+ 
+  //convert to graph
+  const int nn = hWeight->GetNbinsX();
+  double xx[nn];
+  double yy[nn];
+  for (int i=0;i<nn;i++){
+    xx[i] = hWeight->GetBinCenter(i+1);
+    yy[i] = hWeight->GetBinContent(i+1);
+  }
+  gWeight = new TGraph(nn,xx,yy);
+
+  gWeight->Draw("alc");
+
+  useWeights = 1;
+
+  return;
+}
 
 ////////////////////////////////////////////////////////////
 //Takes in a chain and loops over all files in the chain
@@ -88,6 +113,11 @@ float preProcess::getWeight(){
 //  if ((absmode==1)&&(enu>400.)&&(enu<800.)) evtweight*=0.9;
   //CCQE norm bin4 
 //  if ((absmode==1)&&(enu>800.)) evtweight*=1.05;
+
+
+  if (useWeights){
+    evtweight = gWeight->Eval(attribute[2],0,"s");
+  }
 
   return evtweight;
 }
@@ -207,14 +237,14 @@ int preProcess::getSample(){
   
   //cosmic selection
   if (MCComponents==1){
-    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
-    double Zrec = fq->fq1rpos[0][2][2];
-    double Zcut = 1410;
-    double Rcut = 1290;
-    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
-    if ((Zrec<Zcut)) return 1; //< side entering
-    if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
- //   return 0;
+//    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
+//    double Zrec = fq->fq1rpos[0][2][2];
+//    double Zcut = 1410;
+//    double Rcut = 1290;
+//    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
+//    if ((Zrec<Zcut)) return 1; //< side entering
+//    if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
+    return 0;
   }
 
   return -1;
@@ -350,6 +380,7 @@ void preProcess::setupNewTree(){
 //empty constructor
 preProcess::preProcess(){
   nFiles=0;
+  useWeights=0;
 }
 
 /////////////////////////////
@@ -400,12 +431,10 @@ void preProcess::runPreProcessing(){
   chmc->Add(runpars->preProcessFilesMC.Data());
   chdat->Add(runpars->preProcessFilesData.Data());
   if (chmc->GetEntries()<1){
-    cout<<"preProcess ERROR: no events in MC chain"<<endl;
-    return;
+    cout<<"preProcess WARNING: no events in MC chain"<<endl;
   }
   if (chdat->GetEntries()<1){
-    cout<<"preProcess ERROR: no events in Data chain"<<endl;
-    return;
+    cout<<"preProcess WARNING: no events in Data chain"<<endl;
   }
 
   //process the files

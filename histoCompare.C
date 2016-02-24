@@ -608,8 +608,8 @@ void histoCompare::showFitResult(int isamp,int ibin,int iatt){
 //  hTot->SetLineColor(kRed);
  // hMod->Scale(Norm);
  // hTmp->Scale(Norm);
-  hMod->SetLineColor(kRed);
-  hTmp->SetLineColor(kBlue);
+  hMod->SetLineColor(kBlue);
+  hTmp->SetLineColor(kRed);
 //  hTot->Rebin(rebinFactor);
 //  hMod->Rebin(rebinFactor);
   hTmp->Draw();
@@ -639,9 +639,9 @@ void histoCompare::showFitEffect(int isamp,int ibin,int icomp,int iatt){
       hMod->Add(hManager->hMC[isamp][ibin][jcomp][iatt]);
     }
   }
-  hMod->SetLineColor(kRed);
+  hMod->SetLineColor(kBlue);
  // hTmp->Scale(Norm);
-  hTmp->SetLineColor(kBlue);
+  hTmp->SetLineColor(kRed);
 //  hMod->Scale(Norm);
 //  hTot->Rebin(rebinFactor);
 //  hMod->Rebin(rebinFactor);
@@ -661,10 +661,10 @@ void histoCompare::showFitHisto(int isamp,int ibin,int icomp,int iatt){
   cout<<"SMEAR: "<<smear<<endl;
   cout<<"BIAS:  "<<bias<<endl;
   hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt);
-  hMod->SetLineColor(kRed);
+  hMod->SetLineColor(kBlue);
   hMod->Draw("eh");
   hTmp = hManager->getHistogram(isamp,ibin,icomp,iatt);
-  hTmp->SetLineColor(kBlue);
+  hTmp->SetLineColor(kRed);
 //  hMod->Smooth(1);
 //  convolveThisHisto(*hMod,hMod->GetBinWidth(2)*0.5,0.);
   hTmp->Draw("sameeh");
@@ -1530,7 +1530,7 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2, double hnorm){
   //assume poisson errors
  // for (int ibin=10;ibin<=(10);ibin++){
 
-  for (int ibin=5;ibin<=(h1->GetNbinsX()-5);ibin++){
+  for (int ibin=3;ibin<=(h1->GetNbinsX()-3);ibin++){
     c1 = h1->GetBinContent(ibin); //MC
     c2 = h2->GetBinContent(ibin); //data
     errmc = h1->GetBinError(ibin);

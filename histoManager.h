@@ -53,7 +53,9 @@ class histoManager{
   TLegend* Leg;  //for histogram drawing methods
   TH2D* h2d; //for 2D debugging histograms
   double binContents[1000]; //< stores temporary bin contents for faster modificatoins
-
+  //Array to store mean of each histogram. This affects how the histogram is scaled, since a scaling parameter
+  //scales about the mean.
+  double hMCMean[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX];
   ///////////////////////////
   //parametrs
   atmFitPars* fitPars; 

@@ -10,7 +10,7 @@
 #include "TString.h"
 #include "FVCalculators.C"
 #include "sharedPars.C"
-
+#include "TGraph.h"
 
 
 using namespace std;
@@ -53,7 +53,9 @@ class preProcess{
   int MCComponents;
   int FVBinning;
   int nFiles;
-
+  TH1D* hWeight;
+  TGraph* gWeight;
+  int useWeights;
 
   ////////////////////////
   //for cuts
@@ -95,6 +97,10 @@ class preProcess{
   float getWeight();
   void processFile(const char* fname,const char* outname="");
   void processAllFiles(TChain* chain);
+  //sets a histogram to calculate weights for events (use to correct cosmic
+  //muon momenum distribution)
+  void setWeightHistogram(const char* file, const char * name);
+  
 
 };
 

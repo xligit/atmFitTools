@@ -6,7 +6,6 @@
 #include "TMath.h"
 #include "time.h"
 #include <iostream>
-#include "TCanvas.h"
 
 #ifndef GLOBAL_RANDOM
 #define GLOBAL_RANDOM
@@ -82,8 +81,8 @@ void mySmooth(TH1D* hh,double factor=3.0){
 //Integral of box function
 double B(double x,double a, double b){
   if (x<=a) return 0.;
-  if (x>b) return 1.;
- // if (a==b) return 0;
+  if (x>=b) return 1.;
+  if (a==b) return 0;
   return (x-a)/(b-a);
 }
 
@@ -199,10 +198,10 @@ TH1D* smearIt(TH1D* h,double spread, double bias=0.){
   }
   if (hsmear->Integral()>0.) hsmear->Scale(h->Integral()/hsmear->Integral());
   hsmear->SetLineColor(kMagenta);
-//hsmear;
-  return hsmooth;
+hsmear;
+//  return hsmooth;
 }
-*/ 
+ */
 
 /*
 void convolveThisHisto(TH1D &hh, double sig, double bias){
@@ -250,8 +249,6 @@ void convolveThisHisto(TH1D &hh, double sig, double bias){
 }
 */
 
-/*
-
 //////////////////////////////////////////////////////////////
 //performs histogram modifications
 void smearThisHisto(TH1D &hh, double spread, double bias=0.){
@@ -282,91 +279,10 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
   double ymin;
   double ymax;
   double smear = 1./spread;
-//  double mean = hh.GetMean() + (binw/2.);
-  double mean = hh.GetMean();
-  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
-  double sumw2;
-  double sumw;
-
-  //loop over bins and modify contents
-  for (int newbin=1;newbin<=nbins;newbin++){
-
- //   if ((htmp->GetBinContent(newbin)<=0)||(htmp->GetBinContent(newbin-1)<=0)||(htmp->GetBinContent(newbin+1)<=0)){
- //     continue;
- //   }
-
-    ////////////////////
-    //set weight parameters
-    sum = 0.;
-    sumw = 0;
-    sumw2 = 0;
-    binerr=0.;
-    binedge = htmp->GetBinLowEdge(newbin);
- //  ymin = ((binedge-bias)*smear) - shift;
- //   ymin = binedge*smear - shift - bias;
- //   ymax = ymin + (binw*smear);
-    ymin  = binedge - bias;
-    ymax  = ymin + binw;
-    for (int oldbin=1;oldbin<=nbins;oldbin++){
-      xmin = htmp->GetBinLowEdge(oldbin);
-      xmax = (xmin+binw);
-      weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
-      double binc = htmp->GetBinContent(oldbin);
-      sum+=(weight*htmp->GetBinContent(oldbin));
-      binerr += weight*weight*(htmp->GetBinContent(oldbin)*htmp->GetBinContent(oldbin));
-      sumw += weight;
-    }
-    cout<<"sum: "<<sum<<endl;
-    cout<<"sumw: "<<sumw<<endl;
-    if (sumw<=0.0001) continue;
-//    hh.SetBinContent(newbin,sum/sumw);
-    hh.SetBinContent(newbin,sum);
-    hh.SetBinError(newbin,TMath::Sqrt(sum));
-    double scale = htmp->Integral()/hh.Integral();
-    hh.Scale(scale);
-  }
-  htmp->Delete();
-  return;
-}
-
-*/
-
-
-//////////////////////////////////////////////////////////////
-//performs histogram modifications
-void smearThisHisto(TH1D &hh, double spread, double bias=0.){
-
-  //make sure the parameters are reasonable
-  if (spread==0){
-    cout<<"histoTransforms.C: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
-    return;
-  }
-
-  //make temporary clone of input histogram 
-  TH1D* htmp = (TH1D*)hh.Clone("htmp");
-
-  //apply custom smooth function if statistics are low
-//  if (hh.GetEntries()<10000.) mySmooth(htmp);
-
-  //get some useful histogram parameters
-  int nbins=hh.GetNbinsX();
-  double binw = hh.GetBinWidth(1);
-
-  //parameters for calculations
-  double binedge;
-  double sum;
-  double binerr;
-  double weight;
-  double xmin;
-  double xmax;
-  double ymin;
-  double ymax;
-  double smear = 1./spread;
   double mean = hh.GetMean() + (binw/2.);
   double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
   double sumw2;
   double sumw;
-
 
   //loop over bins and modify contents
   for (int newbin=1;newbin<=nbins;newbin++){
@@ -394,138 +310,13 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
       sumw += weight;
     }
   //  if (sumw<=0.0001) continue;
-    hh.SetBinContent(newbin,sum);
-    hh.SetBinError(newbin,TMath::Sqrt(sum));
-//    double scale = htmp->Integral()/hh.Integral();
-//    hh.Scale(scale);
+    hh.SetBinContent(newbin,sum/sumw);
+    double scale = htmp->Integral()/hh.Integral();
+    hh.Scale(scale);
   }
-
-  /*
-  for (int newbin=1;newbin<=nbins;newbin++){
-    sum = 0.;
-    ymin = ((htmp->GetBinLowEdge(newbin)-bias)*smear) - shift;
- //   ymin = ((htmp->GetBinLowEdge(newbin))*smear) -bias - shift;
- //   ymax = ((htmp->GetBinLowEdge(newbin)+htmp->GetBinWidth(newbin)-bias)*smear) - shift;
-    ymax = ymin + (binw*smear);
-    for (int oldbin=1;oldbin<=nbins;oldbin++){
-      xmin = htmp->GetBinLowEdge(oldbin);
-      xmax = (xmin+htmp->GetBinWidth(oldbin));
-      weight = B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
-      sum+=(weight*htmp->GetBinContent(oldbin));
-    }
-    hh.SetBinContent(newbin,sum);
-  }
-  */
-
-  double scale = htmp->Integral()/hh.Integral();
-  hh.Scale(scale);
-
   htmp->Delete();
   return;
 }
-
-
-
-//////////////////////////////////////////////////////////////
-//Test function to compare to event-by-event
-void compareEvtByEvt(int nevts, double mean0, double sig0,double scale, double bias){
-
-  //nominal histogram
-  TH1D* h0 = testBumpD(nevts, sig0, mean0, "nominal");
-  double mean = h0->GetMean();
-
-  //transformed histogram
-  TH1D* htransform =  testBumpD(nevts, sig0, mean0, "transformed");
-  htransform->SetLineColor(kRed);
-  smearThisHisto(*htransform,scale,bias);
-
-  //event by event histogram
-  TH1D* hebe=  testBumpD(nevts, sig0, mean0, "evntbyevt");
-  hebe->Reset();
-  hebe->SetLineColor(kBlue);
-  for (int i=0;i<nevts;i++){
-    double xx = randy->Gaus(mean0,sig0); //< get random throw
-    xx *= scale;
-    xx += bias;
-   // xx += bias*scale;
-    xx -= scale*mean;
-    xx += mean;
-    hebe->Fill(xx);
-  }
-
-  TCanvas* cc = new TCanvas("cc","cc",800,700);
-  h0->Draw();
-  htransform->Draw("same");
-  hebe->Draw("same");
-  cc->Print("compare.png"); 
-
-  return;
-
-}
-
-
-
-//smear it faster
-void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double mean, double bias=0.){
-
-  //make sure the parameters are reasonable
-  if (spread==0){
-    cout<<"histoTransforms.C: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
-    return;
-  }
-
-  //make temporary clone of input histogram 
-//  TH1D* htmp = (TH1D*)hh.Clone("htmp");
-
-  //apply custom smooth function if statistics are low
-  // if (hh.GetEntries()<10000.) mySmooth(htmp);
-
-  //get some useful histogram parameters
-  int nbins=hh.GetNbinsX();
-  double oldintegral = hh.Integral();
-  double binw = hh.GetBinWidth(1);
-
-  //parameters for calculations
-  double binedge;
-  double sum;
-  double binerr;
-  double weight;
-  double xmin;
-  double xmax;
-  double ymin;
-  double ymax;
-  double smear = 1./spread;
-//  double mean = hh.GetMean() + (binw/2.);
-  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
-  double sumw2;
-  double sumw;
-
-  //loop over bins and modify contents
-  for (int newbin=1;newbin<=nbins;newbin++){
-    sum = 0.;
-    sumw = 0;
-    sumw2 = 0;
-    binerr=0.;
-    binedge = hh.GetBinLowEdge(newbin);
-    ymin = ((binedge-bias)*smear) - shift;
-    ymax = ymin + (binw*smear);
-    for (int oldbin=1;oldbin<=nbins;oldbin++){
-      xmin = hh.GetBinLowEdge(oldbin);
-      xmax = (xmin+binw);
-      weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
-      double binc = hcontent[oldbin];
-      sum+=(weight*binc);
-      binerr += weight*weight*(binc*binc);
-      sumw += weight;
-    }
-    hh.SetBinContent(newbin,sum);
-  }
-  double newintegral = hh.Integral();
-  double scale = oldintegral/newintegral;
-  hh.Scale(scale);
-  return;
-}
-
 
 
 //smear it faster
@@ -559,7 +350,6 @@ void smearThisHistoFast(TH1D &hh, double* hcontent, double spread, double bias=0
   double ymax;
   double smear = 1./spread;
   double mean = hh.GetMean() + (binw/2.);
-
   double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
   double sumw2;
   double sumw;

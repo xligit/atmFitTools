@@ -59,6 +59,8 @@ class postfitCalculator{
   int currentMCEvent;
   double normFactor;
   int nAttributes;
+  TCanvas* cc;
+
 
   //histogrms of interest
   TH1D* hEnuMu[10][200]; //<energy assuming muon
@@ -103,9 +105,6 @@ class postfitCalculator{
 };
 
 void postfitCalculator::printPostFitHistos(const char* directory){
-  
-  //setup canvas
-  TCanvas* cc = new TCanvas("cc","cc",800,700);
 
   //loop over histos and pring
   for (int ibin=0;ibin<runPars->nFVBins;ibin++){
@@ -137,12 +136,14 @@ void postfitCalculator::calcPostFitHistos(int errtype){
         hPostFit[isamp][ibin][iatt] = (TH1D*)hMCMod[isamp][ibin][iatt][0]->Clone(hname.Data());
         hPostFit[isamp][ibin][iatt]->SetLineColor(kCyan+1);
         hPostFit[isamp][ibin][iatt]->SetFillColor(kCyan+1);
+        hPostFit[isamp][ibin][iatt]->Reset();        
       }
     }
   }
 
   ////////////////////////////////////////////////////
   //calculate mean 
+  double thenorm=(double)NMCMCPts-1.;
   for (int ibin=0;ibin<runPars->nFVBins;ibin++){
     for (int isamp=0;isamp<runPars->nSamples;isamp++){
       for (int iatt=0;iatt<runPars->nAttributes;iatt++){
@@ -157,8 +158,8 @@ void postfitCalculator::calcPostFitHistos(int errtype){
   for (int ibin=0;ibin<runPars->nFVBins;ibin++){
     for (int isamp=0;isamp<runPars->nSamples;isamp++){
       for (int iatt=0;iatt<runPars->nAttributes;iatt++){
-        TString hname = Form("hMCMCPostfit_samp%d_bin%d_iatt%d",isamp,ibin,iatt);
-        hPostFit[isamp][ibin][iatt]->Scale(1./(double)NMCMCPts);
+        cout<<"norm: "<<thenorm<<endl;
+        hPostFit[isamp][ibin][iatt]->Scale(1./thenorm);
       }
     }
   }
@@ -185,8 +186,7 @@ void postfitCalculator::calcPostFitHistos(int errtype){
         for (int ipt=1;ipt<NMCMCPts;ipt++){
           for (int hbin=0;hbin<hMCMod[isamp][ibin][iatt][ipt]->GetNbinsX();hbin++){
             double diff = hMCMod[isamp][ibin][iatt][ipt]->GetBinContent(hbin) - hPostFit[isamp][ibin][iatt]->GetBinContent(hbin);
-            double norm = 1./(double)(NMCMCPts-1);
-            rms[isamp][ibin][iatt][hbin] += TMath::Sqrt((diff*diff))*norm;
+            rms[isamp][ibin][iatt][hbin] += TMath::Sqrt((diff*diff))/(thenorm-1.);
           }
         }
       }
@@ -423,6 +423,7 @@ void postfitCalculator::attributeAnalysis(){
 //runs a post-fit analysis for the stopping cosmics
 void  postfitCalculator::cosmicPostFitAnalysis(){
 
+  //////////////////////////////////////////
   //get number of total steps minus burn-in
   int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
   if (nsteps<(NMCMCPts)){
@@ -430,20 +431,22 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
     return;
   }
 
-  //loop over points (uniform sampling)
+  ////////////////////////////////////////
+  //setup uniform sampling of MCMC
   int dstep = nsteps/NMCMCPts;
   int istep = MCMCBurnIn;
   int samppts[10000];
-
   //get array of points to sample from
   for (int i=0;i<NMCMCPts;i++){
     samppts[i] = istep;
     istep+=dstep;
   } 
 
+  //////////////////////////////////////////////
   //find the number of MC events to use
   if ((NMCEvents<=0)||(NMCEvents>mctree->GetEntries())) NMCEvents = mctree->GetEntries(); 
 
+  ///////////////////////////////////////////////
   //histogram setup
   hPassFailData =  new TH1D("hpassfaildata","hpassfaildata",2,0,1.1);
   hPassFailAvg =  new TH1D("hpassfailavg","hpassfailavg",2,0,1.1);
@@ -453,6 +456,7 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
     hPassFail[ipt] = new TH1D(hname.Data(),hname.Data(),2,0,1.1);
   }
 
+  ///////////////////////////////////////////////////////////
   //loop over number of MCMC points
   for (int ipt=0;ipt<NMCMCPts;ipt++){
     currentMCMCPoint = samppts[ipt];
@@ -467,9 +471,10 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
       else{
         hPassFail[ipt]->Fill(0);
       }
-      //feel free to do things here, like fill histograms or something   
     } 
   }
+
+  ////////////////////////////////////////////////////////////////
   //loop over data
   for (int ievt=0;ievt<NDataEvents;ievt++){
     datatree->GetEntry(ievt);
@@ -481,133 +486,65 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
     }
     //feel free to do things here, like fill histograms or something   
   } 
+
+  //////////////////////////////////////////////////////
   //normalize MC
   double norm = (double)NDataEvents/(double)NMCEvents; 
   for (int ipt=0;ipt<NMCMCPts;ipt++){
     hPassFail[ipt]->Scale(norm);
+    hPassFail[ipt]->SetLineColor(kBlue);
+    hPassFail[ipt]->SetLineWidth(2);
   }
 
-  return;
-
-
-  
-  /*
-  //get number of total steps minus burn-in
-  int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
-  cout<<"postfitCalculator: # of steps after burn-in: "<<nsteps<<endl;
-  if (nsteps<(NMCMCPts)){
-    cout<<"Not enough steps in MCMC path!"<<endl;
-    return;
+  /////////////////////////////////////////////////////////
+  //calculate average and variance over MCMC points
+  double mean[5];
+  double rms[5];
+  double mcmcnorm = 1./(double)NMCMCPts;
+  for (int hbin=0;hbin<=hPassFail[0]->GetNbinsX();hbin++){
+    mean[hbin]=0.;
+    rms[hbin]=0.;
   }
-
-  //loop over points (uniform sampling)
-  int dstep = nsteps/NMCMCPts;
-  int istep = MCMCBurnIn;
-  int samppts[10000];
-
-  //get array of points to sample from
-  for (int i=0;i<NMCMCPts;i++){
-    samppts[i] = istep;
-    istep+=dstep;
-  } 
-
-    //find the number of MC events to use
-  if ((NMCEvents<=0)||(NMCEvents>mctree->GetEntries())) NMCEvents = mctree->GetEntries(); 
-
-  double NmuID[100];
-  double NmuMisID[100];
-  double NeID[100];
-  double NeMisID[100];
-  double NmuIDdata[100];
-  double NmuMisIDdata[100];
-  double NeIDdata[100];
-  double NeMisIDdata[100]; 
-
-  //set number of mis ied events in MC and Data
-  for (int i=0;i<100;i++){
-    NmuID[i]=0.; //< # of correctly IDed muons
-    NmuMisID[i]=0.; //< # of incorrectly IDed muons
-    NeID[i]=0.; //< # of correctly IDed electrons
-    NeMisID[i]=0.; //< # of incorrectly IDed electrons
-    NmuIDdata[i]=0.;  //< # of correctly IDed muons (data)
-    NmuMisIDdata[i]=0.; //< # of incorrectly IDed muons (data)
-    NeIDdata[i]=0.; //< # of correctly IDed electrons (data)
-    NeMisIDdata[i]=0.; //< # of incorrectly IDed electrons (data)
-  }
- 
-  //loop over number of MCMC points
+  //calculate mean
   for (int ipt=0;ipt<NMCMCPts;ipt++){
-    currentMCMCPoint = samppts[ipt];
-    //loop over MC events
-    for (int ievt=0;ievt<NMCEvents;ievt++){
-      currentMCEvent = ievt;
-      if ((ievt%1000)==0) cout<<"pt: "<<ipt<<" ev: "<<ievt<<endl;
-      if (ipt!=0) modifyCurrentEvent();//< all attributes are modified and eventWeight is calculated
-      //fill histograms
-      hPIDemu[0][ipt]->Fill(mcreader->attribute[0]);
-      hPIDemu[1][ipt]->Fill(mcreader->attribute[1]);
-      //find number of misID events
-      if (makeSelection(1)){
-        NmuID[ipt]++;
-      }
-      else{
-        NmuMisID[ipt]++;
-      }
-//      if (makeSelection(2)){
-//        NeID[ipt]++;
-//      }
-//      else{
-//        NeMisID[ipt]++;
-//      }
-    } 
+    for (int hbin=0;hbin<=hPassFail[0]->GetNbinsX();hbin++){
+      mean[hbin] += mcmcnorm*hPassFail[ipt]->GetBinContent(hbin);
+    }
+  }
+  mcmcnorm = 1./((double)NMCMCPts-1.);
+  //calculate rms
+  for (int ipt=0;ipt<NMCMCPts;ipt++){
+    for (int hbin=0;hbin<=hPassFail[0]->GetNbinsX();hbin++){
+      double binc = hPassFail[ipt]->GetBinContent(hbin);
+      double diff = binc-mean[hbin];
+      rms[hbin] += TMath::Sqrt(diff*diff)*mcmcnorm;
+    }
+  }
+
+  ////////////////////////////////////////////////////////
+  //fill histogram with values
+  for (int hbin=0;hbin<=hPassFail[0]->GetNbinsX();hbin++){
+  //  cout<<"mean: "<<mean[hbin]<<endl;
+  //  cout<<"RMS: "<<rms[hbin]<<endl;
+  //  double binc = mean[hbin];
+  //  double binerr = rms[hbin];
+    hPassFailAvg->SetBinContent(hbin,mean[hbin]);
+    hPassFailAvg->SetBinError(hbin,rms[hbin]);
   }
 
 
-
-
-  ////////////////////////////////////////////////////
-  //calculate Mis ID rates and print them out
-  double muratemean=0.;
-  double eratemean=0.;
-  double muratevar=0.;
-  double eratevar=0.;
-  for (int jpt=0;jpt<NMCMCPts;jpt++){
-    double muRate = NmuMisID[jpt]/(NmuMisID[jpt]+NmuID[jpt]);
-    double eRate = NeMisID[jpt]/(NeMisID[jpt]+NeID[jpt]);
-    cout<<" NmuID  "<<NmuID[jpt]<<" NmuMISID  "<<NmuMisID[jpt]<<" NeID  "<<NeID[jpt]<<" NeMisID  "
-    <<NeMisID[jpt]<<" muRate  "<<muRate<<" eRate  "<<eRate<<endl;
-    if (jpt!=0) muratemean+=muRate;
-    if (jpt!=0) eratemean+=eRate;
-  }
-
-  muratemean/=(double)(NMCMCPts-1);
-  eratemean/=(double)(NMCMCPts-1);
-
-  for (int jpt=0;jpt<NMCMCPts;jpt++){
-    double muRate = NmuMisID[jpt]/(NmuMisID[jpt]+NmuID[jpt]);
-    double eRate = NeMisID[jpt]/(NeMisID[jpt]+NeID[jpt]);
-    if (jpt!=0) muratevar+=(muRate-muratemean)*(muRate-muratemean);
-    if (jpt!=0) eratevar+=(eRate-eratemean)*(eRate-eratemean);
-  }
-
- 
-  muratevar=TMath::Sqrt(muratevar);
-  eratevar=TMath::Sqrt(muratevar);
-  muratevar/=(double)(NMCMCPts-2);
-  eratevar/=(double)(NMCMCPts-2);
-
-
-
-  cout<<"avg muon misID rate: "<<muratemean<<endl;
-  cout<<"muon misID var: "<<muratevar<<endl;
+  //Draw everything on the same canvas
+   hPassFailAvg->SetLineColor(kCyan+1);
+//   hPassFailAvg->SetFillColor(kCyan+1);
+   hPassFailAvg->SetLineWidth(3);
+   hPassFailData->SetLineWidth(3);
+   hPassFailData->SetMarkerStyle(8);
+   hPassFail[0]->SetLineColor(kRed); //< this one is nominal MC
+   hPassFail[0]->SetLineWidth(3);
+   hPassFailData->Draw();
+   hPassFail[0]->Draw("same");
+   hPassFailAvg->Draw("same");
   
-  cout<<"avg electron misID rate: "<<eratemean<<endl;
-  cout<<"electron misID var: "<<eratevar<<endl;
-
-
-  */
-
- 
   return;
 
 }
@@ -622,6 +559,9 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
 //construct from parameters in parameter file
 postfitCalculator::postfitCalculator(const char* parfile){
   
+  //setup canvas
+  TCanvas* cc = new TCanvas("cc","cc",800,700);
+
   //read in parameters
   runPars = new sharedPars(parfile);
   runPars->readParsFromFile();
@@ -787,9 +727,16 @@ void postfitCalculator::modifyAttributes(){
   ////////////////////////////////////////////////////
   //modify attributes
   for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
+    int evtbin = mcreader->nbin;
+    int evtcomp =  mcreader->ncomponent;
+    int evtsamp = mcreader->nsample;
+    double mean = hManager->hMCMean[evtsamp][evtbin][evtcomp][iatt];
+    double scaling = fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][0];
+    double bias    = fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1];
 //    cout<<"attribute mod: "<<fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1]<<endl;
-    //mcreader->attribute[iatt]*=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][0]; //multiply by smear parameter
-    mcreader->attribute[iatt]+=fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1]; //add bias parameter
+    mcreader->attribute[iatt] *= scaling; //multiply by smear parameter
+    mcreader->attribute[iatt] += (mean - (scaling*mean)); //< correct mean shift from scaling   
+    mcreader->attribute[iatt] += bias; //add bias parameter
   }
 
   //////////
