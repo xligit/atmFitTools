@@ -30,8 +30,8 @@ s,sampleName0=All;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ PREPROC PARAMETERS $$$$$$
 s,preProcessOutDir=./rootfiles/;
-s,preProcessFilesMC=/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/mc/stopmu_mc_1390_for_atmnu_test_06*fQ.root;
-s,preProcessFilesData=/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/data/patmue.run07*xxx.root;
+s,preProcessFilesMC=/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/mc/stopmu_mc_1390_for_atmnu_test_06x*fQ.root;
+s,preProcessFilesData=/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/data/patmue.run07*.root;
 $ CODE FOR FV BINNING
 $   0 -> SIMPLE (3 FV BINS BASED ON WALL CUTS)
 $   1 -> COSMIC (SORT BY SIDE VS TOP ENTERING)
@@ -60,20 +60,20 @@ d,PreProcInGateCut=1000;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HFACTORY PARAMETERS $$$$$
 s,hFactoryOuputDir=./rootfiles/;
-s,hFactoryOutput=./rootfiles/cosmicmu_noweight_histograms.root;
-s,hFactoryMCFiles=./rootfiles/cosmicmu_noweight*_ppmc*.root;
+s,hFactoryOutput=./rootfiles/cosmicmu_weight_histograms.root;
+s,hFactoryMCFiles=./rootfiles/cosmicmu_weight*_ppmc*.root;
 s,hFactoryDataFiles=./rootfiles/cosmicmu_1s*_ppdata*.root;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HISTOGRAM BINNING $$$$$$$
-i,nBinsAtt0=30;
-i,nBinsAtt1=30;
+i,nBinsAtt0=25;
+i,nBinsAtt1=25;
 i,nBinsAtt2=20;
 i,nBinsAtt3=20;
 i,nBinsAtt4=30;
-d,xMinAtt0=-800.;
-d,xMaxAtt0=800.;
-d,xMinAtt1=-400.;
-d,xMaxAtt1=600.;
+d,xMinAtt0=-3000.;
+d,xMaxAtt0=3000.;
+d,xMinAtt1=-2000.;
+d,xMaxAtt1=2000.;
 d,xMinAtt2=0.;
 d,xMaxAtt2=9000;
 d,xMinAtt3=-2000;
@@ -99,6 +99,6 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ POSTFIT PARAMETERS $$$$$$$$$
 s,MCMCFile=mcmctree.root;
 i,MCMCBurnIn=10000;
-i,NMCEvents=50000;
+i,NMCEvents=500000;
 i,NDataEvents=500000;
 i,NMCMCPts=19;

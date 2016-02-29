@@ -10,7 +10,7 @@
  preProcess* preproc = new preProcess();
  preproc->setParFileName("cosmicpars.dat");
  //preproc->setWeightHistogram("./rootfiles/momratio.root","hpd");
-// preproc->setWeightHistogram("./rootfiles/fine2.root","hpd");
+ preproc->setWeightHistogram("./rootfiles/fine2.root","hpd");
  preproc->runPreProcessing();
 
 

@@ -3,6 +3,7 @@
 //#include "fQreader.C"
 #include "histoManager.C"
 #include "sharedPars.C"
+#include "atmFitPars.C"
 
 #define NSYSTMAX 10
 #define NHBINSMAX 300
@@ -37,6 +38,7 @@ class splineFactory{
   TString sysParType; //< code denoting the type of parameterization used, see setupSysPar
   double sysPar[NSYSTMAX]; //systematic parameter values
   double sysUnc[NSYSTMAX];  //systematic parameter uncertainties
+  atmFitPars* fitPars;
   double attribute[NATTMAX];
   double eventWeight;
   sharedPars* runpars; //< runtime parameters
@@ -85,8 +87,12 @@ void splineFactory::runSplineFactory(){
   
   //create histogram manager from file with prefilled histograms
   makeManagerFromFile(runpars->hFactoryOutput.Data());
+
+  //initialize histogram arrays using the hManager as a template
   setupHistos();
-  setupSystPars();
+
+  //Initialize systematic parameter values
+ // setupSystPars();
   
   //get pointer to MC tree
   TChain chmc("h1");
@@ -165,7 +171,8 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
 }
 
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Build splines using event-by-event reweighting for various error 
 void splineFactory::buildTheSplines(){
 
   // file setup
@@ -187,17 +194,18 @@ void splineFactory::buildTheSplines(){
   splineTree->Branch("binWeight",binWeight,Form("binWeight[%d][%d]/D",NPTSMAX,NHBINSMAX));
   
 
-  //setup systematic deviations
+  //setup systematic deviations (in sigma)
   double sigvals[5] = {-4.,-2.,0.,2.,4.};
 
   cout<<"creating spines"<<endl; 
 
-  for (int isyst=0;isyst<nSyst;isyst++){
-    //loop over all evetts to fill histograms for each systematic value
-    resetModHistos();
+  //loop over each systematic parameter specified in the parameter file
+  for (int isyst=0;isyst<fitPars->nSysPars;isyst++){
+    resetModHistos(); //< sets all bin contents to zero
+    //loop over the MC events
     for (int iev=0;iev<mcTree->GetEntries();iev++){
       mcTree->GetEvent(iev);  //read event
-      fillAttributes();  //fill all attributes
+      fillAttributes();  //fill all attributes of this event
       //fill histogram for each point
       for (int ipt=0;ipt<NPTSMAX;ipt++){
         incrementSystPars(sigvals[ipt]);
@@ -286,6 +294,9 @@ void splineFactory::setupSystPars(){
     return;
 }
 
+
+///////////////////////////////////////////////////////////////////////
+//Initialize the histogram arrays needed to builde the splines
 void splineFactory::setupHistos(){
   cout<<"called setupHistos()"<<endl;
   TH1D* htemplate;
@@ -348,8 +359,12 @@ void splineFactory::fillHistograms(int ipt, int isyst){
   return;
 };
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+//Re-weight the event given the value "value" of additional systematic parameter "ipar"
+//Character keys determine the type of systematic error parameters to use
 double splineFactory::getEvtWeight(fQreader* mcEvt,int ipar,double value){
-//  double ww = 1.;
+  
   double ww = mcEvt->evtweight;
   int absmode = TMath::Abs(mcEvt->mode);
   double Enu     = mcEvt->pmomv[0];
@@ -458,24 +473,31 @@ double splineFactory::getEvtWeight(int ipar){
   return ww;
 };
 
-////////////////////////////////
-//construct from parameter file
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Construct from parameter file
 splineFactory::splineFactory(const char*  parfile){
+
+  //set file name and read in pars
   parFileName = parfile;
   cout<<"splineFactory: Parameter File: "<<parfile<<endl;
   runpars = new sharedPars(parFileName.Data());
   runpars->readParsFromFile();
+
+  //setup systematic parameters object
+  fitPars = new atmFitPars(parfile);
+
+  //fix internal variables
   nSamp=runpars->nSamples;
   nBin=runpars->nFVBins;
   nComp=runpars->nComponents;
   nAtt=runpars->nAttributes;
   nSyst=runpars->nSysPars;
   nameTag=runpars->globalRootName.Data();
-  foutName = runpars->splineFactoryOutput.Data();
-  sysParType = runpars->sysParType;
-//  foutName->Append(runpars->globalRootName.Data());
- // foutName->Append("_splines.root");
+  foutName = runpars->splineFactoryOutput.Data(); //< name of output file with spline parameters
+  sysParType = runpars->sysParType; 
+
   return;
+
 }
 
 splineFactory::splineFactory(int isamp, int ibin, int icomp, int iatt, int isyst, const char* name){

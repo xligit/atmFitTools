@@ -107,14 +107,18 @@ class postfitCalculator{
 void postfitCalculator::printPostFitHistos(const char* directory){
 
   //loop over histos and pring
-  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
-    for (int isamp=0;isamp<runPars->nSamples;isamp++){
-      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+  for (int ibin=0;ibin<fitpars->nBins;ibin++){
+    for (int isamp=0;isamp<fitpars->nSamples;isamp++){
+      for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
+         cout<<"break1"<<endl;
          TString plotname = directory;
-         plotname.Append(runPars->globalRootName.Data());
+         cout<<"break2"<<endl;
+         plotname.Append("pfit");
          plotname.Append(Form("_postfit_samp%d_bin%d_att%d",isamp,ibin,iatt));
+         cout<<"break3"<<endl;
          plotname.Append(".png");
-         drawPostFitHisto(isamp,ibin,iatt); //< draw all plots
+         drawPostFitHisto(isamp,ibin,iatt); //< draw all plot
+         cout<<"break4"<<endl;
          cc->Print(plotname.Data());
       }
     }
@@ -354,7 +358,7 @@ void postfitCalculator::attributeAnalysis(){
   for (int ievt=0;ievt<NMCEvents;ievt++){
     mctree->GetEntry(ievt);
     for (int iatt=0;iatt<runPars->nAttributes;iatt++){
-      hMCMod[mcreader->nsample][mcreader->nbin][iatt][0]->Fill(mcreader->attribute[iatt]);
+      hMCMod[mcreader->nsample][mcreader->nbin][iatt][0]->Fill(mcreader->attribute[iatt],mcreader->evtweight);
     }
   }
   //loop over data and fill histos
@@ -374,7 +378,7 @@ void postfitCalculator::attributeAnalysis(){
       modifyCurrentEvent();//< all attributes are modified and eventWeight is calculated
       //feel free to do things here, like fill histograms or something  
       for (int iatt=0;iatt<runPars->nAttributes;iatt++){
-        hMCMod[mcreader->nsample][mcreader->nbin][iatt][ipt]->Fill(mcreader->attribute[iatt]);
+        hMCMod[mcreader->nsample][mcreader->nbin][iatt][ipt]->Fill(mcreader->attribute[iatt],mcreader->evtweight);
       }
     } 
   }

@@ -131,10 +131,10 @@ int preProcess::getBin(){
   //calculate fiducial volume variables
   //use electron hypothesis
   TVector3 vpos;
-  vpos.SetXYZ(fq->fq1rpos[0][1][0],fq->fq1rpos[0][1][1],fq->fq1rpos[0][1][2]);
+  vpos.SetXYZ(fq->fq1rpos[0][2][0],fq->fq1rpos[0][2][1],fq->fq1rpos[0][2][2]);
   TVector3 vdir;
-  vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][1][1],fq->fq1rdir[0][1][2]);
-  wall = calcWall(&vpos);
+  vdir.SetXYZ(fq->fq1rdir[0][2][0],fq->fq1rdir[0][2][1],fq->fq1rdir[0][2][2]);
+  wall = calcWall2(&vpos);
   towall = calcToWall(&vpos,&vdir);
 
 

@@ -23,7 +23,24 @@ double calcWall(TVector3* vpos){
   return wall;
 }
 
-
+double calcWall2(TVector3* vpos){
+  double xx = vpos->X();
+  double yy = vpos->Y();
+  double zz = vpos->Z();
+  double Rmax = 1690.;
+  double Zmax = 1810.;
+  double rr   = sqrt(xx*xx + yy*yy);
+  double absz = TMath::Abs(zz);
+  //check if vertex is outside tank
+  double signflg = 1.;
+  if (absz>Zmax) signflg = -1.;
+  if (rr>Rmax)   signflg = -1.;
+  //find min distance to wall
+  double distz = TMath::Abs(Zmax-absz);
+  double distr = TMath::Abs(Rmax-rr);
+  double wall = signflg*fmin(distz,distr);
+  return wall;
+}
 
 double calcToWallCustom(TVector3 *vpos, TVector3 *vdir, double dt){
 
