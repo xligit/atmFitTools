@@ -378,13 +378,21 @@ void postfitCalculator::attributeAnalysis(){
       modifyCurrentEvent();//< all attributes are modified and eventWeight is calculated
       //feel free to do things here, like fill histograms or something  
       for (int iatt=0;iatt<runPars->nAttributes;iatt++){
-        hMCMod[mcreader->nsample][mcreader->nbin][iatt][ipt]->Fill(mcreader->attribute[iatt],mcreader->evtweight);
+        hMCMod[mcreader->nsample][mcreader->nbin][iatt][ipt]->Fill(mcreader->attribute[iatt],evtweight);
       }
     } 
   }
 
 
-  double norm = (double)datatree->GetEntries()/(double)NMCEvents;
+  // calculate normalization of MC using sum of weights
+  double mcsumweights = 0.;
+  for (int ievt=0;ievt<NMCEvents;ievt++){
+    currentMCEvent = ievt;
+    mctree->GetEntry(currentMCEvent); //< read in default MC event
+    mcsumweights += mcreader->evtweight;
+  }
+
+  double norm = (double)datatree->GetEntries()/mcsumweights;
 
   for (int ibin=0;ibin<runPars->nFVBins;ibin++){
     for (int isamp=0;isamp<runPars->nSamples;isamp++){
@@ -737,7 +745,6 @@ void postfitCalculator::modifyAttributes(){
     double mean = hManager->hMCMean[evtsamp][evtbin][evtcomp][iatt];
     double scaling = fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][0];
     double bias    = fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1];
-//    cout<<"attribute mod: "<<fitpars->histoPar[mcreader->nbin][mcreader->ncomponent][iatt][1]<<endl;
     mcreader->attribute[iatt] *= scaling; //multiply by smear parameter
     mcreader->attribute[iatt] += (mean - (scaling*mean)); //< correct mean shift from scaling   
     mcreader->attribute[iatt] += bias; //add bias parameter
@@ -1053,13 +1060,16 @@ double  postfitCalculator::getEvtWeight(){
 
   /////////////////////////////////////////////
   //get event weights
-  double ww = 1.0;
+  // double ww = mcreader->evtweight;
+  double ww = 1.;
   //loop over all flux and xsec parameters
   for (int isyspar=0;isyspar<fitpars->nSysPars;isyspar++){
-    ww*=sfact->getEvtWeight(mcreader,isyspar,fitpars->sysPar[isyspar]);
+//  for (int isyspar=0;isyspar<1;isyspar++){
+    double sysweight = sfact->getEvtWeight(mcreader,isyspar,fitpars->sysPar[isyspar]);
+ //   cout<<"sysweight"<<sysweight<<endl; 
+    ww*=sysweight;
   } 
   evtweight = ww;
-
   ///////////////
   return ww;
 }
@@ -1101,7 +1111,7 @@ void postfitCalculator::init(){
 
   ////////////////////////////
   //setup spline factory
-  sfact = new splineFactory();  
+  sfact = new splineFactory(parFileName.Data());  
 
   ////////////////////////////
   //other defaults

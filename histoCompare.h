@@ -108,7 +108,7 @@ class histoCompare{
  
   //likelihood evaluateions
   double getSumSq(TH1D* h1, TH1D* h2);
-  double getLnL(TH1D* h1, TH1D* h2,double hnorm = 1.);
+  double getLnL(TH1D* h1, TH1D* h2);
   double getNDiff();
   double getTotSumSq();
   double getTotLnL();

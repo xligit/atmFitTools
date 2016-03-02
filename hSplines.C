@@ -195,7 +195,7 @@ void hSplines::buildSpline(int ibin, int isyst,double* X, double*Y, int N){
   TString splineName = nameTag.Data();
   splineName.Append(Form("_spline_bin%d_par%d",ibin,isyst));
   theSpline[ibin][isyst] = new TSpline3(splineName.Data(),xvals,yvals,index); 
- // cout<<"break1"<<endl;
+  cout<<"hSplines: Built spline: "<<splineName.Data()<<endl;
   checkSum--;
   return;
 }
@@ -207,7 +207,7 @@ hSplines::hSplines(TH1D* h, int nsyst, const char* name){
    nSyst=nsyst;
    //initialize base histogram
    baseHisto=h;
-   cout<<"creating spline from base histogram: "<<baseHisto->GetName()<<endl;
+   cout<<"hSpline: Initialized splines for base histogram: "<<baseHisto->GetName()<<endl;
    //initialize modified histogram
    TString modhname = baseHisto->GetName();
    modhname.Append("_modified");

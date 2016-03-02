@@ -11,15 +11,18 @@
 
 using namespace std;
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 //class for creating splines
 class splineFactory{
   public:
-  //constructor
+
+  //constructors
   splineFactory(int nsamp, int nbin, int ncomp, int natt, int nsyst, const char* name);
   splineFactory(const char* parfile);//< initialize using parameters in par file
   splineFactory(){;}
   
-  //internal vars
+  //internal variables
   TString parFileName; //< name of parameter file
   TString nameTag; //< set in constructor. this is the prefix for the output file
   TTree* mcTree; 
@@ -36,8 +39,8 @@ class splineFactory{
   int nAtt;
   int nSyst;
   TString sysParType; //< code denoting the type of parameterization used, see setupSysPar
-  double sysPar[NSYSTMAX]; //systematic parameter values
-  double sysUnc[NSYSTMAX];  //systematic parameter uncertainties
+//  double sysPar[NSYSTMAX]; //systematic parameter values
+//  double sysUnc[NSYSTMAX];  //systematic parameter uncertainties
   atmFitPars* fitPars;
   double attribute[NATTMAX];
   double eventWeight;
@@ -56,14 +59,14 @@ class splineFactory{
   double binWeight[NPTSMAX][NHBINSMAX];
   //methods
   //this needs to be modified for each systematic paramater to add
-  double getEvtWeight(int ipar); //returns event weight after applying syst. par. 
-  double getEvtWeight(fQreader* mcEvt,int ipar,double value); //
+ // double getEvtWeight(int ipar); //returns event weight after applying syst. par. 
+  double getEvtWeight(fQreader* mcevent,int ipar,double value); //
   void setOutputFileName(const char* name){foutName=name;}
   TString getOutputFileName(){return foutName;}
   //
   void fillHistograms(int ipt,int isyst); //fills all histograms given weight
   void  makeManagerFromFile(const char* fname); //reads in histograms from histoFactory
-  void fillLeaves(int nsamp,int nbin,int ncomp,int natt,int isyst); //fills leaves of output tree
+  void fillBranches(int nsamp,int nbin,int ncomp,int natt,int isyst); //fills leaves of output tree
   void setMCTree(TTree* tr);
   //build the splines
   void buildTheSplines();
@@ -77,27 +80,16 @@ class splineFactory{
 //  private:
   void fillAttributes();
   void setupHistos();
-  void setupSystPars(); //sets up systematic parameters
-  void incrementSystPars(double nsig);
+//  void setupSystPars(); //sets up systematic parameters
+  void incrementSystPars(int isyspar, double nsig);
 };
 
-////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 //run spline factory using parameters from file
 void splineFactory::runSplineFactory(){
   
-  //create histogram manager from file with prefilled histograms
-  makeManagerFromFile(runpars->hFactoryOutput.Data());
 
-  //initialize histogram arrays using the hManager as a template
-  setupHistos();
-
-  //Initialize systematic parameter values
- // setupSystPars();
-  
-  //get pointer to MC tree
-  TChain chmc("h1");
-  chmc.Add(runpars->hFactoryMCFiles.Data());
-  setMCTree((TTree*)&chmc);
   
   //make them splines
   buildTheSplines();
@@ -107,6 +99,8 @@ void splineFactory::runSplineFactory(){
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 void splineFactory::resetModHistos(){
   for (int ibin=0;ibin<nBin;ibin++){
     for (int isamp=0;isamp<nSamp;isamp++){
@@ -122,13 +116,17 @@ void splineFactory::resetModHistos(){
   return;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 void splineFactory::setMCTree(TTree* tr){
   mcTree = tr;
   mcEvt = new fQreader(mcTree);
   return;
 }
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 void splineFactory::debugtest(){
   //create new factory
   splineFactory* sfactory = new splineFactory(3,3,7,1,1,"debugtest");
@@ -139,15 +137,21 @@ void splineFactory::debugtest(){
   return;
 };
 
-void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
-   //fills branches in spline information tree
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Fills branches of output tree with information required to build a spline 
+void splineFactory::fillBranches(int isamp,int ibin,int icomp,int iatt,int isyst){
+
+   // these numbers identify which histogram bin the spline is for
    nsample = isamp;
    nbin = ibin;
    ncomponent=icomp;
    nattribute=iatt;
+   nsystpar = isyst;
+
+   // loop over the evaluation points for this bin to create array of bin weights
    nhistobins = hMC[isamp][ibin][icomp][iatt][0]->GetNbinsX();
    npoints = NPTSMAX;
-   nsystpar = isyst;
    for (int ipt=0;ipt<NPTSMAX;ipt++){
      for (int jhistobin=0;jhistobin<=nhistobins;jhistobin++){
        if (hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin)==0){
@@ -160,18 +164,22 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst){
        }
      }
    }
-   //fill array of all systematic parameter points used to fill histograms
+
+   // fill array of all systematic parameter points used to fill histograms
    double sigvals[5] = {-5.,-2.,0.,2.,5.};
    for (int jpt=0;jpt<NPTSMAX;jpt++){
-     incrementSystPars(sigvals[jpt]);
-  //   cout<<"par: "<<isyst<<sysPar[isyst]<<endl;
-     systParValues[jpt]=sysPar[isyst];
+     incrementSystPars(isyst,sigvals[jpt]);
+     systParValues[jpt]=fitPars->sysPar[isyst];
    }
+
+   // a spline can now be created to interpolate binWeight[ibin][isyst] as a function of
+   // systParValues[isyst]
+
    return;
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Build splines using event-by-event reweighting for various error 
 void splineFactory::buildTheSplines(){
 
@@ -202,53 +210,74 @@ void splineFactory::buildTheSplines(){
   //loop over each systematic parameter specified in the parameter file
   for (int isyst=0;isyst<fitPars->nSysPars;isyst++){
     resetModHistos(); //< sets all bin contents to zero
+    cout<<"splineFactory: Filling histograms while modifying systematic parameter: "<<isyst<<endl;
     //loop over the MC events
     for (int iev=0;iev<mcTree->GetEntries();iev++){
-      mcTree->GetEvent(iev);  //read event
-      fillAttributes();  //fill all attributes of this event
-      //fill histogram for each point
+      mcTree->GetEvent(iev);  //< read event
+      //fillAttributes();  //fill all attributes of this event
+      //loop over the values of this parameter
       for (int ipt=0;ipt<NPTSMAX;ipt++){
-        incrementSystPars(sigvals[ipt]);
-        getEvtWeight(isyst); 
-        //fill histogram fo each attribute
+        incrementSystPars(isyst,sigvals[ipt]); //< set parameter value
+      //  getEvtWeight(isyst); //< get new new weight for this event 
+        getEvtWeight(mcEvt,isyst,fitPars->sysPar[isyst]);
+        //loop over fiTQun attributes and fill histograms
         for (int iatt=0;iatt<nAtt;iatt++){
-          hMC[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
+          hMC[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]
+            ->Fill(mcEvt->attribute[iatt],eventWeight);
         } //end attribute loop
-      }  //end point loop
+      }  //end point of evaluation loop
     }//end event loop
-    //loop over all histograms and get spline information
-    //and write to tree
+    //loop over all histograms to create spline information
     for (int kbin=0;kbin<nBin;kbin++){
       for (int kcomp=0;kcomp<nComp;kcomp++){
         for (int ksamp=0;ksamp<nSamp;ksamp++){
           for (int katt=0;katt<nAtt;katt++){
-            fillLeaves(ksamp,kbin,kcomp,katt,isyst);
+            //get spline information for this bin 
+            fillBranches(ksamp,kbin,kcomp,katt,isyst);
             splineTree->Fill();
           }
         }
       }
     }
-
-  }
+  } 
+ 
+  //write output tree with spline parameters
   splineTree->Write();
+
+  //close output file
   fout->Close();
+
+  ///////
   return;
 }
 
-void splineFactory::incrementSystPars(double nsig){
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+void splineFactory::incrementSystPars(int isyspar, double nsig){
+
+  //reset parameters to defaults
+  fitPars->resetDefaults();
+  
+  //adjust systematic parameter in question
+  double adjustment = nsig*fitPars->sysParUnc[isyspar];
+  double value = fitPars->sysPar[isyspar];
+  fitPars->setSysParameter(isyspar,(value+adjustment));
 
   //reset initial parameters
-  setupSystPars();
+//  setupSystPars();
 
   //change systematic parameters
-  for (int isyst=0;isyst<nSyst;isyst++){
-    sysPar[isyst] += sysUnc[isyst]*nsig;
+ // for (int isyst=0;isyst<nSyst;isyst++){
+  //  sysPar[isyst] += sysUnc[isyst]*nsig;
    // if (sysPar[isyst]<0.) sysPar[isyst]=0.;
-  }
+ // }
   
   return;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
 void splineFactory::setupSystPars(){
 
   if (!sysParType.CompareTo("tn186")){
@@ -293,9 +322,10 @@ void splineFactory::setupSystPars(){
 
     return;
 }
+*/
 
 
-///////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Initialize the histogram arrays needed to builde the splines
 void splineFactory::setupHistos(){
   cout<<"called setupHistos()"<<endl;
@@ -319,19 +349,30 @@ void splineFactory::setupHistos(){
   }
   return;
 }
+ 
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 void splineFactory::makeManagerFromFile(const char* fname){
   hManager = new histoManager(fname,nSamp,nBin,nComp,nAtt);
   //setupHistos();
   return;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Fill array of fiTQun outputs to be fit
 void splineFactory::fillAttributes(){
-  attribute[0] = mcEvt->fq1rnll[0][2]-mcEvt->fq1rnll[0][1];
-  attribute[1] = mcEvt->fq1rnll[1][2]-mcEvt->fq1rnll[1][1];
+
+//  for (int iatt=0;iatt<fitPars->nAttributes){
+//    attribute
+//  }
+
   return;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 void splineFactory::fillHistograms(int ipt, int isyst){
   //fills histograms after applying systematic error parameter
   
@@ -350,7 +391,8 @@ void splineFactory::fillHistograms(int ipt, int isyst){
   for (int iev=0;iev<mcTree->GetEntries();iev++){
      mcTree->GetEvent(iev);
      fillAttributes();
-     getEvtWeight(isyst);
+    // getEvtWeight(isyst);
+     getEvtWeight(mcEvt,isyst,fitPars->sysPar[isyst]);
      for (int jatt=0;jatt<nAtt;jatt++){
       hMC[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][jatt][ipt]->Fill(attribute[jatt],eventWeight);
     }
@@ -360,18 +402,23 @@ void splineFactory::fillHistograms(int ipt, int isyst){
 };
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Re-weight the event given the value "value" of additional systematic parameter "ipar"
 //Character keys determine the type of systematic error parameters to use
-double splineFactory::getEvtWeight(fQreader* mcEvt,int ipar,double value){
+double splineFactory::getEvtWeight(fQreader* mcevent,int ipar,double value){
   
-  double ww = mcEvt->evtweight;
-  int absmode = TMath::Abs(mcEvt->mode);
-  double Enu     = mcEvt->pmomv[0];
-  int  nutype  = TMath::Abs(mcEvt->ipnu[0]);  
- 
+  //first get the original weight of this event:
+  double ww = mcevent->evtweight;
+
+  /////////////////////////////// 
   //simple TN186 parameterization
   if (!sysParType.CompareTo("tn186")){ 
+    
+    //these values are needed to determine the event weight
+    int absmode = TMath::Abs(mcevent->mode);
+    double Enu     = mcevent->pmomv[0];
+    int  nutype  = TMath::Abs(mcevent->ipnu[0]);  
+
     //CCQE norm bin1 
     if (ipar==0){
       if ((absmode==1)&&(Enu<200.)) ww*=value;
@@ -409,12 +456,43 @@ double splineFactory::getEvtWeight(fQreader* mcEvt,int ipar,double value){
       if (nutype==14) ww*=value;
     }
   }
+
+  /////////////////////////////// 
+  //cosmic muons systematics
+  if (!sysParType.CompareTo("cosmic")){ 
+    
+    //these values are needed to determine the event weight
+    int fvbin = mcevent->nbin; //< fiducial bin of event
+
+    //FV Bin 1
+    if (ipar==0){
+      if (fvbin==0) ww*=value;
+    }
+    //FV Bin 2
+    if (ipar==1){
+      if (fvbin==1) ww*=value;
+    }
+    //FV Bin 3
+    if (ipar==2){
+      if (fvbin==2) ww*=value;
+    }
+
+  }
+
+  //no negative weights
   if (ww<0.) ww = 0.;
+
+   
   eventWeight = ww;
+
+  //////////
   return ww;
 
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
 double splineFactory::getEvtWeight(int ipar){
 //  double ww = 1.;
   double ww = mcEvt->evtweight;
@@ -472,8 +550,10 @@ double splineFactory::getEvtWeight(int ipar){
   eventWeight = ww;
   return ww;
 };
+*/
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Construct from parameter file
 splineFactory::splineFactory(const char*  parfile){
 
@@ -496,10 +576,27 @@ splineFactory::splineFactory(const char*  parfile){
   foutName = runpars->splineFactoryOutput.Data(); //< name of output file with spline parameters
   sysParType = runpars->sysParType; 
 
+  //create histogram manager from file with prefilled histograms
+  makeManagerFromFile(runpars->hFactoryOutput.Data());
+
+  //initialize histogram arrays using the hManager as a template
+  setupHistos();
+
+  //Initialize systematic parameter values
+  // setupSystPars();
+  
+  //get pointer to MC tree
+  TChain *chmc = new TChain("h1");
+  chmc->Add(runpars->hFactoryMCFiles.Data());
+  setMCTree((TTree*)chmc);
+
   return;
 
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Original constructor
 splineFactory::splineFactory(int isamp, int ibin, int icomp, int iatt, int isyst, const char* name){
   nameTag = name;
   nSamp = isamp;

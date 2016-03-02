@@ -357,9 +357,30 @@ void atmFitPars::initPars(const char* systype){
     nSysPars++;
   }
 
+  // no parameters
   if (!stype.CompareTo("none")){
     nSysPars=0;
   }
+
+  // cosmic muon parameters
+  if (!stype.CompareTo("cosmic")){
+    //FV Bin 0 norm
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.10;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //FV Bin 1 norm
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.10;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //FV Bin 2 norm
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.10;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+  }
+
 
   //fix 1D parameter arrays
   for (int isys=0;isys<nSysPars;isys++){

@@ -92,7 +92,7 @@ class histoManager{
   ///////////////////////////
   //debugging
   void showErrorComparison(int isamp, int ibin, int iatt);
-  void showSysParVariation(int isamp, int ibin, int icomp, int iatt, int isys);
+  void showSysParVariation(int isamp, int ibin, int icomp, int iatt, int isys,double varscale=1.0);
 };
 
 #endif

@@ -999,7 +999,7 @@ void histoCompare::LnLFit(){
   //  int kcomp=thePars->compOfPar[ipar];
   //  int katt = thePars->attOfPar[ipar];
     aname = "parameter_";
-    aname.Append(ipar);
+    aname.Append(Form("%d",ipar));
     fit->SetParameter(ipar,aname.Data(),thePars->pars[ipar],parerr,0,0);
   } 
   parindex = 0;
@@ -1158,9 +1158,9 @@ void histoCompare::sumSqPrefit(){
   for (int kbin=0;kbin<nBin;kbin++){
     for (int kcomp=0;kcomp<nComp;kcomp++){
       for (int katt=0;katt<nAtt;katt++){
-        fit->SetParameter(parindex,parName[kbin][kcomp][katt][0].Data(),Par[kbin][kcomp][katt][0],parerr,0,0);
+        fit->SetParameter(parindex,Form("param_%d",parindex),Par[kbin][kcomp][katt][0],parerr,0,0);
         parindex++;
-        fit->SetParameter(parindex,parName[kbin][kcomp][katt][1].Data(),Par[kbin][kcomp][katt][1],parerr,0,0);
+        fit->SetParameter(parindex,Form("param_%d",parindex),Par[kbin][kcomp][katt][1],parerr,0,0);
         parindex++;
       }
     }
@@ -1197,7 +1197,7 @@ void histoCompare::sumSqPrefit(){
 
           //restore default parameters
           Par[jbin][jcomp][jatt][jmod] = parinit;
-          fit->SetParameter(parindex,parName[jbin][jcomp][jatt][jmod].Data(),Par[jbin][jcomp][jatt][jmod],parerr,0,0);
+          fit->SetParameter(parindex,Form("param_%d",parindex),Par[jbin][jcomp][jatt][jmod],parerr,0,0);
 
 
 
@@ -1457,13 +1457,15 @@ double histoCompare::getTotLnL(){
      //    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
      //    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
          TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
-         TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
-         double hnorm = hDataTmp->Integral()/hPrediction->Integral();
+      //   TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
+         TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get un-normalized histogram.
+
+   //      double hnorm = hDataTmp->Integral()/hPrediction->Integral();
 
    //      double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
    //      cout<<"partialL :"<<partialL<<endl;     
 
-         totL+=getLnL(hPrediction,hDataTmp,hnorm);
+         totL+=getLnL(hPrediction,hDataTmp);
       }
     }
   }
@@ -1513,14 +1515,15 @@ double histoCompare::getSumSq(TH1D* h1, TH1D* h2){
 
 ////////////////////////////////////////////////////////////////////
 //evalute log-likelihood between two histograms
-double histoCompare::getLnL(TH1D* h1, TH1D* h2, double hnorm){
+double histoCompare::getLnL(TH1D* h1, TH1D* h2){
   double lnL = 0.;
 //  double diff;
 //  double term;
   double c1; //data
   double c2; //mc
   double errmc; //mcerr
-  double norm = hManager->normFactor; //normalization
+  //double norm = hManager->normFactor; //normalization
+  double norm = 1.0;
 //  double dof=0.;
 //  double quaderr;
 

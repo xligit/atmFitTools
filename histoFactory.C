@@ -224,10 +224,17 @@ void histoFactory::fillAttributesMC(){
 void histoFactory::normalizeHistos(double scale){
   //scale all MC histograms by some scaling factor
   if (scale < 0.){
-    scale = (double)nDataEvents/(double)nMCEvents;
+    cout<<"histoFactory: Finding MC normalization"<<endl;
+    double mcsumweights = 0.;
+    double datasum = (double)nDataEvents;
+    for (int ievt=0;ievt<nMCEvents;ievt++){
+      mcTree->GetEntry(ievt);
+      mcsumweights += fqMC->evtweight; 
+    }
+    scale = datasum/mcsumweights;
   }
   hnorm = new TH1D("hnorm","hnorm",1,0,1);
-  scale = (double)nDataEvents/(double)nMCEvents;
+ // scale = (double)nDataEvents/(double)nMCEvents;
   hnorm->SetBinContent(1,scale);
   for (int ibin=0;ibin<nBins;ibin++){
     for (int isamp=0;isamp<nSamples;isamp++){

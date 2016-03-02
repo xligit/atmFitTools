@@ -78,7 +78,7 @@ void preProcess::processFile(const char* fname,const char* outname){
   TFile* fin = new TFile(fname);
   TTree* intree = (TTree*)fin->Get("h1");
   cout<<"got tree: "<<intree->GetEntries()<<endl;
-  setTree(intree);
+  setTree(intree); //< set pointers to current tree
 
   //make new tree
   cout<<"create file: "<<outputName.Data()<<endl;
@@ -292,7 +292,7 @@ void preProcess::preProcessIt(){
     nbin=getBin();
     if (!passCuts()) continue;
     vis->fillVisVar(); //get visible ring information
-    fillAttributes();
+    fillAttributes(fq);
     ncomponent=getComponent();
     nsample=getSample();
     evtweight=getWeight();
@@ -313,7 +313,7 @@ int preProcess::getBest2RFitID(){
 
   for (int ifit=0;ifit<nfits;ifit++){
     int fitID = TMath::Abs(fq->fqmrifit[ifit]); //< fit fit ID code
-    int diff = (TMath::Abs(fitID-20000000));
+//    int diff = (TMath::Abs(fitID-20000000));
 //    cout<<"diff: "<<diff<<endl;
 //    cout<<"ifit: "<<ifit<<endl;
     if ((TMath::Abs(fitID-20000000))>100) continue; //< we want best 2R fits
@@ -328,16 +328,16 @@ int preProcess::getBest2RFitID(){
 
 ////////////////////////////////////////
 //fills fiTQun attribute array
-void preProcess::fillAttributes(){
-  attribute[0] = fq->fq1rnll[0][2]-fq->fq1rnll[0][1];
+void preProcess::fillAttributes(fqReader* fqevent){
+  attribute[0] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
   int ibest = getBest2RFitID();
-  double best1Rnglnl = fmin(fq->fq1rnll[0][1],fq->fq1rnll[0][2]);
-  attribute[1] = best1Rnglnl-fq->fqmrnll[ibest];
-  attribute[5] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
-  attribute[2] = fq->fq1rmom[0][2];
-  attribute[3] = fq->fq1rpos[0][2][2];
-  double xx = fq->fq1rpos[0][2][0];
-  double yy = fq->fq1rpos[0][2][1];
+  double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
+  attribute[1] = best1Rnglnl-fqevent->fqmrnll[ibest];
+  attribute[5] = fqevent->fq1rnll[1][2]-fqevent->fq1rnll[1][1];
+  attribute[2] = fqevent->fq1rmom[0][2];
+  attribute[3] = fqevent->fq1rpos[0][2][2];
+  double xx = fqevent->fq1rpos[0][2][0];
+  double yy = fqevent->fq1rpos[0][2][1];
   attribute[4] = TMath::Sqrt(xx*xx + yy*yy);
   return;
 }

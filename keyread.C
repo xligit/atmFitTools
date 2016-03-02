@@ -104,7 +104,7 @@ void keyread::processLine(TString sline){
     return;
   }
   else {
-    cout<<sline(0)<<" is not a valid type!!"<<endl;
+ //   cout<<sline(0)<<" is not a valid type!!"<<endl;
     return;
   }
   ///get key name
@@ -122,21 +122,21 @@ void keyread::processLine(TString sline){
   //place key value in appropriate map
   if (stype(0)=='i'){
     ival = sval.Atoi();
-    cout<<"mapping "<<skey.Data()<<" to "<<ival<<endl;
+   // cout<<"mapping "<<skey.Data()<<" to "<<ival<<endl;
     imap[skey.Data()] =  ival;
   }
   if (stype(0)=='f'){
     fval = sval.Atof(); 
-    cout<<"mapping "<<skey.Data()<<" to "<<fval<<endl;
+  //  cout<<"mapping "<<skey.Data()<<" to "<<fval<<endl;
     fmap[skey.Data()]=fval;
   }
   if (stype(0)=='d'){
     dval=sval.Atof();
-    cout<<"mapping "<<skey.Data()<<" to "<<dval<<endl;
+  //  cout<<"mapping "<<skey.Data()<<" to "<<dval<<endl;
     dmap[skey.Data()]=dval;
   }
   if (stype(0)=='s'){
-    cout<<"mapping "<<skey.Data()<<" to "<<sval.Data()<<endl;
+//    cout<<"mapping "<<skey.Data()<<" to "<<sval.Data()<<endl;
     smap[skey.Data()]=sval;
   }
    

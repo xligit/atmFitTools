@@ -14,13 +14,13 @@
 
 ///////////////////////////////////////////////////
 //make some useful histograms for debugging
-void histoManager::showSysParVariation(int isamp, int ibin, int icomp, int iatt, int ipar){
+void histoManager::showSysParVariation(int isamp, int ibin, int icomp, int iatt, int ipar,double varscale){
 
    //get array for parameter values to try
    const int npts = 15;
    double testval[npts];
-   double minval =  fitPars->parUnc[ipar] - 3.*fitPars->parUnc[ipar];
-   double maxval =  fitPars->parUnc[ipar] + 3.*fitPars->parUnc[ipar];
+   double minval =  fitPars->pars[ipar] - 3.*varscale*fitPars->parUnc[ipar];
+   double maxval =  fitPars->pars[ipar] + 3.*varscale*fitPars->parUnc[ipar];
    double dval  = (maxval-minval)/((double)npts);
    double val = 0.;
    double currentval = fitPars->getParameter(ipar);
@@ -50,7 +50,7 @@ void histoManager::showSysParVariation(int isamp, int ibin, int icomp, int iatt,
    }
 
    //draw 2D histogram
-   h2d->GetZaxis()->SetRangeUser(0,h2d->GetMaximum());
+   if (h2d->GetMaximum()>0.) h2d->GetZaxis()->SetRangeUser(0,h2d->GetMaximum());
    h2d->SetContour(50);
    h2d->Draw("lego2");
    fitPars->setParameter(ipar,currentval); 
@@ -493,7 +493,7 @@ void  histoManager::initHistos(){
 
 void histoManager::readSplinesFromFile(const char* fname,int nsyspartot){
   TString splinename;
-  //make splines
+  //make empty splines
   for (int ibin=0;ibin<nBins;ibin++){
     for (int isamp=0;isamp<nSamples;isamp++){
       for (int icomp=0;icomp<nComponents;icomp++){
@@ -513,6 +513,7 @@ void histoManager::readSplinesFromFile(const char* fname,int nsyspartot){
   //build the splines
   double Y[parReader->npoints];
   double X[parReader->npoints];
+  cout<<"histoManager: Bulding histogram splines"<<endl;
   for (int ispline=0;ispline<splinePars->GetEntries();ispline++){
     splinePars->GetEntry(ispline);
     for (int hbin=0;hbin<=parReader->nhistobins;hbin++){
@@ -525,7 +526,8 @@ void histoManager::readSplinesFromFile(const char* fname,int nsyspartot){
 //      cout<<parReader->ncomponent<<endl;
 //      cout<<parReader->nattribute<<endl;
 
-//      cout<< theSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nattribute]<<endl;
+//      cout<< theSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nattribute]<<endl`;
+  //    cout<<"!!!"<<endl;
       theSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nattribute]
                   ->buildSpline(hbin,parReader->nsystpar,X,Y,parReader->npoints);
 

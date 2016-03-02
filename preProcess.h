@@ -88,7 +88,7 @@ class preProcess{
   void setupNewTree();
   void preProcessIt();
   int passCuts();
-  void fillAttributes();
+  void fillAttributes(fqReader* fqevent);
   int absmode;
   int getComponent();
   int getSample();
