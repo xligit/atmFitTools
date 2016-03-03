@@ -15,7 +15,7 @@
 
   //run spline factory form parameter file
   splineFactory *sfact = new splineFactory("cosmicpars.dat"); //< atmospheric pars
-//  sfact->runSplineFactory();
+  sfact->runSplineFactory();
 
 
 }

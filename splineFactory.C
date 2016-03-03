@@ -4,6 +4,7 @@
 #include "histoManager.C"
 #include "sharedPars.C"
 #include "atmFitPars.C"
+#include "getSystWeight.C"
 
 #define NSYSTMAX 10
 #define NHBINSMAX 300
@@ -410,6 +411,19 @@ double splineFactory::getEvtWeight(fQreader* mcevent,int ipar,double value){
   //first get the original weight of this event:
   double ww = mcevent->evtweight;
 
+  //get the additional weight from systematic parameters
+  double systweight = getSystWeight(sysParType.Data(),mcevent,ipar,value);
+
+  //apply additional weight
+  ww *= systweight;
+
+  //set internal variable
+  eventWeight = ww; 
+
+  //////////
+  return ww;
+
+/*
   /////////////////////////////// 
   //simple TN186 parameterization
   if (!sysParType.CompareTo("tn186")){ 
@@ -482,11 +496,8 @@ double splineFactory::getEvtWeight(fQreader* mcevent,int ipar,double value){
   //no negative weights
   if (ww<0.) ww = 0.;
 
-   
-  eventWeight = ww;
+ */
 
-  //////////
-  return ww;
 
 }
 

@@ -1,3 +1,4 @@
+#ifndef fQreader_cxx
 #define fQreader_cxx
 #include "fQreader.h"
 #include <TH2.h>
@@ -41,3 +42,5 @@ void fQreader::Loop()
       // if (Cut(ientry) < 0) continue;
    }
 }
+
+#endif
