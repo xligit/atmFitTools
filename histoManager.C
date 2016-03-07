@@ -375,6 +375,37 @@ histoManager::histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int
   return;
 }
 
+
+//constructor from a parameter file
+histoManager::histoManager(const char* parfile){
+  
+  //read in parameters
+  sharedPars* runPars = new sharedPars(parfile);
+  runPars->readParsFromFile();
+  
+  //read in previously created histograms
+  int nsamp = runPars->nSamples;
+  int nbin  = runPars->nFVBins;
+  int ncomp = runPars->nComponents;
+  int natt  = runPars->nAttributes;
+  readFromFile(runPars->hFactoryOutput.Data(),nsamp,nbin,ncomp,natt);
+
+  //setup fit parameters
+  fitPars = new atmFitPars(parfile);
+  
+
+  nameTag = runPars->globalRootName.Data();
+
+  
+  if (runPars->useSplinesFlg){
+    readSplinesFromFile(runPars->splineFactoryOutput.Data(),runPars->nSysPars);
+  }
+
+  return;
+}
+
+
+
 void histoManager::setHistogram(int isamp, int ibin, int icomp, int iatt, int dataflg, TH1D* h){
   if (!dataflg){
     hMC[isamp][ibin][icomp][iatt] = h; 

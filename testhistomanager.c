@@ -35,10 +35,12 @@ atmFitPars* fitpars = new atmFitPars("cosmicpars.dat");
 //hm->readSplinesFromFile("./rootfiles/nom2_splineFactoryOut.root",9);
 
 
-histoManager* hm = new histoManager("./rootfiles/cosmicmu_weight_histograms.root",1,3,1,2); 
-hm->setFitPars(fitpars);
-hm->readSplinesFromFile("./rootfiles/cosmic_splines.root",3);
+//histoManager* hm = new histoManager("./rootfiles/cosmicmu_weight_histograms.root",1,3,1,2); 
+//hm->setFitPars(fitpars);
+//hm->readSplinesFromFile("./rootfiles/cosmic_splines.root",3);
 
+histoManager* hm = new histoManager("cosmicpars.dat");
+ 
 
 //hm->setFitPars(fitpars);
 

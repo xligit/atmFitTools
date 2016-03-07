@@ -60,21 +60,21 @@ d,PreProcInGateCut=1000;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HFACTORY PARAMETERS $$$$$
 s,hFactoryOuputDir=./rootfiles/;
-s,hFactoryOutput=./rootfiles/cosmicmu_noweight_histograms.root;
-s,hFactoryMCFiles=./rootfiles/cosmicmu_noweight*_ppmc*.root;
+s,hFactoryOutput=./rootfiles/cosmicmu_weight_histograms.root;
+s,hFactoryMCFiles=./rootfiles/cosmicmu_weight*_ppmc*.root;
 s,hFactoryDataFiles=./rootfiles/cosmicmu_noweight*_ppdata*.root;
 
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HISTOGRAM BINNING $$$$$$$
-i,nBinsAtt0=25;
-i,nBinsAtt1=25;
+i,nBinsAtt0=75;
+i,nBinsAtt1=75;
 i,nBinsAtt2=20;
 i,nBinsAtt3=20;
 i,nBinsAtt4=30;
-d,xMinAtt0=-300.;
-d,xMaxAtt0=300.;
-d,xMinAtt1=-200.;
-d,xMaxAtt1=200.;
+d,xMinAtt0=-3000.;
+d,xMaxAtt0=3000.;
+d,xMinAtt1=-2000.;
+d,xMaxAtt1=2000.;
 d,xMinAtt2=0.;
 d,xMaxAtt2=9000;
 d,xMinAtt3=-2000;
@@ -102,6 +102,6 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ POSTFIT PARAMETERS $$$$$$$$$
 s,MCMCFile=mcmctree.root;
 i,MCMCBurnIn=10000;
-i,NMCEvents=500000;
+i,NMCEvents=50000;
 i,NDataEvents=500000;
-i,NMCMCPts=10;
+i,NMCMCPts=19;

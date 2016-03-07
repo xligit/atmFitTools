@@ -96,6 +96,7 @@ class postfitCalculator{
   void MCMCLooperTemplate();
   void cosmicPostFitAnalysis();
   void attributeAnalysis();
+  void attributeAnalysisFast();
   void makeHistoArray(TH1D* harr[], int nhistos, const char* name, int npts, double xmin, double xmax);
   void drawPostFitHisto(int isamp,int ibin, int iatt);
   void drawPostFitHistoAll(int isamp,int ibin, int iatt);
@@ -303,6 +304,92 @@ void postfitCalculator::makeHistoArray(TH1D* harr[], int nhistos, const char* na
   return;
 }
 
+void postfitCalculator::attributeAnalysisFast(){
+
+  //get number of total steps minus burn-in
+  int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
+  if (nsteps<(NMCMCPts)){
+    cout<<"Not enough steps in MCMC path!"<<endl;
+    return;
+  }
+
+  //loop over points (uniform sampling)
+  int dstep = nsteps/NMCMCPts;
+  int istep = MCMCBurnIn;
+  int samppts[10000];
+
+  //get array of points to sample from
+  for (int i=0;i<NMCMCPts;i++){
+    samppts[i] = istep;
+    istep+=dstep;
+  } 
+
+  //find the number of MC events to use
+  if ((NMCEvents<=0)||(NMCEvents>mctree->GetEntries())) NMCEvents = mctree->GetEntries(); 
+  
+  fitpars->resetDefaults(); //< set parameters to default values (no modifications to MC)
+
+  //set MC defaults to first point
+  for (int ibin=0;ibin<fitpars->nBins;ibin++){
+    for  (int isamp=0;isamp<fitpars->nSamples;isamp++){
+      for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
+        TH1D* htmp = hManager->getSumHistogramMod(isamp,ibin,iatt);
+        for (int hbin=1;hbin<=htmp->GetNbinsX();hbin++){
+          hMCMod[isamp][ibin][iatt][0]->SetBinContent(hbin,htmp->GetBinContent(hbin));
+          hMCMod[isamp][ibin][iatt][0]->SetBinError(hbin,htmp->GetBinError(hbin));
+        }
+      }
+    }
+  }
+
+
+  //loop over number of MCMC points
+  for (int ipt=1;ipt<NMCMCPts;ipt++){
+    currentMCMCPoint = samppts[ipt];
+    setParsFromMCMC(currentMCMCPoint); //< sets parameters from current step of MCMC path
+     for (int ibin=0;ibin<fitpars->nBins;ibin++){
+       for  (int isamp=0;isamp<fitpars->nSamples;isamp++){
+        for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
+          TH1D* htmp = hManager->getSumHistogramMod(isamp,ibin,iatt);
+          for (int hbin=1;hbin<=htmp->GetNbinsX();hbin++){
+            hMCMod[isamp][ibin][iatt][ipt]->SetBinContent(hbin,htmp->GetBinContent(hbin));
+            hMCMod[isamp][ibin][iatt][ipt]->SetBinError(hbin,htmp->GetBinError(hbin));
+          }
+        }
+      }
+    }
+  }
+
+  /*
+  // calculate normalization of MC using sum of weights
+  double mcsumweights = 0.;
+  for (int ievt=0;ievt<NMCEvents;ievt++){
+    currentMCEvent = ievt;
+    mctree->GetEntry(currentMCEvent); //< read in default MC event
+    mcsumweights += mcreader->evtweight;
+  }
+
+  double norm = (double)datatree->GetEntries()/mcsumweights; //< this is the norm factor
+  // scale all modified histograms
+  */
+
+  for (int ibin=0;ibin<runPars->nFVBins;ibin++){
+    for (int isamp=0;isamp<runPars->nSamples;isamp++){
+      for (int iatt=0;iatt<runPars->nAttributes;iatt++){
+        hMCMod[isamp][ibin][iatt][0]->SetLineColor(kRed);
+        for (int ipt=1;ipt<NMCMCPts;ipt++){
+          hMCMod[isamp][ibin][iatt][ipt]->SetLineColor(kCyan+1);
+        }
+      }
+    }
+  }
+
+  return;
+
+}
+
+
+
 void postfitCalculator::attributeAnalysis(){
 
   //get number of total steps minus burn-in
@@ -430,6 +517,10 @@ void postfitCalculator::attributeAnalysis(){
   return;
 
 }
+
+
+
+
 
 ///////////////////////////////////////////////////
 //runs a post-fit analysis for the stopping cosmics
@@ -586,12 +677,20 @@ postfitCalculator::postfitCalculator(const char* parfile){
   //set parameter file name
   parFileName = parfile;
 
+
+  //setup atmFitpars
+  fitpars = new atmFitPars(parfile); 
+
+
   //setup histogram manager
-  hManager = new histoManager(runPars->hFactoryOutput.Data(),
-                              runPars->nSamples,
-                              runPars->nFVBins,
-                              runPars->nComponents,
-                              runPars->nAttributes);
+//  hManager = new histoManager(runPars->hFactoryOutput.Data(),
+//                              runPars->nSamples,
+//                              runPars->nFVBins,
+//                              runPars->nComponents,
+//                              runPars->nAttributes);
+  hManager = new histoManager(parfile);
+  hManager->setFitPars(fitpars); //< bind histoManager to the previously created parameters
+
   initHistos(); //< initilize attribute histograms using hmanager as a template 
 
 
@@ -618,8 +717,6 @@ postfitCalculator::postfitCalculator(const char* parfile){
   setDataTree(trdata);
   normFactor = (double)datatree->GetEntries()/(double)mctree->GetEntries(); 
   cout<<"postfitCalculator: normalization: "<<normFactor<<endl;
-  //setup atmFitpars
-  fitpars = new atmFitPars(parfile); 
 
   //get number of attributes in post fit
   nAttributes = runPars->nAttributes;  
@@ -1060,8 +1157,8 @@ double  postfitCalculator::getEvtWeight(){
 
   /////////////////////////////////////////////
   //get event weights
-  // double ww = mcreader->evtweight;
-  double ww = 1.;
+   double ww = mcreader->evtweight;
+  //double ww = 1.;
   //loop over all flux and xsec parameters
   for (int isyspar=0;isyspar<fitpars->nSysPars;isyspar++){
 //  for (int isyspar=0;isyspar<1;isyspar++){

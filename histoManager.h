@@ -13,6 +13,7 @@
 #include "hSplines.C"
 #include "atmFitPars.C"
 #include "histoTransforms.C"
+#include "sharedPars.C"
 
 #define NSAMPMAX 5
 #define NCOMPMAX 20
@@ -29,6 +30,7 @@ class histoManager{
   histoManager(int nsampl,int nbins,int ncomp,const char* name=""); //creates blank histogram manager
   histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int natt); //recreates a histoManager from a file
   histoManager(int nptsmc, int nptsdata); //< for unit testing, makes histoManager with gaussian histograms 
+  histoManager(const char* parfile); //< builds a histogram manager from histograms and values in parameter file
 
   ///////////////////////////
   //INTERNAL VARIABLES//
