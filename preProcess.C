@@ -116,7 +116,7 @@ float preProcess::getWeight(){
 
 
   if (useWeights){
-    evtweight = gWeight->Eval(attribute[2],0,"s");
+    evtweight = gWeight->Eval(fq->fq1rmom[0][2],0,"s");
   }
 
   return evtweight;
@@ -333,8 +333,9 @@ void preProcess::fillAttributes(fqReader* fqevent){
   int ibest = getBest2RFitID();
   double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
   attribute[1] = best1Rnglnl-fqevent->fqmrnll[ibest];
+  attribute[2] = wall;
   attribute[5] = fqevent->fq1rnll[1][2]-fqevent->fq1rnll[1][1];
-  attribute[2] = fqevent->fq1rmom[0][2];
+//  attribute[2] = fqevent->fq1rmom[0][2];
   attribute[3] = fqevent->fq1rpos[0][2][2];
   double xx = fqevent->fq1rpos[0][2][0];
   double yy = fqevent->fq1rpos[0][2][1];
