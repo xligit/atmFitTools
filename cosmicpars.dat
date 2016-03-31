@@ -1,0 +1,85 @@
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$  PARAMETER FILE FOR FITS $
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$  FORMAT:<type>,<name>=<value>;
+$  FIRST CHARACTER DENOTES DATA TYPE
+$  SUPPORTED TYPES:
+$	'i' -> integer
+$	'f' -> float
+$	'd' -> double
+$	's' -> string
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ GLOBAL PARAMETERS $$$$$$$
+i,nSamples=1;
+i,nFVBins=3;
+i,nComponents=1;
+i,nAttributes=3;
+i,nSysPars=0;
+s,globalRootName=cosmicmu_fv;
+s,FVBinName0=towall_lt500;
+s,FVBinName1=towall_500to1000;
+s,FVBinName2=towall_gt1000;
+s,fQAttName0=PIDse1;
+s,fQAttName1=PIDse2;
+s,fQAttName2=RCparam;
+s,fQAttName3=NRingMuLike;
+s,fQAttname4=EMomse2;
+s,MCComponentName0=Total;
+s,sampleName0=NoDeccay;
+s,sampleName1=Decay;
+s,sampleName2=InGate;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ PREPROC PARAMETERS $$$$$$
+s,preProcessOutDir=./rootfiles/;
+s,preProcessFilesMC=/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/mc/stopmu_mc_1390_for_atmnu_test_064*fQ.root;
+s,preProcessFilesData=/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/data/patmue.run072*.root;
+$ CODE FOR FV BINNING
+$   0 -> SIMPLE (3 FV BINS BASED ON WALL CUTS)
+$   1 -> COSMIC (SORT BY SIDE VS TOP ENTERING)
+i,preProcessFVBinning=3;
+$ MC COMPONENT DEFINITIONS
+$   0 -> VISIBLE (CUTS ON VISBLE # RINGS FROM VISRING
+$   1 -> COSMIC  (CUTS ON SUBEV #)
+i,preProcessMCComponents=1;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ HFACTORY PARAMETERS $$$$$
+s,hFactoryOuputDir=./rootfiles/;
+s,hFactoryOutput=./rootfiles/cosmicmu_fv_histograms.root;
+s,hFactoryMCFiles=./rootfiles/cosmicmu_fv*_ppmc*.root;
+s,hFactoryDataFiles=./rootfiles/cosmicmu_fv*_ppdata*.root;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ HISTOGRAM BINNING $$$$$$$
+i,nBinsAtt0=20;
+i,nBinsAtt1=20;
+i,nBinsAtt2=20;
+i,nBinsAtt3=20;
+i,nBinsAtt4=20;
+d,xMinAtt0=-1000.;
+d,xMaxAtt0=1000.;
+d,xMinAtt1=-400.;
+d,xMaxAtt1=600.;
+d,xMinAtt2=-2000.;
+d,xMaxAtt2=1000;
+d,xMinAtt3=-1000.;
+d,xMaxAtt3=9000;
+d,xMinAtt4=-100.;
+d,xMaxAtt4=200;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ SPLINE FACTORY PARAMETERS $$
+s,splineFactoryOutput=./rootfiles/feb1test_splines.root;
+$  CODE FOR THE TYPE OF SYSTEMATIC ERROR PARAMETERIZATION
+$    0 -> SIMPLE TN186 PARAMETERIZATION 
+s,sysParType=none;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ FIT & MCMC PARAMETERS $$$$$$
+i,MCMCNSteps=10000;
+d,MCMCTunePar=0.1;
+i,fixAllSmearFlg=0;
+i,useSplinesFlg=0;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ POSTFIT PARAMETERS $$$$$$$$$
+s,MCMCFile=mcmctree.root;
+i,MCMCBurnIn=10000;
+i,NMCEvents=50000;
+i,NMCMCPts=9;

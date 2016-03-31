@@ -1,0 +1,81 @@
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$  PARAMETER FILE FOR FITS $
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$  FORMAT:<type>,<name>=<value>
+$  FIRST CHARACTER DENOTES DATA TYPE
+$  SUPPORTED TYPES:
+$	'i' -> integer
+$	'f' -> float
+$	'd' -> double
+$	's' -> string
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ GLOBAL PARAMETERS $$$$$$$
+i,nSamples=3;
+i,nFVBins=3;
+i,nComponents=7;
+i,nAttributes=1;
+i,nSysPars=9;
+s,globalRootName=feb1test;
+s,FVBinName0=core;
+s,FVBinName1=wall_80_to_200;
+s,FVBinName2=wall_lt_80;
+s,fQAttName0=EvsMuPIDRatio;
+s,MCComponentName0=CC1e;
+s,MCComponentName1=CC1mu;
+s,MCComponentName2=CCeOther;
+s,MCComponentName3=CCmuOther;
+s,MCComponentName4=CCOther;
+s,MCComponentName5=NCpi0;
+s,MCComponentName6=NCOther;
+s,sampleName0=1subevent;
+s,sampleName1=2subevent;
+s,sampleName2=gt3subevent;
+s,sysParName0=CCQE_0to200_xsec;
+s,sysParName1=CCQE_200to400_xsec;
+s,sysParName2=CCQE_400to800_xsec;
+s,sysParName3=CCQE_gt800_xsec;
+s,sysParName4=subGeVFluxNorm;
+s,sysParName5=multiGeVFluxNorm;
+s,sysParName6=CCnonQE_xsec;
+s,sysParName7=NC_xsec;
+s,sysParName8=Mu_vs_E_ratio;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ PREFIT PARAMETERS $$$$$$$
+s,preProcessOutDir=./rootfiles/;
+s,preProcessFilesMC=/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.00*.root;
+s,preProcessFilesData=/nfs/data41/t2k/amissert/atmos/fitqunRC/atmospheric/MC/feb13sk4_MassProd.reduc.07*.root;
+$ CODE FOR FV BINNING
+$   0 -> SIMPLE (3 FV BINS BASED ON WALL CUTS)
+i,preProcessFVBinning=0;
+$ MC COMPONENT DEFINITIONS
+$   0 -> VISIBLE (CUTS ON VISBLE # RINGS FROM VISRING
+i,preProcessMCComponents=0;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ HFACTORY PARAMETERS $$$$$
+s,hFactoryOuputDir=./rootfiles/;
+s,hFactoryOutput=./rootfiles/feb1test_histograms.root;
+s,hFactoryMCFiles=./rootfiles/feb1test_ppmc*.root;
+s,hFactoryDataFiles=./rootfiles/feb1test_ppdata*.root;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ HISTOGRAM BINNING $$$$$$$
+i,nBinsAtt0=50;
+i,nBinsAtt1=50;
+i,nBinsAtt2=50;
+d,xMinAtt0=-3000.;
+d,xMinAtt1=-3000.;
+d,xMaxAtt0=6000.;
+d,xMaxAtt1=6000.;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ SPLINE FACTORY PARAMETERS $$
+s,splineFactoryOutput=./rootfiles/feb1test_splines.root;
+$  CODE FOR THE TYPE OF SYSTEMATIC ERROR PARAMETERIZATION
+$    0 -> SIMPLE TN186 PARAMETERIZATION 
+s,sysParType=tn186;
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$ FIT & MCMC PARAMETERS $$$$$$
+i,MCMCNSteps=10000;
+d,MCMCTunePar=0.1;
+i,fixAllSmearFlg=0;
+i,useSplinesFlg=1;
+
