@@ -1,0 +1,11 @@
+# exclude everything below
+*.so
+*.d
+*.*~
+rootfiles
+*_ACLiC_dict.h
+*_ACLiC_linkdef.h
+*.root
+*.eps
+*.pdf
+*.png
