@@ -22,11 +22,9 @@ using namespace std;
 //////////////////////////////////////////////////////////////
 //Class to take care of preprocessing of all data and MC files
 //Usage:
-//  1) Specify parameters in sharedpars.dat file.  These parameters 
-//     specify the files to be run on, where the output should go,
-//     and which FV binning and MC component definitions to use
-//  2) Call runPreprocess()
-
+//	1) create instance using preProcess()
+//	2) specify parameter file using setParFileName(<name>)
+//      3) run using runPreProcessing()
 class preProcess{
   public:
 
@@ -53,6 +51,7 @@ class preProcess{
   int MCComponents;
   int FVBinning;
   int nFiles;
+  int MCSamples; //< flag for sample definitions
   TH1D* hWeight;
   TGraph* gWeight;
   int useWeights;

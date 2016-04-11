@@ -23,7 +23,10 @@ int natt=2;
 //chmc->Add("./rootfiles/atmfit_ppmc*.root");
 //chdata->Add("./rootfiles/nominal2_Data*.root");
 //chmc->Add("./rootfiles/nominal2_MC*.root");
-atmFitPars* fitpars = new atmFitPars("cosmicpars.dat");
+//atmFitPars* fitpars = new atmFitPars("cosmicpars.dat");
+atmFitPars* fitpars = new atmFitPars("atmpars2.dat");
+
+
 //fitpars->initPars("tn186");
 //TTree* trdata = (TTree*)chdata;
 //TTree* trmc   = (TTree*)trdata;
@@ -39,7 +42,9 @@ atmFitPars* fitpars = new atmFitPars("cosmicpars.dat");
 //hm->setFitPars(fitpars);
 //hm->readSplinesFromFile("./rootfiles/cosmic_splines.root",3);
 
-histoManager* hm = new histoManager("cosmicpars.dat");
+//histoManager* hm = new histoManager("cosmicpars.dat");
+histoManager* hm = new histoManager("atmpars2.dat");
+
  
 
 //hm->setFitPars(fitpars);

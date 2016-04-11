@@ -138,32 +138,35 @@ int preProcess::getBin(){
   towall = calcToWall(&vpos,&vdir);
 
 
+  ////////////////////////////////
+  // separate into bins by FVBinning parameter
 
-  //separate into bins
-  //"simple" FV Binning
+  //////////////////////////////////////////
+  //"simple" FV Binning for atm
   if (FVBinning==0){
-  //  if ((wall<200.)&&(wall>80.)) return 1;
-   // if (wall<80.) return 2;
+    if ((wall<200.)&&(wall>80.)) return 1;
+    if (wall<80.) return 2;
     return 0;
   }
 
+  ////////////////////////////////////////
+  // cosmic binning by entering surface
+  if (FVBinning==1){
+    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
+    double Zrec = fq->fq1rpos[0][2][2];
+    double Zcut = 1410;
+    double Rcut = 1290;
+    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
+    if ((Zrec<Zcut)) return 1; //< side entering
+    if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
+  }
 
-  //cosmic binning
-//  if (FVBinning==1){
-//    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
-//    double Zrec = fq->fq1rpos[0][2][2];
-//    double Zcut = 1410;
-//    double Rcut = 1290;
-//    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
-//    if ((Zrec<Zcut)) return 1; //< side entering
- //   if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
-//  }
-
-
-  //no binning
-//  if (FVBinning==2){return 0;}
-
-  //towall binning
+  //////////////////////////////////
+  // all in one bin
+  if (FVBinning==2){return 0;}
+  
+  //////////////////////////////////
+  // towall binning for cosmics
   if (FVBinning==3){
     if (towall<500.) return 0;
     if ((towall>-500)&&(towall<1000)) return 1;
@@ -177,49 +180,32 @@ int preProcess::getBin(){
 /////////////////////////////////
 //Simple initial cuts
 int preProcess::passCuts(){
- 
-  //OD cut for atmospheric evetns
-//  if (MCComponents==0){
-//    if ((fq->nhitac)>16) return 0;
-//  }
 
-  //minimum energy cut
-//  if ((fq->fqtotq[0]<80)) return 0;
-
-  //cosmic cuts
-//  if (MCComponents==1){
-//    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
-//    double ingatethresh = 1000.;
-//    if ((fq->fqnse)!=2) return 0;
-//    if (tdecay<ingatethresh) return 0;
-//    if (fq->fq1rmom[0][1]<100.) return 0;
-//    if (fq->fq1rmom[1][1]>100.) return 0;
-//    if (fq->fq1rmom[1][1]<15.)  return 0;
-
-    //towall cuts
- //   if (towall<0.) return 0; 
-//  }
-
-
+  /////////////////////
   //Fully Contained Cut
   if (fq->nhitac>NHITACMax) return 0;
 
+  //////////////////////
   //Visible Energy Cut
   if (fq->fq1rmom[0][1]<EVisMin) return 0;
 
+  ////////////////
   //FV Basic Cuts
   if (wall<WallMin) return 0; 
   if (towall<ToWallMin) return 0;
 
+  /////////////////////////
   //Number of subevent cuts
   if (fq->fqnse>NSEMax) return 0;
   if (fq->fqnse<NSEMin) return 0;
  
+  /////////////
   //In-gate cut
   double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
   if (tdecay<InGateMin) return 0;
 
-
+  ////////////////////
+  //all cuts passed!!
   return 1;
 }
 
@@ -228,7 +214,7 @@ int preProcess::passCuts(){
 int preProcess::getSample(){
 
   //atmospheric selections
-  if (MCComponents==0){
+  if (MCSamples==0){
     if (fq->fqnse==1) return 0;
     if (fq->fqnse==2) return 1;
     if (fq->fqnse>2)  return 2;
@@ -254,12 +240,13 @@ int preProcess::getSample(){
 //get code for MC true component type
 int preProcess::getComponent(){
 
-  //useful for cuts
+  ////////////////////////////
+  // useful for cuts
   absmode = TMath::Abs(fq->mode);
   int absnu   = TMath::Abs(fq->ipnu[0]);
  
-  //visible event selection
-  //charged current
+  /////////////////////////////////////////
+  // visible + NEUT event selection for atm
   if (MCComponents==0){
     if ((absmode>0)&&(absmode<30)){
       if ((vis->nve==1)&&((vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 0; //CC single e
@@ -274,6 +261,23 @@ int preProcess::getComponent(){
     }
   }
 
+  /////////////////////////////////////////
+  // visible only components for atm
+  if (MCComponents==2){
+
+    // single electron
+    if ((vis->nve==1)&&(vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 0;
+    // single muon
+    if ((vis->nve==0)&&(vis->nvp==0)&&(vis->nvmu==1)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 1;
+    // electron + other
+    if (vis->nve==1) return 2;
+    // muon + other
+    if (vis->nvmu==1) return 3;
+    // pi0 with no other
+    if ((vis->nvpi0==1)&&(vis->nvpip==0)) return 4;
+    // other
+    return 5;
+  }
 
   //cosmic selectoin
   if (MCComponents==1){
@@ -418,6 +422,7 @@ void preProcess::runPreProcessing(){
   cout<<"nametag: "<<nameTag.Data()<<endl;
   FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
   MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
+  MCSamples = runpars->preProcessMCSamples; //< flag for MC sample definitions in getSample()
   NHITACMax = runpars->PreProcFCCut;
   EVisMin = runpars->PreProcEVisCut;
   WallMin = runpars->PreProcWallMinCut;

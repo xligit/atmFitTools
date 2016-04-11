@@ -44,6 +44,7 @@ class sharedPars{
   TString preProcessFilesData;
   TString preProcessOutDir;
   int preProcessMCComponents;
+  int preProcessMCSamples;
   int preProcessFVBinning; 
   int PreProcFCCut;
   double PreProcEVisCut;
@@ -93,6 +94,7 @@ class sharedPars{
   TString MCMCFile;
   TString sysParType;
   int NDataEvents;
+ 
 };
 
 
@@ -134,7 +136,6 @@ void sharedPars::readParsFromFile(const char* filename){
   fQAttName2=kr->getKeyS("fQAttName2");
   fQAttName3=kr->getKeyS("fQAttName3");
   fQAttName4=kr->getKeyS("fQAttName4");
-
   hFactoryDataFiles=kr->getKeyS("hFactoryDataFiles");
   hFactoryMCFiles=kr->getKeyS("hFactoryMCFiles");
   hFactoryOutput=kr->getKeyS("hFactoryOutput");
@@ -167,6 +168,7 @@ void sharedPars::readParsFromFile(const char* filename){
   preProcessFilesData = kr->getKeyS("preProcessFilesData"); 
   preProcessMCComponents = kr->getKeyI("preProcessMCComponents");
   preProcessFVBinning = kr->getKeyI("preProcessFVBinning");
+  preProcessMCSamples = kr->getKeyI("preProcessMCSamples");
   globalRootName = kr->getKeyS("globalRootName");
   splineFactoryOutput = kr->getKeyS("splineFactoryOutput");
   sysParType = kr->getKeyS("sysParType");
