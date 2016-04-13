@@ -11,7 +11,8 @@
 #include "FVCalculators.C"
 #include "sharedPars.C"
 #include "TGraph.h"
-
+#include <map>
+#include <string>
 
 using namespace std;
 
@@ -55,6 +56,9 @@ class preProcess{
   TH1D* hWeight;
   TGraph* gWeight;
   int useWeights;
+  map<string,double> attributeMap;
+  TString attributeList[5];
+  int nAttributes;
 
   ////////////////////////
   //for cuts
@@ -88,11 +92,12 @@ class preProcess{
   void preProcessIt();
   int passCuts();
   void fillAttributes(fqReader* fqevent);
+  void fillAttributeMap(fqReader* fqevent);
   int absmode;
   int getComponent();
   int getSample();
   int getBin();
-  int getBest2RFitID();
+  int getBest2RFitID(); //< returns best 2R fit ID for current event
   float getWeight();
   void processFile(const char* fname,const char* outname="");
   void processAllFiles(TChain* chain);

@@ -283,7 +283,9 @@ int preProcess::getComponent(){
   if (MCComponents==1){
     return 0;
   }
-
+  
+  cout<<"preProcess: ERROR MC component not defined!";
+  return -1;
 }
 
 //loop over all events and sort into bins, samples and components
@@ -333,7 +335,18 @@ int preProcess::getBest2RFitID(){
 ////////////////////////////////////////
 //fills fiTQun attribute array
 void preProcess::fillAttributes(fqReader* fqevent){
-  attribute[0] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
+
+  // Fill the cmap that matches attribute names to values
+  fillAttributeMap(fqevent);
+
+  // fill the attribute[] array with the values you want to use for this analysis
+  for (int i=0; i<nAttributes; i++){
+    double value = attributeMap[attributeList[i].Data()];
+    attribute[i] = value;
+  }
+
+
+/*  attribute[0] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
   int ibest = getBest2RFitID();
   double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
   attribute[1] = best1Rnglnl-fqevent->fqmrnll[ibest];
@@ -344,6 +357,39 @@ void preProcess::fillAttributes(fqReader* fqevent){
   double xx = fqevent->fq1rpos[0][2][0];
   double yy = fqevent->fq1rpos[0][2][1];
   attribute[4] = TMath::Sqrt(xx*xx + yy*yy);
+  */
+
+  return;
+}
+
+
+////////////////////////////////////////
+//fills cmap of possible fitqun attributes
+void preProcess::fillAttributeMap(fqReader* fqevent){
+
+  // PID e vs. mu ratio of first subevent
+  attributeMap["fqelike"] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
+
+  // Ring Counting (RC) parameter
+  int ibest = getBest2RFitID();
+  double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
+  attributeMap["fqrcpar"] = best1Rnglnl-fqevent->fqmrnll[ibest];
+
+  // Reconstructed distance from wall
+  attributeMap["fqwall"] = wall;
+
+  // Reconstructed momentum (muon)
+  attributeMap["fq1rmumom"] = fqevent->fq1rmom[0][2];
+
+  // Reconstructed momentum (electron)
+  attributeMap["fq1remom"] = fqevent->fq1rmom[0][1];
+
+  // pi0 likelihood
+  attributeMap["fqpi0like"] = fqevent->fqpi0nll[0];
+
+  // pi0 mass
+  attributeMap["fqpi0mass"] = fqevent->fqpi0mass[0];
+
   return;
 }
 
@@ -430,6 +476,14 @@ void preProcess::runPreProcessing(){
   NSEMax = runpars->PreProcNseMax0;
   NSEMin = runpars->PreProcNseMin;
   InGateMin = runpars->PreProcInGateCut; 
+  // list of attributes to use
+  nAttributes = runpars->nAttributes;
+  attributeList[0] = runpars->fQAttName0;
+  attributeList[1] = runpars->fQAttName1;
+  attributeList[2] = runpars->fQAttName2;
+  attributeList[3] = runpars->fQAttName3;
+  attributeList[4] = runpars->fQAttName4;
+
 
   //create data and mc chains
   chmc = new TChain("h1");
