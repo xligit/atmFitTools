@@ -44,7 +44,7 @@ void covBase::init(std::string name, std::string file)
   invCov->Invert();
   mName = name;
   size = cov->GetNrows();
-
+  size_xsec = size;
   fParName = new std::string[size];
   fParInit = new double[size];
   fParSigma = new double[size];
@@ -154,8 +154,8 @@ void covBase::randomize()
 {
   for (int i = 0; i < size; ++i) {
     if (fParSigma[i] > 0) {
-      randPar(i) = rnd->Gaus(0,1);
-      //randPar(i) = fPropKernel[i]->GetRandom();
+      //randPar(i) = rnd->Gaus(0,1);
+      randPar(i) = fPropKernel[i]->GetRandom();
     } else {
       randPar(i) = 0;
     }

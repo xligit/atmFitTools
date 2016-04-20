@@ -1,5 +1,5 @@
-#ifndef _COVBASE_h_
-#define _COVBASE_h
+#ifndef _COVBASE_H_
+#define _COVBASE_H_
 
 #include <string>
 #include <iostream>
@@ -32,7 +32,7 @@ class covBase
   void setEvalLikelihood(int i, bool e) { fParEvalLikelihood[i] = e; }
   void setPar(int i, double val) { fParCurr[i] = val; }
   void setPars(std::vector<double> pars);
-  void setThrowPar(int i, double val) { fParSigma[i] = val; }
+  void setThrowPar(int i, double val) { fParSigma[i] = val; } // set sigma of a parameter or decide whether to throw a parameter or not
   //void setBranches(TTree &tree);
   void setStepScales(float scale);
   void setStepScale(int i, float scale) { fStepScale[i] = scale; }
@@ -52,6 +52,7 @@ class covBase
   double getProposed(int i) { return fParProp[i]; }
   double getCurrent(int i) { return fParCurr[i]; }
   int getNPar() { return size; }
+  int getNXsecPar() {return size;}
   TF1* getPropFunc(int i) { return fPropKernel[i]; }
   bool isParameterFixed(int i) { return fParEvalLikelihood[i]; }
 
@@ -63,6 +64,8 @@ class covBase
   virtual void throwNominal(bool nomValues = true, unsigned int seed = 0);
   virtual double getLikelihood();
   virtual void proposeStep();
+  virtual double GetWeightFrac(int i) {return fParCurr[i]-1;}
+  virtual double GetWeight(int i) {return fParCurr[i];}
   void acceptStep();
   //void genPosteriorHists();
 
@@ -75,6 +78,7 @@ class covBase
 
   TRandom3 *rnd;
   int size;
+  int size_xsec;
   std::string mName;
   TMatrixDSym *cov;
   TMatrixDSym *invCov;

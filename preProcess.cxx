@@ -310,6 +310,7 @@ int preProcess::getMode()
     else if (abs(fq->mode)>30 && abs(fq->mode)<33) return 4; // NCpi0
     else if (abs(fq->mode)>32 && abs(fq->mode)<35) return 5; // NCpipm
     else if (abs(fq->mode)==36)                    return 6; // NCCoherent
+    else if (abs(fq->mode)==38 || abs(fq->mode)==39) return 9; // NC gamma
     else if (abs(fq->mode)>36 && abs(fq->mode)<53) return 7; // NCother (including NCel)
     else if (abs(fq->mode)==2)                     return 8; // MEC
   }  

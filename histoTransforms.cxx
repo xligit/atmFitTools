@@ -319,6 +319,7 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
 //smear it faster
 void smearThisHistoFast(TH1D &hh, double* hcontent, double spread, double bias=0.){
 
+  if (hh.Integral()<1e-4) return;
   //make sure the parameters are reasonable
   if (spread==0){
     cout<<"histoTransforms.C: smearThisHistoFast: cannont smear with 0 spread parameter!"<<endl;

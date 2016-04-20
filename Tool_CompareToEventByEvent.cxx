@@ -3,6 +3,7 @@
 
 void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int iatt,int isys){
   //clone histogram
+  TH1::SetDefaultSumw2(kTRUE);
   htmp1 = (TH1D*)hManager->getHistogram(isamp,ibin,icomp,iatt)->Clone("tmpclone");
   htmp1->Reset();
   htmp2 = hManager->getModHistogram(isamp,ibin,icomp,iatt);
@@ -30,8 +31,87 @@ void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int i
   return;
 }
 
+void compareToEventByEvent::compareAllComp(int isamp, int ibin, int iatt, int isys)
+{
+  TH1::SetDefaultSumw2(kTRUE);
+  htmp1 = (TH1D*)hManager->getHistogram(isamp,ibin,0,0,iatt)->Clone("tmpclone");
+  htmp1->Reset();
+  htmp2 = hManager->getSumHistogramMod(isamp,ibin,iatt,0);//getModHistogram(isamp,ibin,0,4,iatt);
+  htmp3 = hManager->getSumHistogram(isamp,ibin,iatt,0);
+
+  // fill histogram event-by-event
+
+  for (int i = 0; i < mcTree->GetEntries(); ++i) {
+    mcTree->GetEvent(i);
+    fillAttributes();
+    float weight = mcEvt->evtweight * getEvtWeight(isys);
+    if (i%50000==0) std::cout<<thePars->sysParName[isys]<<" "<<mcEvt->nmode<<" wgt = "<<weight<<std::endl;
+    if ((mcEvt->nbin==ibin)&&(mcEvt->nsample==isamp)) {
+      htmp1->Fill(att[iatt], weight);
+    }
+  }
+
+  htmp1->SetLineColor(kBlack); // event-by-event modified histogram
+  htmp1->SetLineWidth(2);
+  htmp2->SetLineColor(kRed); // spline modified histogram
+  htmp2->SetFillColor(kRed-9);
+  htmp3->SetLineColor(kBlue); // original histogram
+  TCanvas c;
+  c.cd();
+  htmp2->Draw("samee2");
+  //htmp2->Draw("sameh");
+  htmp1->Draw("sameh");
+  htmp1->Draw("samee");
+  htmp3->Draw("samee");
+  htmp3->Draw("sameh");
+  c.SaveAs(Form("compareAll%d.eps",isys));
+
+}
+
+void compareToEventByEvent::compareAllComp(int isamp, int ibin, int iatt)
+{
+  TH1::SetDefaultSumw2(kTRUE);
+  htmp1 = (TH1D*)hManager->getHistogram(isamp,ibin,0,0,iatt)->Clone("tmpclone");
+  htmp1->Reset();
+  htmp2 = hManager->getSumHistogramMod(isamp,ibin,iatt,0);
+  htmp3 = hManager->getSumHistogram(isamp,ibin,iatt,0);
+
+  // fill histogram event-by-event
+  for (int i = 0; i < mcTree->GetEntries(); ++i) {
+    mcTree->GetEvent(i);
+    fillAttributes();
+    float weight = mcEvt->evtweight;
+    for (int isys = 0; isys < thePars->nSysPars; ++isys) {
+      if (thePars->sysParName[isys].find("hc_")!=std::string::npos) continue;
+      if (thePars->sysParName[isys].find("HAD")!=std::string::npos) continue;
+      weight *= getEvtWeight(isys);
+      if (i%50000==0) std::cout<<thePars->sysParName[isys]<<" "<<mcEvt->nmode<<" wgt = "<<weight<<std::endl;
+    }
+    if ((mcEvt->nbin==ibin)&&(mcEvt->nsample==isamp)) {
+      htmp1->Fill(att[iatt], weight);
+    }
+  }
+
+  htmp1->SetLineColor(kBlack); // event-by-event modified histogram
+  htmp1->SetLineWidth(2);
+  htmp2->SetLineColor(kRed); // spline modified histogram
+  htmp2->SetFillColor(kRed-9);
+  htmp3->SetLineColor(kBlue); // original histogram
+  TCanvas c;
+  c.cd();
+  htmp2->Draw("samee2");
+  //htmp2->Draw("sameh");
+  htmp1->Draw("sameh");
+  htmp1->Draw("samee");
+  htmp3->Draw("samee");
+  htmp3->Draw("sameh");
+  c.SaveAs("compareAll.eps");
+
+}
+
 void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int imode,int iatt,int isys){
   //clone histogram
+  TH1::SetDefaultSumw2(kTRUE);
   htmp1 = (TH1D*)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->Clone("tmpclone");
   htmp1->Reset();
   htmp2 = hManager->getModHistogram(isamp,ibin,icomp,imode,iatt);
@@ -42,14 +122,15 @@ void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int i
     mcTree->GetEvent(iev);
     fillAttributes();
     float weight = mcEvt->evtweight * getEvtWeight(isys);
-    if (iev%10000==0) std::cout<<thePars->sysParName[isys]<<" "<<mcEvt->nmode<<" wgt = "<<weight<<std::endl;
+    if (iev%50000==0) std::cout<<thePars->sysParName[isys]<<" "<<mcEvt->nmode<<" wgt = "<<weight<<std::endl;
     if ((mcEvt->nbin==ibin)&&(mcEvt->nsample==isamp)&&(mcEvt->ncomponent==icomp)&&(mcEvt->nmode==imode)){
       htmp1->Fill(att[iatt],weight);
     }
   }
   htmp1->SetLineColor(kBlack); // event-by-event modified histogram
+  htmp1->SetLineWidth(2);
   htmp2->SetLineColor(kRed); // spline modified histogram
-  htmp2->SetFillColor(kRed);
+  htmp2->SetFillColor(kRed-9);
   htmp3->SetLineColor(kBlue); // original histogram
   TCanvas c;
   c.cd();
@@ -65,6 +146,7 @@ void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int i
 
 void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int imode,int iatt, bool all){
   //clone histogram
+  TH1::SetDefaultSumw2(kTRUE);
   htmp1 = (TH1D*)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->Clone("tmpclone");
   htmp1->Reset();
   htmp2 = hManager->getModHistogram(isamp,ibin,icomp,imode,iatt);
@@ -77,15 +159,16 @@ void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int i
     float weight = mcEvt->evtweight;
     for (int isys = 0; isys < thePars->nSysPars; ++isys) {
       weight *= getEvtWeight(isys);
-      if (iev%10000==0) std::cout<<thePars->sysParName[isys]<<" "<<mcEvt->nmode<<" wgt = "<<weight<<std::endl;
+      if (iev%50000==0) std::cout<<thePars->sysParName[isys]<<" "<<mcEvt->nmode<<" wgt = "<<weight<<std::endl;
     }
     if ((mcEvt->nbin==ibin)&&(mcEvt->nsample==isamp)&&(mcEvt->ncomponent==icomp)&&(mcEvt->nmode==imode)){
       htmp1->Fill(att[iatt],weight);
     }
   }
   htmp1->SetLineColor(kBlack);
+  htmp1->SetLineWidth(2);
   htmp2->SetLineColor(kRed);
-  htmp2->SetFillColor(kRed);
+  htmp2->SetFillColor(kRed-9);
   htmp3->SetLineColor(kBlue);
   TCanvas c;
   c.cd();
@@ -111,10 +194,13 @@ float compareToEventByEvent::getEvtWeight(int ipar){
   float ww = 1;//mcEvt->evtweight;
   int absmode = TMath::Abs(mcEvt->mode);
   float Enu     = mcEvt->pmomv[0];
-  int  nutype  = TMath::Abs(mcEvt->ipnu[0]);
+  int  nutype  = mcEvt->ipnu[0];
   double evis = mcEvt->fq1rmom[0][1]; 
   int nmode = mcEvt->nmode; 
-
+  if (thePars->sysParName[ipar].find("_C")!=std::string::npos ||
+      thePars->sysParName[ipar].find("hc_")!=std::string::npos) {
+    return ww;
+  }
   if (thePars->sysParName[ipar].find("MAQE")!=std::string::npos) {
     if (nmode == 0) {
       ww *= mcEvt->byEv_maqe_ccqe_gr->Eval((thePars->sysPar[ipar]-thePars->sysParNom[ipar]), 0, "S");
@@ -206,11 +292,17 @@ float compareToEventByEvent::getEvtWeight(int ipar){
       //std::cout<<thePars->sysParName[ipar]<<" "<<nmode<<" "<<thePars->sysPar[ipar]<<" | ";
     }
   }
-  else if (thePars->sysParName[ipar].find("CCNUE_0")!=std::string::npos) {
+  else if (thePars->sysParName[ipar].find("MEC_NUBAR")!=std::string::npos) {
+    if (nmode == 8 && nutype < 0) ww *= thePars->sysPar[ipar];
+  }
+  else if (thePars->sysParName[ipar].find("CCNUE")!=std::string::npos) {
     if (nutype == 12 && nmode <4) {
       ww *= thePars->sysPar[ipar];
       //std::cout<<thePars->sysParName[ipar]<<" "<<nmode<<" "<<thePars->sysPar[ipar]<<" | ";
     }
+  }
+  else if (thePars->sysParName[ipar].find("CCNUEBAR")!=std::string::npos) {
+    if (nutype==-12 && nmode < 4) ww *= thePars->sysPar[ipar];
   }
   else if (thePars->sysParName[ipar].find("CCCOH_O_0")!=std::string::npos) {
     if (nmode == 3) {
@@ -230,6 +322,9 @@ float compareToEventByEvent::getEvtWeight(int ipar){
       //std::cout<<thePars->sysParName[ipar]<<" "<<nmode<<" "<<thePars->sysPar[ipar]<<" | ";
     }
   }
+  else if (thePars->sysParName[ipar].find("NC1GAMMA_O")!=std::string::npos) {
+    if (nmode == 9) ww *= thePars->sysPar[ipar];
+  }
   else if (thePars->sysParName[ipar].find("FSI_INEL_LO_E")!=std::string::npos) {}//do nothing for now
   else if (thePars->sysParName[ipar].find("FSI_INEL_HI_E")!=std::string::npos) {}//do nothing for now
   else if (thePars->sysParName[ipar].find("FSI_PI_PROD")!=std::string::npos) {}//do nothing for now
@@ -239,7 +334,7 @@ float compareToEventByEvent::getEvtWeight(int ipar){
   else {} // all other systematic parameters don't change the weights
   
   //std::cout<<"----------- "<<"mode="<<nmode<<" "<<ww<<" -----------"<<std::endl;
-  return ww;
+  return ww>0 ? ww:0;
 }
 
 compareToEventByEvent::compareToEventByEvent(atmFitPars* thepars, TChain* tr,const char* hfilename, const char* sfilename, bool separateNeutMode)

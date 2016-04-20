@@ -56,6 +56,7 @@ void splineFactory::resetModHistos(){
 	      hMCMode6[isamp][ibin][icomp][iatt][ipt]->Reset();
 	      hMCMode7[isamp][ibin][icomp][iatt][ipt]->Reset();
 	      hMCMode8[isamp][ibin][icomp][iatt][ipt]->Reset();
+	      hMCMode9[isamp][ibin][icomp][iatt][ipt]->Reset();
 	    }
 	  }
 	}
@@ -176,6 +177,11 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst, 
                ((double)hMCMode8[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
                (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
              break;
+	   case 9:
+	     binWeight[ipt][jhistobin] = 
+	       ((double)hMCMode9[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/ 
+	       (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+	     break;
 	   default:
 	     binWeight[ipt][jhistobin] = 1.;
 	     break;
@@ -222,6 +228,8 @@ void splineFactory::buildTheSplines(){
 
   for (int isyst=0;isyst<nSyst;isyst++){
     if (sysName[isyst].find("_C")!=std::string::npos) continue;
+    if (sysName[isyst].find("fhc_")!=std::string::npos || sysName[isyst].find("rhc_")!=std::string::npos) continue; // beam flux does not act on SK atm MC events
+    if (sysName[isyst].find("HAD")!=std::string::npos) continue; // for now
     std::cout<<"======================== "<<sysName[isyst]<<" ========================"<<std::endl;
     resetModHistos();
     for (int iev=0;iev<mcTree->GetEntries();iev++){
@@ -245,6 +253,7 @@ void splineFactory::buildTheSplines(){
 	      else if (mcEvt->nmode==6) hMCMode6[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
 	      else if (mcEvt->nmode==7) hMCMode7[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
 	      else if (mcEvt->nmode==8) hMCMode8[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
+	      else if (mcEvt->nmode==9) hMCMode9[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
 	    }
 	  }
 	}
@@ -265,6 +274,7 @@ void splineFactory::buildTheSplines(){
 	      else if (mcEvt->nmode==6) hMCMode6[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
 	      else if (mcEvt->nmode==7) hMCMode7[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
 	      else if (mcEvt->nmode==8) hMCMode8[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
+	      else if (mcEvt->nmode==9) hMCMode9[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
 	    }
 	  }
 	}
@@ -286,6 +296,7 @@ void splineFactory::buildTheSplines(){
 	      else if (mcEvt->nmode==6) hMCMode6[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
 	      else if (mcEvt->nmode==7) hMCMode7[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
 	      else if (mcEvt->nmode==8) hMCMode8[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
+	      else if (mcEvt->nmode==9) hMCMode9[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]->Fill(attribute[iatt],eventWeight);
 	    }
 	  } //end attribute loop
 	}  //end point loop
@@ -320,6 +331,8 @@ void splineFactory::buildTheSplines(){
 
 void splineFactory::incrementSystPars(double nsig, int isyst){
   setupSystPars();
+  if (sysName[isyst].find("hc_")!=std::string::npos) return;
+  if (sysName[isyst].find("_C")!=std::string::npos) return;
   if (sysName[isyst].find("RPA_O") != std::string::npos) sysPar[isyst] = mcEvt->rpa[nsig];
   else if (sysName[isyst].find("HAD") != std::string::npos) sysPar[isyst] = mcEvt->rpa[nsig];
   else if (sysName[isyst].find("MAQE") != std::string::npos) sysPar[isyst] = mcEvt->maqe[nsig];
@@ -330,7 +343,10 @@ void splineFactory::incrementSystPars(double nsig, int isyst){
   else if (sysName[isyst].find("BgRES") != std::string::npos) sysPar[isyst] = mcEvt->bgres[nsig];
   else if (sysName[isyst].find("DISMPISHP") != std::string::npos) sysPar[isyst] = mcEvt->dismpishp[nsig];
   //else if (sysName[isyst].find("RPA") != std::string::npos) sysPar[isyst] = mcEvt->rpa[nsig];
-  else sysPar[isyst] = /*fitPars->sysPar[isyst]+*/sysUnc[isyst]*nsig;
+  else {
+    sysPar[isyst] = /*fitPars->sysPar[isyst]+*/sysUnc[isyst]*nsig;
+    //if (fitPars->sysPar[isyst]+sysUnc[isyst]*nsig<0) sysPar[isyst] = -fitPars->sysPar[isyst];
+  }
   //std::cout<<nsig<<", "<<sysName[isyst]<<"="<<sysPar[isyst]<<", "<<std::endl;
 }
 
@@ -492,6 +508,14 @@ void splineFactory::setupHistos(){
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
               hMCMode8[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
               hMCMode8[isamp][ibin][icomp][iatt][ipt]->Reset();
+
+	      htemplate = hManager->getHistogram(isamp,ibin,icomp,9,iatt);
+              hname = htemplate->GetName();
+              hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,9,iatt));
+              //cout<<"setting histogram template: "<<hname.Data()<<endl;
+              hMCMode9[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
+              hMCMode9[isamp][ibin][icomp][iatt][ipt]->Reset();
+
 	    }
 	  }
 	}
@@ -603,7 +627,8 @@ double splineFactory::getEvtWeight(int ipar){
   int nmode = mcEvt->nmode;
   double Enu     = mcEvt->pmomv[0];
   double evis = mcEvt->fq1rmom[0][1];
-  int  nutype  = TMath::Abs(mcEvt->ipnu[0]);
+  //int  nutype  = TMath::Abs(mcEvt->ipnu[0]);
+  int nutype = mcEvt->ipnu[0];
 //  if (ipar==0){
 //   if (mcEvt->ncomponent==0) ww*=sysPar[0];
 //  } 
@@ -652,7 +677,12 @@ double splineFactory::getEvtWeight(int ipar){
       if (nutype==14) ww*=sysPar[8];
     }
   } else if (!sysParType.CompareTo("t2k") || !sysParType.CompareTo("banff")){
-    
+
+    if (sysName[ipar].find("_C")!=std::string::npos || 
+	sysName[ipar].find("fhc_")!=std::string::npos || 
+	sysName[ipar].find("rhc_")!=std::string::npos) {
+      return ww>0 ? ww:0;
+    }    
     if (sysName[ipar].find("MAQE")!=std::string::npos) {
       if (nmode == 0) {
 	ww *= mcEvt->byEv_maqe_ccqe_gr->Eval(sysPar[ipar], 0, "S");
@@ -744,10 +774,22 @@ double splineFactory::getEvtWeight(int ipar){
 	std::cout<<sysName[ipar]<<" "<<nmode<<" "<<sysPar[ipar]<<" | ";
       }
     }
-    else if (sysName[ipar].find("CCNUE_0")!=std::string::npos) {
+    else if (sysName[ipar].find("MEC_NUBAR")!=std::string::npos) {
+      if (nmode == 8 && nutype < 0) {
+	ww *= (sysPar[ipar]+fitPars->sysParNom[ipar]);  
+	std::cout<<sysName[ipar]<<" "<<nmode<<" "<<sysPar[ipar]<<" | ";  
+      }
+    }
+    else if (sysName[ipar].find("CCNUE")!=std::string::npos) {
       if (nutype == 12 && nmode <4) {
 	ww *= (sysPar[ipar]+fitPars->sysParNom[ipar]);
 	std::cout<<sysName[ipar]<<" "<<nmode<<" "<<sysPar[ipar]<<" | ";
+      }
+    }
+    else if (sysName[ipar].find("CCNUEBAR")!=std::string::npos) {
+      if (nutype == -12 && nmode<4) {
+	ww *= (sysPar[ipar]+fitPars->sysParNom[ipar]);
+	std::cout<<sysName[ipar]<<" "<<nmode<<" "<<sysPar[ipar]<<" | ";  
       }
     }
     else if (sysName[ipar].find("CCCOH_O_0")!=std::string::npos) {
@@ -768,6 +810,13 @@ double splineFactory::getEvtWeight(int ipar){
 	std::cout<<sysName[ipar]<<" "<<nmode<<" "<<sysPar[ipar]<<" | ";
       }
     }
+    else if (sysName[ipar].find("NC1GAMMA_O")!=std::string::npos) {
+      if (nmode == 9) {
+	ww *= (sysPar[ipar]+fitPars->sysParNom[ipar]);
+	std::cout<<sysName[ipar]<<" "<<nmode<<" "<<sysPar[ipar]<<" | "; 
+      }
+    }
+    /*
     else if (sysName[ipar].find("FSI_INEL_LO_E")!=std::string::npos) {}//do nothing for now
     else if (sysName[ipar].find("FSI_INEL_HI_E")!=std::string::npos) {}//do nothing for now
     else if (sysName[ipar].find("FSI_PI_PROD")!=std::string::npos) {}//do nothing for now
@@ -775,7 +824,7 @@ double splineFactory::getEvtWeight(int ipar){
     else if (sysName[ipar].find("FSI_CEX_LO_E")!=std::string::npos) {}//do nothing for now
     else if (sysName[ipar].find("FSI_CEX_HI_E")!=std::string::npos) {}//do nothing for now
     else {} // all other systematic parameters don't change the weights
-    
+     */
   }
   std::cout<<"----------- "<<"mode = "<<nmode<<" "<<ww<<" -----------"<<std::endl;
   
@@ -861,7 +910,7 @@ splineFactory::splineFactory(const char*  parfile, bool separateneutmode)
   nBin=runpars->nFVBins;
   nComp=runpars->nComponents;
   nAtt=runpars->nAttributes;
-  nMode=9;
+  nMode=NMODE;
   //nSyst=runpars->nSysPars;
   nameTag=runpars->globalRootName.Data();
   foutName = runpars->splineFactoryOutput.Data();

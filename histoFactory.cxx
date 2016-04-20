@@ -20,7 +20,7 @@ histoFactory::histoFactory(const char* parfile, bool separateneutmode)
   nAttributes = runpars->nAttributes;
   nBins = runpars->nFVBins;
   if (separateNeutMode) {
-    nModes = 9;
+    nModes = NMODE;
     hManager = new histoManager(nSamples,nBins,nComponents,nameTag.Data(), nModes, separateNeutMode);
   } else {
     nModes = 0;

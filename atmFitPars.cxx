@@ -89,7 +89,7 @@ atmFitPars::atmFitPars(const char* parfilename, covBase *covm){
   runpars = new sharedPars(parfilename);
   runpars->readParsFromFile();
   nSamples = runpars->nSamples;
-  nModes = 9;
+  nModes = NMODE;
   cout<<"  nSamples: "<<nSamples<<endl;
   nComponents = runpars->nComponents;
   cout<<"  nComponents: "<<nComponents<<endl;

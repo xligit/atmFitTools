@@ -6,6 +6,7 @@
 #include "sharedPars.h"
 #include "covXsec.h"
 #include "covBANFF.h"
+#include "covBase.h"
 
 using namespace std;
 

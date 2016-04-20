@@ -51,11 +51,13 @@ void fQreader::FillMap()
     std::cout<<((double)i*0.5-3.0)<<"="<<dismpishp[(double)i*0.5-3.0]<<" ";
   }
   std::cout<<"dismpishp"<<std::endl;
+  /*
   for (int i = 0; i < byEv_rpa_ccqe_gr->GetN(); ++i) {
     byEv_rpa_ccqe_gr->GetPoint(i,x,y);
     rpa[(double)i] = x;
   }
   std::cout<<"rpa"<<std::endl;
+  */
 }
 
 void fQreader::Loop()

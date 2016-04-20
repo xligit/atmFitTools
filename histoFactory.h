@@ -3,7 +3,7 @@
 
 #include "sharedPars.h"
 #include "histoManager.h"
-//#include "shared.h"
+#include "shared.h"
 
 using namespace std;
 

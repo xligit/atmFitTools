@@ -1,5 +1,6 @@
 {
   gROOT->ProcessLine(".x /home/xiaoyue/atmFitTools/loadClasses.C");
+  gStyle->SetOptStat(0);
 
   bool separateNeutMode = true;
   //covXsec *cov = new covXsec("xsec_cov", "/home/xiaoyue/atmFitTools/rootfiles/xsec_covariance_2015a_q3_1.2_withRPA_v1.root");
@@ -39,7 +40,7 @@
   for (int i = 0; i < pars->nSysPars; ++i) {
     std::cout<<i<<", "<<pars->sysParName[i]<<" "<<pars->sysParNom[i]<<" "<<pars->sysPar[i]<<std::endl;
   }
-  //comp->comparePrediction(0,2,0,0,0,(bool)true);
+  //comp->compareAllComp(0,2,0);
 
   for (int i = 0; i < pars->nSysPars; ++i) {
     if (pars->sysParName[i].find("MAQE")!=std::string::npos) {
@@ -52,14 +53,9 @@
   for (int i = 0; i < pars->nSysPars; ++i) {
     std::cout<<i<<", "<<pars->sysParName[i]<<" "<<pars->sysParNom[i]<<" "<<pars->sysPar[i]<<std::endl;
   }
+  comp->compareAllComp(0,2,0,(int)isys);
   std::cout<<pars->sysParName[isys]<<"\n"<<std::endl;
-  for (int icom = 0; icom < pars->nComponents; ++icom) {
-    comp->comparePrediction(0,2,icom,1,0,(int)isys);
-    gROOT->ProcessLine(Form(".! mv compare53.eps compare53_%d.eps",icom));
-  }
-
-  return;
-
+  /*
   for (int i = 0; i < pars->nSysPars; ++i) {
     if (pars->sysParName[i].find("CA5")!=std::string::npos) {
       pars->setSysParameter(i, pars->sysParNom[i]+pars->sysParUnc[i]*sigma);
@@ -71,7 +67,7 @@
   for (int i = 0; i < pars->nSysPars; ++i) {
     std::cout<<i<<", "<<pars->sysParName[i]<<" "<<pars->sysParNom[i]<<" "<<pars->sysPar[i]<<std::endl;
   }
-  comp->comparePrediction(0,2,0,0,0,(int)isys);
+  comp->compareAllComp(0,2,0,(int)isys);
   std::cout<<pars->sysParName[isys]<<"\n"<<std::endl;
 
   for (int i = 0; i < pars->nSysPars; ++i) {
@@ -85,7 +81,7 @@
   for (int i = 0; i < pars->nSysPars; ++i) {
     std::cout<<i<<", "<<pars->sysParName[i]<<" "<<pars->sysParNom[i]<<" "<<pars->sysPar[i]<<std::endl;
   }
-  comp->comparePrediction(0,2,0,0,0,(int)isys);
+  comp->compareAllComp(0,2,0,(int)isys);
   std::cout<<pars->sysParName[isys]<<"\n"<<std::endl;
 
   for (int i = 0; i < pars->nSysPars; ++i) {
@@ -99,7 +95,7 @@
   for (int i = 0; i < pars->nSysPars; ++i) {
     std::cout<<i<<", "<<pars->sysParName[i]<<" "<<pars->sysParNom[i]<<" "<<pars->sysPar[i]<<std::endl;
   }
-  comp->comparePrediction(0,2,0,0,0,(int)isys);
+  comp->compareAllComp(0,2,0,(int)isys);
   std::cout<<pars->sysParName[isys]<<"\n"<<std::endl;
-
+  */
 }

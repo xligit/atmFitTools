@@ -21,5 +21,7 @@ class compareToEventByEvent{
   void comparePrediction(int isamp,int ibin, int icomp, int iatt, int isys);
   void comparePrediction(int isamp,int ibin, int icomp, int imode, int iatt, int isys); 
   void comparePrediction(int isamp,int ibin, int icomp, int imode, int iatt, bool all);
+  void compareAllComp(int isamp, int ibin, int iatt, int isys);
+  void compareAllComp(int isamp, int ibin, int iatt);
 };
 

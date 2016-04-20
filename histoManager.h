@@ -18,12 +18,13 @@
 #include "splineParReader.h"
 #include "covXsec.h"
 #include "covBANFF.h"
-
+#include "covBase.h"
+#include "shared.h"
 //#define NSAMPMAX 3
 //#define NCOMPMAX 7
 //#define NATTMAX 4
 //#define NBINMAX 6
-#define NMODE 9
+//#define NMODE 9
 
 //manages all histograms and splines for the fit
 class histoManager{
@@ -93,8 +94,8 @@ class histoManager{
 
   TH1D* getSumHistogram(int isamp, int ibin, int att, int normFlg=1);
   TH1D* getSumHistogramMod(int isamp, int ibin, int att, int normFlg=1);
-  TH1D* getSplineModifiedHisto(int isamp, int ibin, int icomp, int iatt);
-  TH1D* getSplineModifiedHisto(int isamp, int ibin, int icomp, int imode, int iatt);
+  void  getSplineModifiedHisto(int isamp, int ibin, int icomp, int iatt);
+  void  getSplineModifiedHisto(int isamp, int ibin, int icomp, int imode, int iatt);
 
   ///////////////////////////  
   //plotting

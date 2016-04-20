@@ -19,7 +19,7 @@
 #define NSYSTMAX 500
 #define NHBINSMAX 300
 #define NPTSMAX 21 // used to be 5                                                         
-#define NMODE 9
+#define NMODE 10
 
 #endif
 

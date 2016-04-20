@@ -5,6 +5,7 @@
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/ThrowParms.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/covBase.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/covXsec.cxx%s", comlOption));
+  gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/covBANFF.cxx%s", comlOption));
   // fit parameters
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/keyread.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/sharedPars.cxx%s", comlOption));
