@@ -1,6 +1,7 @@
 # exclude everything below
 *.so
 *.d
+*.o
 *.*~
 rootfiles
 *_ACLiC_dict.h
@@ -10,3 +11,6 @@ rootfiles
 *.pdf
 *.png
 *.txt
+*.exe
+WeightOut.cc
+wgtCompare.C
