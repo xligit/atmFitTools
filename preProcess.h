@@ -75,6 +75,10 @@ class preProcess{
   //new branch variables
   float towall;
   float wall;
+  float towallv[50];
+  float wallv2;
+  float fq1rwall[10][7];
+  float fq1rtowall[10][7];
   float evtweight;
   float attribute[1000];
   int ncomponent;

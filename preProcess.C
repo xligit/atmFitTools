@@ -139,6 +139,7 @@ float preProcess::getWeight(){
 //calculates the FV bin for an event
 int preProcess::getBin(){
 
+  ////////////////////////////////////////////////////////////
   //calculate fiducial volume variables
   //use electron hypothesis
   TVector3 vpos;
@@ -147,6 +148,25 @@ int preProcess::getBin(){
   vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][1][1],fq->fq1rdir[0][1][2]);
   wall = calcWall2(&vpos);
   towall = calcToWall(&vpos,&vdir);
+  // calculate additional fv variables as well
+  for (int isubev=0; isubev<fq->fqnse; isubev++){
+    vpos.SetXYZ(fq->fq1rpos[isubev][2][0],fq->fq1rpos[isubev][2][1],fq->fq1rpos[isubev][2][2]);
+    vdir.SetXYZ(fq->fq1rdir[isubev][2][0],fq->fq1rdir[isubev][2][1],fq->fq1rdir[isubev][2][2]);
+    fq1rwall[isubev][2] = calcWall2(&vpos);
+    fq1rtowall[isubev][2] = calcToWall(&vpos,&vdir);
+    vpos.SetXYZ(fq->fq1rpos[isubev][1][0],fq->fq1rpos[isubev][1][1],fq->fq1rpos[isubev][1][2]);
+    vdir.SetXYZ(fq->fq1rdir[isubev][1][0],fq->fq1rdir[isubev][1][1],fq->fq1rdir[isubev][1][2]);
+    fq1rwall[isubev][1] = calcWall2(&vpos);
+    fq1rtowall[isubev][1] = calcToWall(&vpos,&vdir);
+
+  }
+  //true towall
+  for (int ipart=0; ipart<fq->npar; ipart++){
+    vpos.SetXYZ(fq->posv[0],fq->posv[1],fq->posv[2]);
+    vdir.SetXYZ(fq->dirv[ipart][0],fq->dirv[ipart][1],fq->dirv[ipart][2]);
+    towallv[ipart]=calcToWall(&vpos,&vdir);
+    wallv2=calcWall2(&vpos);
+  }
 
 
   ////////////////////////////////
@@ -197,6 +217,9 @@ int preProcess::getBin(){
 //Simple initial cuts
 int preProcess::passCuts(){
 
+  /////////////////////
+  //tmp cuts
+  if (towallv[0]<80.) return 0;
 
   /////////////////////
   //Fully Contained Cut
@@ -484,6 +507,10 @@ void preProcess::setupNewTree(){
   trout->Branch("vispid",vis->vispid,"vispid[100]/I");
   trout->Branch("fqwall",&wall,"fqwall/F");
   trout->Branch("fqtowall",&towall,"fqtowall/F");
+  trout->Branch("fq1rwall",fq1rwall,"fq1rwall[10][7]/F");
+  trout->Branch("fq1rtowall",fq1rtowall,"fq1rtowall[10][7]/F");
+  trout->Branch("towallv",towallv,"towallv[50]");
+  trout->Branch("wallv2",&wallv2,"wallv2");
   trout->Branch("evtweight",&evtweight,"evtweight/F");
   trout->Branch("best2RID",&best2RID,"best2RID/I");
   return;

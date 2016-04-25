@@ -139,7 +139,7 @@ void postfitCalculator::calcPostFitHistos(int errtype){
       for (int iatt=0;iatt<runPars->nAttributes;iatt++){
         TString hname = Form("hMCMCPostfit_samp%d_bin%d_iatt%d",isamp,ibin,iatt);
         hPostFit[isamp][ibin][iatt] = (TH1D*)hMCMod[isamp][ibin][iatt][0]->Clone(hname.Data());
-        hPostFit[isamp][ibin][iatt]->SetLineColor(kBlue+1);
+        hPostFit[isamp][ibin][iatt]->SetLineColor(kBlue);
        // hPostFit[isamp][ibin][iatt]->SetFillColor(kBlue+1);
         hPostFit[isamp][ibin][iatt]->Reset();        
       }
@@ -231,7 +231,8 @@ void postfitCalculator::drawPostFitHisto(int isamp, int ibin, int iatt){
   hManager->getHistogramData(isamp,ibin,iatt)->SetMarkerStyle(8);   
   hManager->getHistogramData(isamp,ibin,iatt)->SetLineWidth(3);   
   hManager->getHistogramData(isamp,ibin,iatt)->Draw();   
-  hPostFit[isamp][ibin][iatt]->Draw("sameeh");
+  hPostFit[isamp][ibin][iatt]->SetFillColor(kBlue);
+  hPostFit[isamp][ibin][iatt]->Draw("samee2");
   hMCMod[isamp][ibin][iatt][0]->SetMarkerStyle(8);
   hMCMod[isamp][ibin][iatt][0]->SetMarkerColor(kRed);
   hMCMod[isamp][ibin][iatt][0]->SetLineWidth(2);
@@ -487,7 +488,7 @@ void postfitCalculator::attributeAnalysis(){
         hMCMod[isamp][ibin][iatt][0]->SetLineColor(kRed);
         hMCMod[isamp][ibin][iatt][0]->Scale(norm);
         for (int ipt=1;ipt<NMCMCPts;ipt++){
-          hMCMod[isamp][ibin][iatt][ipt]->SetLineColor(kBlue+1);
+          hMCMod[isamp][ibin][iatt][ipt]->SetLineColor(kBlue);
           hMCMod[isamp][ibin][iatt][ipt]->Scale(norm);        
         }
       }
@@ -637,7 +638,7 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
 
 
   //Draw everything on the same canvas
-   hPassFailAvg->SetLineColor(kBlue+1);
+   hPassFailAvg->SetLineColor(kBlue);
 //   hPassFailAvg->SetFillColor(kBlue+1);
    hPassFailAvg->SetLineWidth(3);
    hPassFailData->SetLineWidth(3);
@@ -1004,7 +1005,7 @@ void postfitCalculator::drawBreakdown(int ihisto,int islot){
   ///////////////////
   //pid histograms
   if (ihisto==0){
-    hPIDemu[0][islot]->SetFillColor(kBlue+1);
+    hPIDemu[0][islot]->SetFillColor(kBlue);
     hPIDemu[1][islot]->SetFillColor(kRed);
     hPIDemu[2][islot]->SetFillColor(kBlue);
     hPIDemu[3][islot]->SetFillColor(kOrange);
@@ -1014,7 +1015,7 @@ void postfitCalculator::drawBreakdown(int ihisto,int islot){
   ///////////////////
   //Enu (mu) histograms
   if (ihisto==1){
-    hEnuMu[0][islot]->SetFillColor(kBlue+1);
+    hEnuMu[0][islot]->SetFillColor(kBlue);
     hEnuMu[1][islot]->SetFillColor(kRed);
     hEnuMu[2][islot]->SetFillColor(kBlue);
     hEnuMu[3][islot]->SetFillColor(kOrange);

@@ -29,6 +29,7 @@ class atmFitPars{
 
   ///////////////////////////////////////////////////////////////////
   //parameter values
+  double histoNorms[NBINMAX][NCOMPMAX];
   double histoPar[NBINMAX][NCOMPMAX][NATTMAX][2];
   double histoParUncLo[NBINMAX][NCOMPMAX][NATTMAX][2];
   double histoParUncHi[NBINMAX][NCOMPMAX][NATTMAX][2];
