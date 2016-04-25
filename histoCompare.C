@@ -579,7 +579,7 @@ void histoCompare::showModHiso(int isamp,int ibin, int icomp, int iatt, double s
  // hTot->Rebin(rebinFactor);
   hMod->SetLineColor(kRed);
   hTmp->Draw();
-  hMod->Draw("same");
+  hMod->Draw("sameh");
   //set parameter back to original
   thePars->setParameter(ibin,icomp,iatt,0,smeartmp);
   thePars->setParameter(ibin,icomp,iatt,1,biastmp);
@@ -612,8 +612,8 @@ void histoCompare::showFitResult(int isamp,int ibin,int iatt){
   hTmp->SetLineColor(kRed);
 //  hTot->Rebin(rebinFactor);
 //  hMod->Rebin(rebinFactor);
-  hTmp->Draw();
-  hMod->Draw("samee");
+  hTmp->Draw("h");
+  hMod->Draw("sameeh");
  // hTmp->Draw("samee");
 
   hManager->hData[isamp][ibin][iatt]->SetMarkerStyle(8);
@@ -646,8 +646,8 @@ void histoCompare::showFitEffect(int isamp,int ibin,int icomp,int iatt){
 //  hTot->Rebin(rebinFactor);
 //  hMod->Rebin(rebinFactor);
 //  hTmp->Draw();
-  hMod->Draw();
-  hTmp->Draw("same");
+  hMod->Draw("h");
+  hTmp->Draw("sameh");
   hManager->hData[isamp][ibin][iatt]->SetMarkerStyle(8);
   hManager->hData[isamp][ibin][iatt]->Draw("samee");
   return;

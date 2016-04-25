@@ -4,6 +4,15 @@
 #include "preProcess.h"
 #include "TObjArray.h"
 
+
+
+/////////////////////////////////////////////////////////////////
+// Setup the FV bin histogram for getFVBin()
+void preProcess::setFVBinHisto(){
+  hFVBins = new TH2FV("hfvbins",0);
+}
+
+
 /////////////////////////////////////////////////////////////////
 //Create a TGraph that is used to make weights to see effect of
 //correcting for cosmic flux mis-modeling
@@ -74,19 +83,21 @@ void preProcess::processFile(const char* fname,const char* outname){
   outputName.Append(".root");
 
   //get existing h1 tree
-  cout<<"opening file: "<<fname<<endl;
+  cout<<"  opening file: "<<fname<<endl;
   TFile* fin = new TFile(fname);
   TTree* intree = (TTree*)fin->Get("h1");
-  cout<<"got tree: "<<intree->GetEntries()<<endl;
+  cout<<"  got tree: "<<intree->GetEntries()<<endl;
   setTree(intree); //< set pointers to current tree
 
   //make new tree
-  cout<<"create file: "<<outputName.Data()<<endl;
+  cout<<"  create file: "<<outputName.Data()<<endl;
   fout = new TFile(outputName.Data(),"recreate");
   setupNewTree(); 
 
   //fill new tree
-  preProcessIt();
+  int neventsnew = preProcessIt();
+  cout<<"  filled it with "<<neventsnew<<" events!" <<endl;
+
 
   //clean up
   if (trout->GetEntries()>0) fout->Write();
@@ -131,9 +142,9 @@ int preProcess::getBin(){
   //calculate fiducial volume variables
   //use electron hypothesis
   TVector3 vpos;
-  vpos.SetXYZ(fq->fq1rpos[0][2][0],fq->fq1rpos[0][2][1],fq->fq1rpos[0][2][2]);
+  vpos.SetXYZ(fq->fq1rpos[0][1][0],fq->fq1rpos[0][1][1],fq->fq1rpos[0][1][2]);
   TVector3 vdir;
-  vdir.SetXYZ(fq->fq1rdir[0][2][0],fq->fq1rdir[0][2][1],fq->fq1rdir[0][2][2]);
+  vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][1][1],fq->fq1rdir[0][1][2]);
   wall = calcWall2(&vpos);
   towall = calcToWall(&vpos,&vdir);
 
@@ -145,8 +156,8 @@ int preProcess::getBin(){
   //"simple" FV Binning for atm
   if (FVBinning==0){
     if ((wall<200.)&&(wall>80.)) return 1;
-    if (wall<80.) return 2;
-    return 0;
+    if (wall<80.) return 0;
+    return 2;
   }
 
   ////////////////////////////////////////
@@ -173,6 +184,11 @@ int preProcess::getBin(){
     if (towall>=1000) return 2;
   }
 
+  //////////////////////////////////////
+  // binning using wall/towallhistogram
+  if (FVBinning==4){
+    return hFVBins->Fill(towall,wall)-1;
+  }
   return -1;
 }
 
@@ -180,6 +196,7 @@ int preProcess::getBin(){
 /////////////////////////////////
 //Simple initial cuts
 int preProcess::passCuts(){
+
 
   /////////////////////
   //Fully Contained Cut
@@ -192,7 +209,7 @@ int preProcess::passCuts(){
   ////////////////
   //FV Basic Cuts
   if (wall<WallMin) return 0; 
-  if (towall<ToWallMin) return 0;
+  if (towall<ToWallMin) return 0;  
 
   /////////////////////////
   //Number of subevent cuts
@@ -201,8 +218,10 @@ int preProcess::passCuts(){
  
   /////////////
   //In-gate cut
-  double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
-  if (tdecay<InGateMin) return 0;
+  if (InGateMin>0){
+    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
+    if (tdecay<InGateMin) return 0;
+  }
 
   ////////////////////
   //all cuts passed!!
@@ -233,6 +252,19 @@ int preProcess::getSample(){
     return 0;
   }
 
+  //hybrid pi0 selection
+  if (MCSamples==2){
+//    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
+//    double Zrec = fq->fq1rpos[0][2][2];
+//    double Zcut = 1410;
+//    double Rcut = 1290;
+//    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
+//    if ((Zrec<Zcut)) return 1; //< side entering
+//    if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
+    return 0;
+  }
+
+  cout<<"preProcess:  Error sample not defined!"<<endl;
   return -1;
 }
 
@@ -278,25 +310,35 @@ int preProcess::getComponent(){
     // other
     return 5;
   }
-
-  //cosmic selectoin
+ 
+  //////////////////////////////////////////
+  // cosmic selectoin
   if (MCComponents==1){
     return 0;
   }
   
+
+  //////////////////////////////////////////
+  // hybrid pi0 selectoin
+  if (MCComponents==3){
+    return 0;
+  }
+
   cout<<"preProcess: ERROR MC component not defined!";
   return -1;
 }
 
 //loop over all events and sort into bins, samples and components
-void preProcess::preProcessIt(){
+int preProcess::preProcessIt(){
   int nev = tr->GetEntries();
+  int naccepted = 0;
   for (int i=0;i<nev;i++){
     //get info for event
-    if ((i%1000)==0) cout<<i<<endl;
+    if ((i%1000)==0) cout<<"event:  "<<i<<endl;
     tr->GetEntry(i);
     nbin=getBin();
     if (!passCuts()) continue;
+    naccepted++;
     vis->fillVisVar(); //get visible ring information
     fillAttributes(fq);
     ncomponent=getComponent();
@@ -305,7 +347,7 @@ void preProcess::preProcessIt(){
     trout->Fill();
   }
 
-  return;
+  return naccepted;
 }
 
 ///////////////////////////////////////
@@ -385,10 +427,31 @@ void preProcess::fillAttributeMap(fqReader* fqevent){
   attributeMap["fq1remom"] = fqevent->fq1rmom[0][1];
 
   // pi0 likelihood
-  attributeMap["fqpi0like"] = fqevent->fqpi0nll[0];
+  attributeMap["fqpi0like"] = fqevent->fq1rnll[0][1] - fqevent->fqpi0nll[0];
 
   // pi0 mass
   attributeMap["fqpi0mass"] = fqevent->fqpi0mass[0];
+
+  // pi0 photon angle
+  attributeMap["fqpi0photangle"] = fqevent->fqpi0photangle[0];
+
+  // pi0 wall min
+  TVector3 vpos;
+  vpos.SetXYZ(fqevent->fqpi0pos[0][0],fqevent->fqpi0pos[0][1],fqevent->fqpi0pos[0][2]);
+  TVector3 vdir1;
+  vdir1.SetXYZ(fqevent->fqpi0dir1[0][0],fqevent->fqpi0dir1[0][1],fqevent->fqpi0dir1[0][2]);
+  TVector3 vdir2;
+  vdir2.SetXYZ(fqevent->fqpi0dir2[0][0],fqevent->fqpi0dir2[0][1],fqevent->fqpi0dir2[0][2]);
+  double pi0wall= calcWall2(&vpos);
+  double pi0towall1 = calcToWall(&vpos,&vdir1);
+  double pi0towall2 = calcToWall(&vpos,&vdir2);
+  attributeMap["fqpi0wall"] = pi0wall;
+
+  // pi0 towall min
+  attributeMap["fqpi0towallmin"] = fmin(pi0towall1,pi0towall2);
+
+  // pi0 total momentum
+  attributeMap["fqpi0momtot"] = fqevent->fqpi0momtot[0];
 
   return;
 }
@@ -419,8 +482,8 @@ void preProcess::setupNewTree(){
   trout->Branch("nvk",&vis->nvk,"nvk/I");
   trout->Branch("nvoth",&vis->nvoth,"nvoth/I");
   trout->Branch("vispid",vis->vispid,"vispid[100]/I");
-  trout->Branch("wall",&wall,"wall/F");
-  trout->Branch("towall",&towall,"towall/F");
+  trout->Branch("fqwall",&wall,"fqwall/F");
+  trout->Branch("fqtowall",&towall,"fqtowall/F");
   trout->Branch("evtweight",&evtweight,"evtweight/F");
   trout->Branch("best2RID",&best2RID,"best2RID/I");
   return;
@@ -467,6 +530,7 @@ void preProcess::runPreProcessing(){
   nameTag = runpars->globalRootName;
   cout<<"nametag: "<<nameTag.Data()<<endl;
   FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
+  if (FVBinning==4) setFVBinHisto();
   MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
   MCSamples = runpars->preProcessMCSamples; //< flag for MC sample definitions in getSample()
   NHITACMax = runpars->PreProcFCCut;
@@ -483,6 +547,9 @@ void preProcess::runPreProcessing(){
   attributeList[2] = runpars->fQAttName2;
   attributeList[3] = runpars->fQAttName3;
   attributeList[4] = runpars->fQAttName4;
+  attributeList[5] = runpars->fQAttName5;
+  attributeList[6] = runpars->fQAttName6;
+  attributeList[7] = runpars->fQAttName7;
 
 
   //create data and mc chains

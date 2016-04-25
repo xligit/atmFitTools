@@ -13,7 +13,7 @@
 #include "TGraph.h"
 #include <map>
 #include <string>
-
+#include "TH2FV.C"
 using namespace std;
 
 
@@ -57,8 +57,9 @@ class preProcess{
   TGraph* gWeight;
   int useWeights;
   map<string,double> attributeMap;
-  TString attributeList[5];
+  TString attributeList[50];
   int nAttributes;
+  TH2FV* hFVBins;
 
   ////////////////////////
   //for cuts
@@ -88,8 +89,9 @@ class preProcess{
   void setTree(TChain* trin);
   void setParFileName(const char* filename){parFileName=filename;}
   void runPreProcessing();
+  void setFVBinHisto();
   void setupNewTree();
-  void preProcessIt();
+  int preProcessIt(); //< process a file and return the number of entries in new tree
   int passCuts();
   void fillAttributes(fqReader* fqevent);
   void fillAttributeMap(fqReader* fqevent);

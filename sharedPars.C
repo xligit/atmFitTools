@@ -61,6 +61,10 @@ class sharedPars{
   TString fQAttName2;
   TString fQAttName3;
   TString fQAttName4;
+  TString fQAttName5;
+  TString fQAttName6;
+  TString fQAttName7;
+  TString fQAttName8;
   TString MCComponentName0;
   TString MCComponentName1;
   TString MCComponentName2;
@@ -136,6 +140,10 @@ void sharedPars::readParsFromFile(const char* filename){
   fQAttName2=kr->getKeyS("fQAttName2");
   fQAttName3=kr->getKeyS("fQAttName3");
   fQAttName4=kr->getKeyS("fQAttName4");
+  fQAttName5=kr->getKeyS("fQAttName5");
+  fQAttName6=kr->getKeyS("fQAttName6");
+  fQAttName7=kr->getKeyS("fQAttName7");
+  fQAttName8=kr->getKeyS("fQAttName8");
   hFactoryDataFiles=kr->getKeyS("hFactoryDataFiles");
   hFactoryMCFiles=kr->getKeyS("hFactoryMCFiles");
   hFactoryOutput=kr->getKeyS("hFactoryOutput");
