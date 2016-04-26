@@ -466,7 +466,7 @@ void compareEvtByEvt(int nevts, double mean0, double sig0,double scale, double b
 
 
 //smear it faster
-void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double mean, double bias=0.){
+void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double mean, double bias, double normscale=1.){
 
   //make sure the parameters are reasonable
   if (spread==0){
@@ -522,7 +522,7 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
   }
   double newintegral = hh.Integral();
   double scale = oldintegral/newintegral;
-  hh.Scale(scale);
+  hh.Scale(scale*normscale);
   return;
 }
 

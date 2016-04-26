@@ -15,6 +15,7 @@ class atmFitPars{
   //constructors
   atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst=0);
   atmFitPars(int isamp, int ibin, int icomp, int iatt, const char* systype); 
+  // use this constructor
   atmFitPars(const char* parfile); //constructs from parameter file
 
   ///////////////////////////////////////////////////////////////
@@ -25,11 +26,12 @@ class atmFitPars{
   int nAttributes;
   int nSysPars;
   int nTotPars;
+  int flgUseNormPars;
   sharedPars* runpars;
 
   ///////////////////////////////////////////////////////////////////
   //parameter values
-  double histoNorms[NBINMAX][NCOMPMAX];
+  double histoNorm[NSAMPMAX][NBINMAX];
   double histoPar[NBINMAX][NCOMPMAX][NATTMAX][2];
   double histoParUncLo[NBINMAX][NCOMPMAX][NATTMAX][2];
   double histoParUncHi[NBINMAX][NCOMPMAX][NATTMAX][2];
@@ -40,7 +42,10 @@ class atmFitPars{
   double parUnc[4000];
   int   fixPar[4000]; //< array of fix flags for parameters
   double bestpars[4000];
-  int   parIndex[NBINMAX][NCOMPMAX][NATTMAX][2];
+  int   parIndex[NBINMAX][NCOMPMAX][NATTMAX][2]; //< stores 1D array position for bias/smear pars
+  int   sysParIndex[NSYSPARMAX]; //< stores 1D array position for systematic pars
+  int   normParIndex[NSAMPMAX][NBINMAX]; //< stores 1D array position for normalization pars
+
   double norm;  
 
   //////////////////////////////////////////////////////////////
@@ -49,6 +54,9 @@ class atmFitPars{
   void initPars(const char* systype=""); //< sets parameters to initial values
   int getParIndex(int ibin, int icomp, int iatt, int imod){return parIndex[ibin][icomp][iatt][imod];}
   double getParameter(int ipar){return pars[ipar];}
+  double getHistoParameter(int ibin, int icomp, int iatt, int imod);
+  double getSysParameter(int isys);
+  double getNormParameter(int isamp, int ibin);
   void setParameter(int ipar, double value);
   void setSysParameter(int ipar, double value);
   void setParameter(int ibin, int icomp, int iatt, int imod, double value); 
@@ -71,11 +79,34 @@ class atmFitPars{
   void printPars();
 };
 
+//////////////////////////////////////////////////
+// get specific parameters
+double atmFitPars::getHistoParameter(int ibin, int icomp, int iatt, int imod){
+  int theindex = parIndex[ibin][icomp][iatt][imod];
+  return pars[theindex];
+}
+
+//////////////////////////////////////////////////
+// get specific parameters
+double atmFitPars::getNormParameter(int isamp, int ibin){
+  int theindex = normParIndex[isamp][ibin];
+  return pars[theindex];
+}
+
+//////////////////////////////////////////////////
+// get specific parameters
+double atmFitPars::getSysParameter(int isys){
+  int theindex = sysParIndex[isys];
+  return pars[theindex];
+}
 
 //////////////////////////////////////////////////
 //set parameters back to defaults
 void atmFitPars::resetDefaults(){
 
+//  initPars();
+
+  
   //initialize histogram pars
   int index = 0; //< running 1D index
   for (int ibin=0;ibin<nBins;ibin++){
@@ -111,6 +142,7 @@ void atmFitPars::resetDefaults(){
     index++;
     sysPar[isyst]=sysParDefault[isyst];
   }
+  
 
   return;
 }
@@ -131,25 +163,29 @@ void atmFitPars::fixAllSmearPars(int isfixed){
   return;
 }
 
+/////////////////////////////////////////////////////
 //construct from parameter file
 atmFitPars::atmFitPars(const char* parfilename){
-  /////////////////////////////////////
+
   //fill shared parameters from file
   cout<<"atmFitPars: reading parameter file: "<<parfilename<<endl;
   runpars = new sharedPars(parfilename);
   runpars->readParsFromFile();
   nSamples = runpars->nSamples;
-  cout<<"  nSamples: "<<nSamples<<endl;
+  cout<<"atmFitPars:  nSamples: "<<nSamples<<endl;
   nComponents = runpars->nComponents;
-  cout<<"  nComponents: "<<nComponents<<endl;
+  cout<<"atmFitPars:  nComponents: "<<nComponents<<endl;
   nBins = runpars->nFVBins;
-  cout<<"  nBins: "<<nBins<<endl;
+  cout<<"atmFitPars:  nBins: "<<nBins<<endl;
   nSysPars = runpars->nSysPars;
-  cout<<"  nSysPars: "<<nSysPars<<endl;
+  cout<<"atmFitPars:  nSysPars: "<<nSysPars<<endl;
   nAttributes = runpars->nAttributes;
-  cout<<"  nAttributes: "<<nAttributes<<endl;
-
+  cout<<"atmFitPars:  nAttributes: "<<nAttributes<<endl;
+  flgUseNormPars = runpars->flgUseNormPars;
+  if (flgUseNormPars) cout<<"atmFitPars: Using normalization pars"<<endl;
   TString sysType = runpars->sysParType;
+
+  //fill all initial parameter values and count number of pars
   initPars(sysType.Data());
 
 }
@@ -244,8 +280,11 @@ void atmFitPars::setParameter(int ibin, int icomp, int iatt, int itype, double v
   return;
 }
 
+
 void atmFitPars::setParameter(int ipar, double value){
-  pars[ipar]=value;
+  pars[ipar]=value; //< set 1D parameter array
+  // update systematic and histogram modification parameters as well
+  // these parameters should be kept in sync
   if (ipar>=(nTotPars-nSysPars)) sysPar[ipar-nTotPars+nSysPars] = value;
   else{
     histoPar[binOfPar[ipar]][compOfPar[ipar]][attOfPar[ipar]][typeOfPar[ipar]]=value;
@@ -306,7 +345,8 @@ void atmFitPars::initPars(const char* systype){
     }
   }
 
-  //initialize systematic error parameters
+  /////////////////////////////////////////////////
+  // initialize systematic error parameters
   TString stype = systype;
   nSysPars=0;
 
@@ -383,12 +423,40 @@ void atmFitPars::initPars(const char* systype){
   }
 
 
-  //fix 1D parameter arrays
+  //add systematics to 1D parameter arrays
   for (int isys=0;isys<nSysPars;isys++){
     pars[index]=sysPar[isys];
     parUnc[index]=sysParUnc[isys];
+    sysParIndex[isys] = index;
     index++;
   }
+
+  // initialize normalization parameters
+  int normindex = index;
+  int normpars  = 0;
+  for (int ibin=0; ibin<nBins; ibin++){
+    for (int isamp=0; isamp<nSamples; isamp++){
+       histoNorm[isamp][ibin] = 1.; //< default histo norm is one
+       pars[normindex] = 1.0;
+       parUnc[normindex] = 0.1;
+       sysParUnc[nSysPars] = 0.1;
+       sysParDefault[nSysPars] = 1.0;
+       normParIndex[isamp][ibin] = normindex;
+       normindex++;
+       //count these as systematic parameters if using in fit
+       if (flgUseNormPars){
+         nSysPars++;
+	 index++;
+       }
+    }
+  }
+
+  // end systemaitc parmeter initializations
+  /////////////////////////////////////////////////
+
+
+  ////////////////////////////////////////////
+  // fix total number of parameters and print values
   nTotPars = index;
   cout<<"Total number of fit parameters: "<<nTotPars<<endl;
   for (int kpar=0;kpar<nTotPars;kpar++){

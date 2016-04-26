@@ -171,67 +171,18 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
     }
   }
 
-/*  for (int i=1;i<=nhistobins;i++){
-    bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(i);
-    weightsum=0.;
-    for (int isyspar=0;isyspar<fitPars->nSysPars;isyspar++){
-      //get sum of spline weights from this bin
-      if (useSplineFlg){
-        weightsum+=getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
-      }
-    } 
-    weightsum = weightsum -(double)fitPars->nSysPars + 1.; 
-    if (useSplineFlg) bincontent*=weightsum;
-    hMCModified[isamp][ibin][icomp][iatt]->SetBinContent(i,bincontent);
-    hMCModified[isamp][ibin][icomp][iatt]->SetBinError(i,hMC[isamp][ibin][icomp][iatt]->GetBinError(i));
-  }
-*/
-
-  //modify histogram according to smear and bias parameters
-  smearThisHisto( (*hMCModified[isamp][ibin][icomp][iatt]), fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
-//  smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),binContents, fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
-  //Use predetermined mean for scaling
   smearThisHistoFastMean( (*hMCModified[isamp][ibin][icomp][iatt]),
                           binContents, 
-                          fitPars->histoPar[ibin][icomp][iatt][0],
+                          fitPars->getHistoParameter(ibin,icomp,iatt,0),
                           hMCMean[isamp][ibin][icomp][iatt],
-                          fitPars->histoPar[ibin][icomp][iatt][1]);
+                          fitPars->getHistoParameter(ibin,icomp,iatt,1),
+			  fitPars->getNormParameter(isamp,ibin) );
 
   
   return hMCModified[isamp][ibin][icomp][iatt];
 }
 
-/*
-TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
-  if (hMod!=NULL){
- //   cout<<"deleting existing histogram"<<endl;
-    hMod->Delete();
-  }
 
-  //if not using splines, start with base histogram
-  if (!useSplineFlg){
-  //  cout<<"getting base histogram"<<endl;
-    hMod = (TH1D*)hMC[isamp][ibin][icomp][iatt]->Clone("hmod");
-  }
-
-  //if splines are being used, start with histogram modified by splines
-  else{
-  //  cout<<"getting spline modified histogram"<<endl; 
-    theSplines[isamp][ibin][icomp][iatt]->buildModHistoAllPar(fitPars->nSysPars,fitPars->sysPar);
-//    theSplines[isamp][ibin][icomp][iatt]->buildModHisto(0,1.);
-
-    hMod = (TH1D*)theSplines[isamp][ibin][icomp][iatt]->getModHisto()->Clone("hmod");
-  }
-
-  //apply histogram smearing
-//  cout<<"smearing histogram with parameters: "<<fitPars->histoPar[ibin][0][iatt][0]<<" "<<fitPars->histoPar[ibin][0][iatt][1]<<endl;
-//  TH1D* htmp = (TH1D*)hMod->CLone("htmo");
-  smearThisHisto( (*hMod), fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
-
-  //return post-smearing histogram
-  return hMod;
-}
-*/
 TH1D* histoManager::getHistogram(int isamp, int ibin, int icomp, int iatt){
   return hMC[isamp][ibin][icomp][iatt];
 }

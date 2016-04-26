@@ -493,7 +493,8 @@ void histoCompare::profileL(int ibin, int icomp, int iatt, int imod, double rang
   TString pname = "p";
   pname.Append("_profile.png");
   //double bestpoint = Par[ibin][icomp][iatt][imod];
-  double bestpoint = thePars->histoPar[ibin][icomp][iatt][imod];
+  double bestpoint = thePars->getHistoParameter(ibin,icomp,iatt,imod);
+
 
   cout<<"Fitted value: "<<bestpoint<<endl;
   double dx = range/(double)npts;
@@ -556,8 +557,8 @@ void histoCompare::showFitPars(int ibin,int iatt,int imod){
 }
 
 void histoCompare::showModHiso(int isamp,int ibin, int icomp, int iatt, double smear, double bias){
-  double biastmp = thePars->histoPar[ibin][icomp][iatt][1];
-  double smeartmp = thePars->histoPar[ibin][icomp][iatt][1];
+  double biastmp = thePars->getHistoParameter(ibin,icomp,iatt,0);
+  double smeartmp = thePars->getHistoParameter(ibin,icomp,iatt,1);
   thePars->setParameter(ibin,icomp,iatt,0,smear);
   thePars->setParameter(ibin,icomp,iatt,1,bias);
   hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt); //gets the modified histogram
@@ -656,8 +657,8 @@ void histoCompare::showFitEffect(int isamp,int ibin,int icomp,int iatt){
 ///////////////////////////////////////////////////////////////////////////////////
 //Plots the specified histogram before and after modifications, as well as the data
 void histoCompare::showFitHisto(int isamp,int ibin,int icomp,int iatt){
-  double smear = thePars->histoPar[ibin][icomp][iatt][0];
-  double bias  = thePars->histoPar[ibin][icomp][iatt][1];
+  double smear = thePars->getHistoParameter(ibin,icomp,iatt,0);
+  double bias  = thePars->getHistoParameter(ibin,icomp,iatt,1);
   cout<<"SMEAR: "<<smear<<endl;
   cout<<"BIAS:  "<<bias<<endl;
   hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt);
@@ -1291,8 +1292,8 @@ void histoCompare::lnLWrapper(int& ndim, double* gout, double& result, double pa
 //      for (int iatt=0;iatt<staticthis->nAtt;iatt++){
  //       staticthis->Par[ibin][icomp][iatt][0] = par[index];
  //       staticthis->Par[ibin][icomp][iatt][1] = par[index+1]; 
-//        staticthis->thePars->histoPar[ibin][icomp][iatt][0] = par[index];
-//        staticthis->thePars->histoPar[ibin][icomp][iatt][1] = par[index+1];
+//        staticthis->thePars->getHistoParameter(ibin,icomp,iatt,0) = par[index];
+//        staticthis->thePars->getHistoParameter(ibin,icomp,iatt,1) = par[index+1];
 //        index+=2;
 //      }
 //    }
@@ -1458,7 +1459,7 @@ double histoCompare::getTotLnL(){
      //    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
          TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
       //   TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
-         TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get un-normalized histogram.
+         TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.
 
    //      double hnorm = hDataTmp->Integral()/hPrediction->Integral();
 
@@ -1474,8 +1475,12 @@ double histoCompare::getTotLnL(){
   //contribution from flux/xsec priors
   double pull;
   for (int isys=0;isys<thePars->nSysPars;isys++){
-    pull = thePars->sysPar[isys]-1.;
+   // pull = thePars->sysPar[isys]-1.;
+   // pull/=thePars->sysParUnc[isys];
+
+    pull = thePars->getSysParameter(isys)-1.;
     pull/=thePars->sysParUnc[isys];
+
     totL+=(0.5)*(pull*pull);
   }
   return totL;

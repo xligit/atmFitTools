@@ -232,6 +232,7 @@ void postfitCalculator::drawPostFitHisto(int isamp, int ibin, int iatt){
   hManager->getHistogramData(isamp,ibin,iatt)->SetLineWidth(3);   
   hManager->getHistogramData(isamp,ibin,iatt)->Draw();   
   hPostFit[isamp][ibin][iatt]->SetFillColor(kBlue);
+  hPostFit[isamp][ibin][iatt]->SetMarkerColor(kBlue);
   hPostFit[isamp][ibin][iatt]->Draw("samee2");
   hMCMod[isamp][ibin][iatt][0]->SetMarkerStyle(8);
   hMCMod[isamp][ibin][iatt][0]->SetMarkerColor(kRed);

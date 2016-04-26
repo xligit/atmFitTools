@@ -98,6 +98,7 @@ class sharedPars{
   TString MCMCFile;
   TString sysParType;
   int NDataEvents;
+  int flgUseNormPars;
  
 };
 
@@ -192,6 +193,7 @@ void sharedPars::readParsFromFile(const char* filename){
   PreProcNseMin=kr->getKeyI("PreProcNseMin");
   PreProcInGateCut=kr->getKeyD("PreProcInGateCut");
   NDataEvents = kr->getKeyI("NDataEvents");
+  flgUseNormPars = kr->getKeyI("flgUseNormPars");
 }
 
 sharedPars::sharedPars(const char* parfilename){
