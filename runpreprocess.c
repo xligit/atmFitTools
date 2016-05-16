@@ -7,8 +7,8 @@
  ///////////////////////////////////////
  //setup and run preprocessing object
  preProcess* preproc = new preProcess();
- preproc->setParFileName("atmpars.dat");
- preproc->runPreProcessing();
+ preproc->setParFileName("t2kmcpars.dat");
+// preproc->runPreProcessing();
 
 
 }

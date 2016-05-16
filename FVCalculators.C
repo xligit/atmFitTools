@@ -1,10 +1,13 @@
 #ifndef FVCALC_C
 #define FVCALC_C
 
+#include "TPolyLine3D.h"
 #include <TVector3.h>
 #include <TMath.h>
 #include <math.h>
 #include <iostream>
+#include "TRandom2.h"
+#include "TCanvas.h"
 
 using namespace std;
 
@@ -49,33 +52,38 @@ double calcToWallCustom(TVector3 *vpos, TVector3 *vdir, double dt){
   double x0 = vpos->X();
   double y0 = vpos->Y();
   double z0 = vpos->Z();
+  double r0 = sqrt( x0*x0 + y0*y0);
   double dirx = vdir->X();
   double diry = vdir->Y();
   double dirz = vdir->Z();
-  double r=0;
-  double z=z0;
-  double x=x0;
-  double y=y0;
+  double r;
+  double z;
+  double x;
+  double y;
   double t=0.;
   int    flg =0;
-  double tmax = 10000.;
-  double sign = 1.;
+  double tmax = 100000.;
   if (fabs(z0)>Z) return -10000;;
-  if (sqrt(x0*x0+y0*y0)>R) return -10000;
+  if (r0>R) return -10000;
   while ((flg==0)&&(t<tmax)){
     x = x0 + t*dirx;
     y = y0 + t*diry;
     z = z0 + t*dirz;
-    r = sqrt(x*x + y*y);
-    if (sign>0){
-      if (fabs(z)>Z) flg=1;
-      if (r>R) flg=1;
-    }
-    else{
-      if (fabs(z)<Z) flg=1;
-      if (r<R) flg=1;
-    } 
+    r = sqrt( (x*x) + (y*y) );
+    if (fabs(z)>Z) flg=1;
+    if (r>R) flg=1;
     t+=dt;
+    
+
+  //  if (sign>0){
+  //    if (fabs(z)>Z) flg=1;
+  //    if (r>R) flg=1;
+  //  }
+  //  else{
+  //    if (fabs(z)<Z) flg=1;
+  //    if (r<R) flg=1;
+  //  } 
+  //  t+=dt;
   }
   //its the previous iteration that caused exit:
   t-=dt;
@@ -84,40 +92,163 @@ double calcToWallCustom(TVector3 *vpos, TVector3 *vdir, double dt){
   z-=dt*dirz;
   vpos->SetXYZ(x,y,z);
 
-  return t*sign;
+  return t;
 }
 
-double calcPerimeter(TVector3 *vpos, TVector3* vdir){
-  int npts = 20;
-  TVector3 P[20]; //position vector for points
+
+
+
+
+/////////////////////////////////////////////////////
+// estimate the perimeter of the cherenkov ring
+double calcMinCone(TVector3 *vpos, TVector3* vdir, int npts=50){
+  
+  const int NPTSMAX = npts;
+
+  //////////////////////////////////////////////////////////////
+  // each ray starts at initial point defined from given vertex
+  TVector3 P[NPTSMAX]; // initial position vector for rays
   for (int i=0;i<npts;i++){
      P[i].SetXYZ(vpos->X(),vpos->Y(),vpos->Z());
   }
-  TVector3 D[20]; //direction vector for points
-  TVector3 zhat;
-  zhat.SetXYZ(0.,0.,1.);
-  TVector3 perp; //vector perpendicular to direction
-  perp = zhat.Cross(*vdir);
-  double changle = 0.72245;
-  double dangle = (2*3.14159)/(double)npts;
-  double angle = 0.;
-  TVector3 vdirtmp;
-  vdirtmp.SetXYZ(vdir->X(),vdir->Y(),vdir->Z());
-  TVector3 dir0 =vdirtmp;
-  dir0.Rotate(changle,perp);
+
+
+  ////////////////////////////////////////////////////////////
+  // set the ray directions
+  // we must first find a vector that is perpendicular to particle direction
+  int bestaxis=0;
+  if (TMath::Abs(vdir->Y())<TMath::Abs(vdir->X())){
+    bestaxis=1;
+    if (TMath::Abs(vdir->Z())<TMath::Abs(vdir->Y())) bestaxis=2;
+  }
+  else{
+    bestaxis = 0;
+    if (TMath::Abs(vdir->Z())<TMath::Abs(vdir->X())) bestaxis=2;
+  }
+  TVector3 vhat;
+  if (bestaxis==0)vhat.SetXYZ(1.,0.,0.);
+  if (bestaxis==1)vhat.SetXYZ(0.,1.,0.);
+  if (bestaxis==2)vhat.SetXYZ(0.,0.,1.);
+  TVector3 vperp = vhat.Cross(*vdir); // this vector is perpendicular to particle direction
+
+  // now we make initial ray, and then rotate it around particle direction
+  TVector3 D[NPTSMAX]; //direction vector for points
+  double changle = 0.72245; // Cherenkov angle in water
+  double dangle = (2*3.14159)/(double)npts; // angular differnce between rays
+  double angle = 0.;  // inital angle
+  TVector3 dir0; // inital ray
+  dir0.SetXYZ(vdir->X(),vdir->Y(),vdir->Z()); // start equalt to particle dir
+  dir0.Rotate(changle,vperp); // rotate it onto Cherenkov cone
   for (int j=0;j<npts;j++){
-    D[j] = dir0;
-    D[j].Rotate(angle,vdirtmp);
+    D[j] = dir0;  // put direction on cone
+    D[j].Rotate(angle,*vdir); // rotate on cone
     angle+=dangle;
   }
+
+
+  //////////////////////////////////////////////////
+  // now that rays are defined, let's calculate the perimeter
+  double raymin = 10000;
+  for (int k=0;k<npts;k++){
+    // calc dist to wall within 1 cm;	  
+    double raytowall = calcToWallCustom(&P[k],&D[k],1.0); //sets P to value at ID wall
+    if (raytowall<raymin) raymin=raytowall;
+  }
+
+
+  return raymin;
+}
+
+
+
+
+
+/////////////////////////////////////////////////////
+// estimate the perimeter of the cherenkov ring
+double calcPerimeter(TVector3 *vpos, TVector3* vdir, int npts=50, int visflg=0){
+  
+  const int NPTSMAX = npts;
+
+  //////////////////////////////////////////////////////////////
+  // each ray starts at initial point defined from given vertex
+  TVector3 P[NPTSMAX]; // initial position vector for rays
+  for (int i=0;i<npts;i++){
+     P[i].SetXYZ(vpos->X(),vpos->Y(),vpos->Z());
+  }
+
+  ////////////////////////////////////////////////////////////
+  // set the ray directions
+
+  // we must first find a vector that is perpendicular to particle direction
+  int bestaxis=0;
+  if (TMath::Abs(vdir->Y())<TMath::Abs(vdir->X())){
+    bestaxis=1;
+    if (TMath::Abs(vdir->Z())<TMath::Abs(vdir->Y())) bestaxis=2;
+  }
+  else{
+    bestaxis = 0;
+    if (TMath::Abs(vdir->Z())<TMath::Abs(vdir->X())) bestaxis=2;
+  }
+  TVector3 vhat;
+  if (bestaxis==0)vhat.SetXYZ(1.,0.,0.);
+  if (bestaxis==1)vhat.SetXYZ(0.,1.,0.);
+  if (bestaxis==2)vhat.SetXYZ(0.,0.,1.);
+  TVector3 vperp = vhat.Cross(*vdir); // this vector is perpendicular to particle direction
+
+  // now we make initial ray, and then rotate it around particle direction
+  TVector3 D[NPTSMAX]; //direction vector for points
+  double changle = 0.72245; // Cherenkov angle in water
+  double dangle = (2*3.14159)/(double)npts; // angular differnce between rays
+  double angle = 0.;  // inital angle
+  TVector3 dir0; // inital ray
+  dir0.SetXYZ(vdir->X(),vdir->Y(),vdir->Z()); // start equalt to particle dir
+  dir0.Rotate(changle,vperp); // rotate it onto Cherenkov cone
+  for (int j=0;j<npts;j++){
+    D[j] = dir0;  // put direction on cone
+    D[j].Rotate(angle,*vdir); // rotate on cone
+    angle+=dangle;
+  }
+
+  //////////////////////////////////////////////////
+  // now that rays are defined, let's calculate the perimeter
   double perim = 0;
   for (int k=0;k<npts;k++){
+    // calc dist to wall within 1 cm;	  
     calcToWallCustom(&P[k],&D[k],1.0); //sets P to value at ID wall
   }
+  //loop over points and add distances
   for (int pt=1;pt<npts;pt++){
     perim+=(P[pt-1]-P[pt]).Mag();
   }
-  perim+=(P[npts-1]-P[npts]).Mag();
+  //don't forget to connect first  point to last
+  perim+=(P[0]-P[npts-1]).Mag();
+
+
+  // draw it if visflg (for debugging)
+  if (visflg){
+    
+   //make arrays for polylines
+   double x[2];
+   double y[2];
+   double z[2];
+   TPolyLine3D *rays[NPTSMAX];
+   for (int i=0; i<npts; i++){
+     x[0] = vpos->X();
+     y[0] = vpos->Y();
+     z[0] = vpos->Z();
+     x[1] = P[i].X();
+     y[1] = P[i].Y();
+     z[1] = P[i].Z();
+     rays[i] = new TPolyLine3D(2,x,y,z);
+     if (i==0) rays[0]->Draw();
+     else{
+       rays[i]->Draw("same");
+     }
+   }
+  }
+
+  // return final perimeter value
+
   return perim;
 }
 
@@ -155,8 +286,54 @@ double calcPhiWall(TVector3* vpos, TVector3* vdir){
   return (180./TMath::Pi())*wallnorm.Angle(rcdir);  //return angle between norm and direction
 }
 
-
 //////////////////////////////////////////////////////////////
 
+
+void towallValidataion(int nrays){
+
+  TCanvas* cc = new TCanvas("cc","cc",800,700);
+
+  const int NRAYS = nrays;
+
+  TPolyLine3D *rays[NRAYS];
+
+  TVector3 vpos(0,0,0);
+  TVector3 *vdir[NRAYS];
+
+   TRandom2 * randy = new TRandom2(nrays);
+
+  //make random directions
+  for (int i=0; i<nrays; i++){
+    double xdir = randy->Gaus(0,1);
+    double ydir = randy->Gaus(0,1);
+    double zdir = randy->Gaus(0,1);
+    vdir[i] = new TVector3(xdir,ydir,zdir);
+    vdir[i]->SetMag(1.);
+
+    //calc towall
+    TVector3* vposf = new TVector3(vpos.X(),vpos.Y(),vpos.Z());
+    calcToWallCustom(vposf,vdir[i],1.);
+    //make line
+    double xx[2];
+    double yy[2];
+    double zz[2];
+    xx[0] = vpos.X();
+    yy[0] = vpos.Y();
+    zz[0] = vpos.Z();
+    xx[1] = vposf->X();
+    yy[1] = vposf->Y();
+    zz[1] = vposf->Z();
+    rays[i] = new TPolyLine3D(2,xx,yy,zz);
+    if (i==0) rays[0]->Draw();
+    else{
+      rays[i]->Draw("same");
+    }
+  }
+
+  cc->Print("~/fvtest.png");
+
+  return;
+
+}
 
 #endif

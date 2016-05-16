@@ -135,6 +135,44 @@ float preProcess::getWeight(){
 
 
 
+void preProcess::setParFileName(const char* fname){
+  
+  // set file name
+  parFileName=fname;
+  
+  //read in parameters!
+  cout<<"preProcess: Reading parameters from file "<<parFileName.Data()<<endl;
+  sharedPars* runpars = new sharedPars(parFileName.Data());
+  runpars->readParsFromFile();
+  nameTag = runpars->globalRootName;
+  cout<<"nametag: "<<nameTag.Data()<<endl;
+  FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
+  setFVBinHisto();
+  MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
+  MCSamples = runpars->preProcessMCSamples; //< flag for MC sample definitions in getSample()
+  NHITACMax = runpars->preProcFCCut;
+  EVisMin = runpars->preProcEVisCut;
+  WallMin = runpars->preProcWallMinCut;
+  ToWallMin = runpars->preProcToWallMinCut;
+  NSEMax = runpars->preProcNseMax0;
+  NSEMin = runpars->preProcNseMin;
+  InGateMin = runpars->preProcInGateCut; 
+  flgAddMoreVars = runpars->preProcAddMoreVars;
+
+  // list of attributes to use
+  nAttributes = runpars->nAttributes;
+  attributeList[0] = runpars->fQAttName0;
+  attributeList[1] = runpars->fQAttName1;
+  attributeList[2] = runpars->fQAttName2;
+  attributeList[3] = runpars->fQAttName3;
+  attributeList[4] = runpars->fQAttName4;
+  attributeList[5] = runpars->fQAttName5;
+  attributeList[6] = runpars->fQAttName6;
+  attributeList[7] = runpars->fQAttName7;
+
+
+}
+
 ///////////////////////////////////////////////
 //calculates the FV bin for an event
 int preProcess::getBin(){
@@ -143,9 +181,9 @@ int preProcess::getBin(){
   //calculate fiducial volume variables
   //use electron hypothesis
   TVector3 vpos;
-  vpos.SetXYZ(fq->fq1rpos[0][1][0],fq->fq1rpos[0][1][1],fq->fq1rpos[0][1][2]);
+  vpos.SetXYZ(fq->fq1rpos[0][2][0],fq->fq1rpos[0][2][1],fq->fq1rpos[0][2][2]);
   TVector3 vdir;
-  vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][1][1],fq->fq1rdir[0][1][2]);
+  vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][2][1],fq->fq1rdir[0][2][2]);
   wall = calcWall2(&vpos);
   towall = calcToWall(&vpos,&vdir);
   // calculate additional fv variables as well
@@ -158,7 +196,6 @@ int preProcess::getBin(){
     vdir.SetXYZ(fq->fq1rdir[isubev][1][0],fq->fq1rdir[isubev][1][1],fq->fq1rdir[isubev][1][2]);
     fq1rwall[isubev][1] = calcWall2(&vpos);
     fq1rtowall[isubev][1] = calcToWall(&vpos,&vdir);
-
   }
   //true towall
   for (int ipart=0; ipart<fq->npar; ipart++){
@@ -167,7 +204,29 @@ int preProcess::getBin(){
     towallv[ipart]=calcToWall(&vpos,&vdir);
     wallv2=calcWall2(&vpos);
   }
-
+  // even more FV related variables
+  if (flgAddMoreVars>0){
+     // add 1r perimiter and mincone	  
+     for (int isubev=0; isubev<fq->fqnse; isubev++){
+       vpos.SetXYZ(fq->fq1rpos[isubev][2][0],fq->fq1rpos[isubev][2][1],fq->fq1rpos[isubev][2][2]);
+       vdir.SetXYZ(fq->fq1rdir[isubev][2][0],fq->fq1rdir[isubev][2][1],fq->fq1rdir[isubev][2][2]);
+       fq1rperim[isubev][2] = calcPerimeter(&vpos,&vdir);
+       fq1rmincone[isubev][2] = calcMinCone(&vpos,&vdir);
+       vpos.SetXYZ(fq->fq1rpos[isubev][1][0],fq->fq1rpos[isubev][1][1],fq->fq1rpos[isubev][1][2]);
+       vdir.SetXYZ(fq->fq1rdir[isubev][1][0],fq->fq1rdir[isubev][1][1],fq->fq1rdir[isubev][1][2]);
+       fq1rperim[isubev][1] = calcPerimeter(&vpos,&vdir);
+       fq1rmincone[isubev][1] = calcMinCone(&vpos,&vdir);
+    }
+    //true perimeter and mincone
+    if (flgAddMoreVars>1){
+      for (int ipart=0; ipart<fq->npar; ipart++){
+        vpos.SetXYZ(fq->posv[0],fq->posv[1],fq->posv[2]);
+        vdir.SetXYZ(fq->dirv[ipart][0],fq->dirv[ipart][1],fq->dirv[ipart][2]);
+        perimv[ipart]=calcPerimeter(&vpos,&vdir);
+        minconev[ipart]=calcMinCone(&vpos,&vdir);
+      }
+    }
+  }
 
   ////////////////////////////////
   // separate into bins by FVBinning parameter
@@ -207,8 +266,13 @@ int preProcess::getBin(){
   //////////////////////////////////////
   // binning using wall/towallhistogram
   if (FVBinning==4){
-    return hFVBins->Fill(towall,wall)-1;
+    int fvbin = hFVBins->Fill(towall,wall)-1;
+    return fvbin;
+ //   if (fq->fq1rmom[0][1]<230.) return fvbin;
+  //  if (fq->fq1rmom[0][1]>800.) return fvbin+12;
+   // return fvbin+6;
   }
+
   return -1;
 }
 
@@ -513,6 +577,9 @@ void preProcess::setupNewTree(){
   trout->Branch("wallv2",&wallv2,"wallv2");
   trout->Branch("evtweight",&evtweight,"evtweight/F");
   trout->Branch("best2RID",&best2RID,"best2RID/I");
+  trout->Branch("fq1rperim",fq1rperim,"fq1rperim[10][7]/F");
+  trout->Branch("fq1rmincone",fq1rmincone,"fq1rmincone[10][7]/F");
+
   return;
 }
 
@@ -560,13 +627,15 @@ void preProcess::runPreProcessing(){
   if (FVBinning==4) setFVBinHisto();
   MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
   MCSamples = runpars->preProcessMCSamples; //< flag for MC sample definitions in getSample()
-  NHITACMax = runpars->PreProcFCCut;
-  EVisMin = runpars->PreProcEVisCut;
-  WallMin = runpars->PreProcWallMinCut;
-  ToWallMin = runpars->PreProcToWallMinCut;
-  NSEMax = runpars->PreProcNseMax0;
-  NSEMin = runpars->PreProcNseMin;
-  InGateMin = runpars->PreProcInGateCut; 
+  NHITACMax = runpars->preProcFCCut;
+  EVisMin = runpars->preProcEVisCut;
+  WallMin = runpars->preProcWallMinCut;
+  ToWallMin = runpars->preProcToWallMinCut;
+  NSEMax = runpars->preProcNseMax0;
+  NSEMin = runpars->preProcNseMin;
+  InGateMin = runpars->preProcInGateCut; 
+  flgAddMoreVars = runpars->preProcAddMoreVars;
+
   // list of attributes to use
   nAttributes = runpars->nAttributes;
   attributeList[0] = runpars->fQAttName0;

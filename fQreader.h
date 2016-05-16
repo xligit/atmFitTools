@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Tue Dec  1 11:25:55 2015 by ROOT version 5.28/00c
+// Fri Apr 29 14:46:21 2016 by ROOT version 5.28/00c
 // from TTree h1/DST
-// found on file: nominal3_MC_7_.root
+// found on file: t2kmc_numu_ppmc_2_.root
 //////////////////////////////////////////////////////////
 
 #ifndef fQreader_h
@@ -110,9 +110,16 @@ public :
    Int_t           nvk;
    Int_t           nvoth;
    Int_t           vispid[100];
-   Float_t         wall;
-   Float_t         towall;
+   Float_t         fqwall;
+   Float_t         fqtowall;
+   Float_t         fq1rwall[10][7];
+   Float_t         fq1rtowall[10][7];
+   Float_t         towallv[50];
+   Float_t         wallv2;
    Float_t         evtweight;
+   Int_t           best2RID;
+   Float_t         fq1rperim[10][7];
+   Float_t         fq1rmincone[10][7];
 
    // List of branches
    TBranch        *b_nev;   //!
@@ -207,9 +214,16 @@ public :
    TBranch        *b_nvk;   //!
    TBranch        *b_nvoth;   //!
    TBranch        *b_vispid;   //!
-   TBranch        *b_wall;   //!
-   TBranch        *b_towall;   //!
+   TBranch        *b_fqwall;   //!
+   TBranch        *b_fqtowall;   //!
+   TBranch        *b_fq1rwall;   //!
+   TBranch        *b_fq1rtowall;   //!
+   TBranch        *b_towallv;   //!
+   TBranch        *b_wallv2;   //!
    TBranch        *b_evtweight;   //!
+   TBranch        *b_best2RID;   //!
+   TBranch        *b_fq1rperim;   //!
+   TBranch        *b_fq1rmincone;   //!
 
    fQreader(TTree *tree=0);
    virtual ~fQreader();
@@ -230,9 +244,9 @@ fQreader::fQreader(TTree *tree)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("nominal3_MC_7_.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("t2kmc_numu_ppmc_2_.root");
       if (!f) {
-         f = new TFile("nominal3_MC_7_.root");
+         f = new TFile("t2kmc_numu_ppmc_2_.root");
       }
       tree = (TTree*)gDirectory->Get("h1");
 
@@ -375,9 +389,16 @@ void fQreader::Init(TTree *tree)
    fChain->SetBranchAddress("nvk", &nvk, &b_nvk);
    fChain->SetBranchAddress("nvoth", &nvoth, &b_nvoth);
    fChain->SetBranchAddress("vispid", vispid, &b_vispid);
-   fChain->SetBranchAddress("wall", &wall, &b_wall);
-   fChain->SetBranchAddress("towall", &towall, &b_towall);
+   fChain->SetBranchAddress("fqwall", &fqwall, &b_fqwall);
+   fChain->SetBranchAddress("fqtowall", &fqtowall, &b_fqtowall);
+   fChain->SetBranchAddress("fq1rwall", fq1rwall, &b_fq1rwall);
+   fChain->SetBranchAddress("fq1rtowall", fq1rtowall, &b_fq1rtowall);
+   fChain->SetBranchAddress("towallv", towallv, &b_towallv);
+   fChain->SetBranchAddress("wallv2", &wallv2, &b_wallv2);
    fChain->SetBranchAddress("evtweight", &evtweight, &b_evtweight);
+   fChain->SetBranchAddress("best2RID", &best2RID, &b_best2RID);
+   fChain->SetBranchAddress("fq1rperim", fq1rperim, &b_fq1rperim);
+   fChain->SetBranchAddress("fq1rmincone", fq1rmincone, &b_fq1rmincone);
    Notify();
 }
 

@@ -34,6 +34,7 @@ class TH2FV:public TH2Poly{
   void InitSplitDiagonal();
   void InitFVBins();
   void InitFVBins2(); 
+  void InitFVBins3();
 };
 
 
@@ -120,6 +121,46 @@ void TH2FV::InitFVBins(){
 
  //bin5
  double x5[] = {200,6000,6000,200};
+ double y5[] = {200,200,6000,200};
+ AddBin(4,x5,y5);
+
+ return;
+
+}
+
+
+
+//////////////////////////////////////////////////////
+// FV bins for perimeter
+void TH2FV::InitFVBins3(){
+
+ //bin0
+ double x0[] = {0,300,300,0};
+ double y0[] = {0,0,300,0};
+ AddBin(4,x0,y0);
+
+ //bin1
+ double x1[] = {300,8000,8000,300};
+ double y1[] = {0,0,80,80};
+ AddBin(4,x1,y1);
+
+ //bin2
+ double x2[] = {8000,20000,20000,8000};
+ double y2[] = {0,0,80,80};
+ AddBin(4,x2,y2);
+
+ //bin3
+ double x3[] = {300,8000,8000,300};
+ double y3[] = {80,80,300,300};
+ AddBin(4,x3,y3);
+
+ //bin4
+ double x4[] = {8000,20000,20000,8000};
+ double y4[] = {80,80,300,300};
+ AddBin(4,x4,y4);
+
+ //bin5
+ double x5[] = {300,20000,20000,300};
  double y5[] = {200,200,6000,200};
  AddBin(4,x5,y5);
 
@@ -261,6 +302,7 @@ void TH2FV::Init(){
   if (fBinType==1) InitSplitDiagonal();
   if (fBinType==0) InitFVBins();
   if (fBinType==2) InitFVBins2();
+  if (fBinType==3) InitFVBins3(); //< template for perimeter bins
   return;
 }
 

@@ -76,9 +76,13 @@ class preProcess{
   float towall;
   float wall;
   float towallv[50];
+  float minconev[50];
+  float perimv[50];
   float wallv2;
   float fq1rwall[10][7];
   float fq1rtowall[10][7];
+  float fq1rmincone[10][7];
+  float fq1rperim[10][7];
   float evtweight;
   float attribute[1000];
   int ncomponent;
@@ -91,7 +95,7 @@ class preProcess{
   //methods
   void setTree(TTree* trin);
   void setTree(TChain* trin);
-  void setParFileName(const char* filename){parFileName=filename;}
+  void setParFileName(const char* filename);
   void runPreProcessing();
   void setFVBinHisto();
   void setupNewTree();
@@ -110,7 +114,10 @@ class preProcess{
   //sets a histogram to calculate weights for events (use to correct cosmic
   //muon momenum distribution)
   void setWeightHistogram(const char* file, const char * name);
-  
+ 
+  private:
+
+  int flgAddMoreVars;
 
 };
 
