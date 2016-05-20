@@ -110,13 +110,15 @@ void keyread::processLine(TString sline){
   ///get key name
   int ichar=2;
   while (sline(ichar)!='='){
-    skey.Append(sline(ichar));
+    // ignore spaces
+    if(sline(ichar)!=' ') skey.Append(sline(ichar));
     ichar++;
   }
   ///get key value
   int jchar=ichar+1;
   while (sline(jchar)!=';'){
-    sval.Append(sline(jchar));
+    // ignore spaces
+    if(sline(ichar)!=' ') sval.Append(sline(jchar));
     jchar++;
   }
   //place key value in appropriate map

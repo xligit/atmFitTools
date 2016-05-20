@@ -9,7 +9,7 @@
 /////////////////////////////////////////////////////////////////
 // Setup the FV bin histogram for getFVBin()
 void preProcess::setFVBinHisto(){
-  hFVBins = new TH2FV("hfvbins",0);
+  hFVBins = new TH2FV("hfvbins",1);
 }
 
 
@@ -173,6 +173,8 @@ void preProcess::setParFileName(const char* fname){
 
 }
 
+
+
 ///////////////////////////////////////////////
 //calculates the FV bin for an event
 int preProcess::getBin(){
@@ -183,7 +185,7 @@ int preProcess::getBin(){
   TVector3 vpos;
   vpos.SetXYZ(fq->fq1rpos[0][2][0],fq->fq1rpos[0][2][1],fq->fq1rpos[0][2][2]);
   TVector3 vdir;
-  vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][2][1],fq->fq1rdir[0][2][2]);
+  vdir.SetXYZ(fq->fq1rdir[0][2][0],fq->fq1rdir[0][2][1],fq->fq1rdir[0][2][2]);
   wall = calcWall2(&vpos);
   towall = calcToWall(&vpos,&vdir);
   // calculate additional fv variables as well
@@ -266,12 +268,19 @@ int preProcess::getBin(){
   //////////////////////////////////////
   // binning using wall/towallhistogram
   if (FVBinning==4){
-    int fvbin = hFVBins->Fill(towall,wall)-1;
-    return fvbin;
+      int fvbin = hFVBins->FindBin(towall,wall)-1;
+      return fvbin;
+   }
+//    if (fvbin<0){
+//      cout<<"Bad FV value:"<<endl;
+//      cout<<"  wall:   "<<wall<<endl;
+//      cout<<"  towall: "<<towall<<endl;
+//  //  }
+      //return fvbin;
  //   if (fq->fq1rmom[0][1]<230.) return fvbin;
   //  if (fq->fq1rmom[0][1]>800.) return fvbin+12;
    // return fvbin+6;
-  }
+  
 
   return -1;
 }
@@ -283,7 +292,7 @@ int preProcess::passCuts(){
 
   /////////////////////
   //tmp cuts
-  if (towallv[0]<80.) return 0;
+ // if (towallv[0]<80.) return 0;
 
   /////////////////////
   //Fully Contained Cut
@@ -308,6 +317,12 @@ int preProcess::passCuts(){
   if (InGateMin>0){
     double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
     if (tdecay<InGateMin) return 0;
+  }
+
+  ////////////////////////
+  // optional masking cut
+  if (flgUseSpikeMask>0){
+     if (!passMask(hmask,fq1rwall[0][2])) return 0;
   }
 
   ////////////////////
@@ -423,7 +438,10 @@ int preProcess::preProcessIt(){
     //get info for event
     if ((i%1000)==0) cout<<"event:  "<<i<<endl;
     tr->GetEntry(i);
+    //calc FV bin and fill FV variables
     nbin=getBin();
+    if (nbin<0.) continue;
+    //apply cuts
     if (!passCuts()) continue;
     naccepted++;
     vis->fillVisVar(); //get visible ring information
@@ -635,6 +653,13 @@ void preProcess::runPreProcessing(){
   NSEMin = runpars->preProcNseMin;
   InGateMin = runpars->preProcInGateCut; 
   flgAddMoreVars = runpars->preProcAddMoreVars;
+  flgUseSpikeMask = runpars->preProcMaskFlg;
+  if (flgUseSpikeMask>0){
+     TString fname = runpars->preProcMaskFile.Data();
+     TFile* maskfile = new TFile(fname.Data());
+     cout<<"preProc: Getting spike mask from file: "<<fname.Data()<<endl;     
+     hmask = (TH1D*)maskfile->Get("hmask");
+  }
 
   // list of attributes to use
   nAttributes = runpars->nAttributes;
@@ -651,6 +676,8 @@ void preProcess::runPreProcessing(){
   //create data and mc chains
   chmc = new TChain("h1");
   chdat = new TChain("h1");
+  cout<<"preProc: adding MC files: "<<runpars->preProcessFilesMC.Data()<<endl;
+  cout<<"preProc: adding Data files: "<<runpars->preProcessFilesData.Data()<<endl;
   chmc->Add(runpars->preProcessFilesMC.Data());
   chdat->Add(runpars->preProcessFilesData.Data());
   if (chmc->GetEntries()<1){

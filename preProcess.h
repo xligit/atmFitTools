@@ -14,6 +14,8 @@
 #include <map>
 #include <string>
 #include "TH2FV.C"
+#include "masktools.C"
+
 using namespace std;
 
 
@@ -60,6 +62,7 @@ class preProcess{
   TString attributeList[50];
   int nAttributes;
   TH2FV* hFVBins;
+  TH1D* hmask;
 
   ////////////////////////
   //for cuts
@@ -118,7 +121,7 @@ class preProcess{
   private:
 
   int flgAddMoreVars;
-
+  int flgUseSpikeMask;
 };
 
 #endif

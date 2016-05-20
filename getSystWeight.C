@@ -1,7 +1,13 @@
 #ifndef GETSYSTWEIGHT_C
 #define GETSYSTWEIGHT_C
+
 #include "atmFitPars.C"
-#include "fQreader.C"
+
+#ifndef fQreader_h
+#define fQreader_h
+#include "fQreader.h"
+#endif
+
 #include "TString.h"
 
 using namespace std;

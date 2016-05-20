@@ -1465,8 +1465,11 @@ double histoCompare::getTotLnL(){
 
    //      double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
    //      cout<<"partialL :"<<partialL<<endl;     
-
-         totL+=getLnL(hPrediction,hDataTmp);
+         double partialLnL = getLnL(hPrediction,hDataTmp);
+       //  cout<<"adding: "<<partialLnL<<" to total. ";
+      //   cout<<"samp: "<<isamp<<" bin: "<<ibin<<" att: "<<iatt<<endl;
+         totL+=partialLnL;
+       //  totL+=getLnL(hPrediction,hDataTmp);
       }
     }
   }

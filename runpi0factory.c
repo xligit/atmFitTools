@@ -13,8 +13,8 @@
   hfact->runHistoFactory();
 
   //run spline factory form parameter file
-  splineFactory *sfact = new splineFactory("pi0pars.dat"); //< atmospheric pars
-  sfact->runSplineFactory();
+//  splineFactory *sfact = new splineFactory("pi0pars.dat"); //< atmospheric pars
+//  sfact->runSplineFactory();
 
 
 }

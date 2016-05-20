@@ -1,4 +1,9 @@
 #include "TH2Poly.h"
+#include "TVector2.h"
+#include "TMath.h"
+
+
+#define NHBINSMAX 9999
 
 using namespace std;
 
@@ -12,6 +17,11 @@ class TH2FV:public TH2Poly{
 
   TH2FV(const char* name, int bintype=0, int nbinsx =10, double xmin=0, double xmax=5000,
                                        int nbinsy =10, double ymin=0, double ymax=2000.);
+//  TH2FV(const char* name, int bintype, int nbinsx, double xmin, double xmax,
+                                       //int nbinsy, double ymin, double ymax);
+
+
+
 
 
   //vars
@@ -22,20 +32,420 @@ class TH2FV:public TH2Poly{
   double fXMax;
   double fYMin;
   double fYMax;
+  double fCenter[NHBINSMAX][2];
 
   //initialize
   void Init();
+  
+  //add bin and keep track of center
+  //(messes up AddBin() for some reason
+  void AddBinWithCenter(int n, double *xx, double* yy);
+
+  //add bin center
+  void AddBinCenter(int n, double *xx, double* yy);
+
+  // get the center of a bin
+  double GetBinCenterX(int nbin);
+  double GetBinCenterX(int binx, int biny);
+  double GetBinCenterY(int nbin);
+  double GetBinCenterY(int binx, int biny);
+  double GetMaxWall();
+
+  // draw standard view
+  void DrawStdView(const char* opts);
+ 
+  // test bin consistency
+  void TestHisto();
+
+  double fMaxWall;
 
   protected:
 
   //for triangle plots:
   int LineIntersects(double* binx, double* biny);
+  //double fMaxWall;
   void SetSplitBins(double* splitx, double* splity);
   void InitSplitDiagonal();
   void InitFVBins();
   void InitFVBins2(); 
   void InitFVBins3();
+  void InitFVBins4();
+  void InitFVBins5();
+  void InitFVBins6();
+  void InitFVBins7();
+  void InitStdBins(double wall1, double wall2, double towall1,
+                   double towall2, double towall3, double towall4);
+  
 };
+
+double TH2FV::GetMaxWall(){
+  return fMaxWall;
+}
+
+void TH2FV::InitStdBins(double wall1, double wall2, double towall1,
+                   double towall2, double towall3, double towall4){
+
+
+
+
+// double wall1 = 80.;
+// double wall2 = 200.;
+// double towall1 = 300.;
+// double towall2 = 6000.;
+// double towall3 = 800.;
+// double towall4 = 800.;
+ fMaxWall = towall4;
+
+ //bin1
+ double x0[] = {0,towall1,towall1,0};
+ double y0[] = {0,0,towall1,0};
+// AddBin(4,x0,y0);
+// AddBinCenter(3,x0,y0);
+ AddBinWithCenter(4,x0,y0);
+
+ //bin2
+ double x2[] = {towall1,towall2,towall2,towall1};
+ double y2[] = {0,0,wall1,wall1};
+ AddBinWithCenter(4,x2,y2);
+
+ //bin3
+// double x3[] = {towall2,6000,6000,towall2};
+// double y3[] = {0,0,wall1,wall1};
+// AddBinWithCenter(4,x3,y3);
+
+ //bin4
+ double corner1 = TMath::Max(towall1,wall2);
+ double corner2 = TMath::Min(towall1,wall2);
+ double x4[] = {towall1, towall3,towall3, corner1, towall1,towall1};
+ double y4[] = {wall1,   wall1,   wall2,  wall2,  corner2, wall1};
+ AddBinWithCenter(6,x4,y4);
+
+ //bin5
+ double x5[] = {towall3,6000,6000,towall3};
+ double y5[] = {wall1,wall1,wall2,wall2};
+ AddBinWithCenter(4,x5,y5);
+
+ //bin6
+ corner1 = TMath::Max(towall1,wall2);
+ double x6[] = {corner1,towall4,towall4,corner1,corner1};
+ double y6[] = {wall2,  wall2,  towall4,corner1,wall2};
+ AddBinWithCenter(5,x6,y6);
+
+ //bin7
+ //double x7[] = {towall4,6000,6000,towall4};
+ //double y7[] = {wall2,wall2,towall4,towall4};
+ double x7[] = {towall4,6000,6000,towall4};
+ double y7[] = {wall2, wall2,6000,towall4};
+ AddBinWithCenter(4,x7,y7);
+
+ //bin8
+// double xx[] = {towall4, 6000.,6000.,towall4};
+// double yy[] = {towall4,towall4,6000., towall4};
+// double xx[]={1000,2000,2000,1000};
+// double yy[]={2000,2000,3000,3000};
+// AddBinWithCenter(4,xx,yy);
+ 
+
+
+ return;
+
+
+}
+
+void TH2FV::TestHisto(){
+  
+  for (int i=1; i<=GetNumberOfBins(); i++){
+    double xx = GetBinCenterX(i);
+    double yy = GetBinCenterY(i);
+    //cout<<"Fill: "<<"("<<xx<<","<<yy<<")"<<endl;
+    Fill(xx,yy);
+  }
+
+  Draw("colz");
+}
+
+void TH2FV::DrawStdView(const char* opts){
+  GetXaxis()->SetRangeUser(0,1600);
+  GetYaxis()->SetRangeUser(0,1400);
+  Draw(opts);
+  return;
+}
+
+double TH2FV::GetBinCenterY(int binx, int biny){
+  int globalbin = GetBin(binx, biny);
+  return fCenter[globalbin-1][1];
+}
+
+double TH2FV::GetBinCenterY(int nbin){
+  return fCenter[nbin-1][1];
+}
+
+double TH2FV::GetBinCenterX(int binx, int biny){
+  int globalbin = GetBin(binx, biny);
+  return fCenter[globalbin-1][0];
+}
+
+double TH2FV::GetBinCenterX(int nbin){
+  return fCenter[nbin-1][0];
+}
+
+
+//////////////////////////////////////////////////////
+// Adds a bin and updates the list of bin centers
+void TH2FV::AddBinWithCenter(int n, double* xx, double* yy){
+
+  //Add the bin
+  AddBin(n,xx,yy);
+
+  //first calculate the center
+  TVector2 vcenter;
+  vcenter.Set(0.,0.);
+  for (int i=0; i<n; i++){
+    TVector2 vertex;
+    vertex.Set(xx[i],yy[i]);
+    vcenter = vcenter + vertex;
+  }
+  double norm = 1./(double)n;
+  vcenter = vcenter*norm;
+
+  // fill the center array
+  int N = GetNumberOfBins();
+  fCenter[N-1][0] = vcenter.X();
+  fCenter[N-1][1] = vcenter.Y();
+
+  return;
+
+}
+
+//////////////////////////////////////////////////////
+// just adds bin center to list
+void TH2FV::AddBinCenter(int n, double* xx, double* yy){
+
+  //first calculate the center
+  TVector2 vcenter;
+  vcenter.Set(0.,0.);
+  for (int i=0; i<n; i++){
+    TVector2 vertex;
+    vertex.Set(xx[i],yy[i]);
+    vcenter = vcenter + vertex;
+  }
+  double norm = 1./(double)n;
+  vcenter = vcenter*norm;
+
+  // fill the center array
+  int N = GetNumberOfBins();
+  fCenter[N-1][0] = vcenter.X();
+  fCenter[N-1][1] = vcenter.Y();
+
+  return;
+
+}
+
+
+
+//////////////////////////////////////////////////////
+// FV bins for fits
+void TH2FV::InitFVBins6(){
+
+
+ double wall1 = 80.;
+ double wall2 = 200.;
+ double towall1 = 500.;
+ double towall2 = 1100.;
+ double towall3 = 1100.;
+ double towall4 = 1100.;
+
+ //bin0
+ double x0[] = {0,towall1,towall1,0};
+ double y0[] = {0,0,towall1,0};
+ AddBinWithCenter(4,x0,y0);
+
+ //bin1
+ double x2[] = {towall1,towall2,towall2,towall1};
+ double y2[] = {0,0,wall1,wall1};
+ AddBinWithCenter(4,x2,y2);
+
+ //bin2
+ double x3[] = {towall2,6000,6000,towall2};
+ double y3[] = {0,0,wall1,wall1};
+ AddBinWithCenter(4,x3,y3);
+
+ //bin3
+ double x4[] = {towall1,towall3,towall3,towall1};
+ double y4[] = {wall1,wall1,wall2,wall2};
+ AddBinWithCenter(4,x4,y4);
+
+ //bin4
+ double x5[] = {towall3,6000,6000,towall3};
+ double y5[] = {wall1,wall1,wall2,wall2};
+ AddBinWithCenter(4,x5,y5);
+
+ //bin5
+ double x6[] = {towall1,towall4,towall4,towall1,towall1};
+ double y6[] = {wall2,wall2,towall4,towall1,wall2};
+ AddBinWithCenter(4,x6,y6);
+
+ //bin6
+ double x7[] = {towall4,6000,6000,towall4};
+ double y7[] = {wall2,wall2,towall4,towall4};
+ AddBinWithCenter(4,x7,y7);
+
+ //bin7
+ double x8[] = {towall4,6000,6000,towall4};
+ double y8[] = {towall4,towall4,6000,towall4};
+ AddBinWithCenter(4,x8,y8);
+ 
+
+
+ return;
+
+}
+
+
+
+//////////////////////////////////////////////////////
+// FV bins for fits
+void TH2FV::InitFVBins7(){
+
+
+ double wall1 = 140.;
+ double wall2 = 260.;
+ double towall1 = 500.;
+ double towall2 = 1100.;
+ double towall3 = 1100.;
+ double towall4 = 1100.;
+
+
+
+
+ //bin0
+ double x0[] = {0,towall1,towall1,0};
+ double y0[] = {0,0,towall1,0};
+ AddBinWithCenter(4,x0,y0);
+
+ //bin1
+ double x2[] = {towall1,towall2,towall2,towall1};
+ double y2[] = {0,0,wall1,wall1};
+ AddBinWithCenter(4,x2,y2);
+
+ //bin2
+ double x3[] = {towall2,6000,6000,towall2};
+ double y3[] = {0,0,wall1,wall1};
+ AddBinWithCenter(4,x3,y3);
+
+ //bin3
+ double x4[] = {towall1,towall3,towall3,towall1};
+ double y4[] = {wall1,wall1,wall2,wall2};
+ AddBinWithCenter(4,x4,y4);
+
+ //bin4
+ double x5[] = {towall3,6000,6000,towall3};
+ double y5[] = {wall1,wall1,wall2,wall2};
+ AddBinWithCenter(4,x5,y5);
+
+ //bin5
+ double x6[] = {towall1,towall4,towall4,towall1,towall1};
+ double y6[] = {wall2,wall2,towall4,towall1,wall2};
+ AddBinWithCenter(4,x6,y6);
+
+ //bin6
+ double x7[] = {towall4,6000,6000,towall4};
+ double y7[] = {wall2,wall2,towall4,towall4};
+ AddBinWithCenter(4,x7,y7);
+
+ //bin7
+ double x8[] = {towall4,6000,6000,towall4};
+ double y8[] = {towall4,towall4,6000,towall4};
+ AddBinWithCenter(4,x8,y8);
+ 
+
+
+ return;
+
+}
+
+
+
+
+
+//////////////////////////////////////////////////////
+// FV bins for fits
+void TH2FV::InitFVBins4(){
+
+
+ double wall1 = 80.;
+ double wall2 = 200.;
+ double towall1 = 300.;
+ double towall2 = 6000.;
+ double towall3 = 800.;
+ double towall4 = 800.;
+
+ InitStdBins(wall1,wall2,towall1,towall2,towall3,towall4);
+
+ return;
+
+}
+
+
+
+//////////////////////////////////////////////////////
+// FV bins for fits
+void TH2FV::InitFVBins5(){
+
+
+ double wall1 = 140.;
+ double wall2 = 260.;
+ double towall1 = 200.;
+ double towall2 = 800.;
+ double towall3 = 800.;
+ double towall4 = 800.;
+
+ //bin0
+ double x0[] = {0,towall1,towall1,0};
+ double y0[] = {0,0,towall1,0};
+ AddBinWithCenter(4,x0,y0);
+
+ //bin1
+ double x2[] = {towall1,towall2,towall2,towall1};
+ double y2[] = {0,0,wall1,wall1};
+ AddBinWithCenter(4,x2,y2);
+
+ //bin2
+ double x3[] = {towall2,6000,6000,towall2};
+ double y3[] = {0,0,wall1,wall1};
+ AddBinWithCenter(4,x3,y3);
+
+ //bin3
+ double x4[] = {towall1,towall3,towall3,wall2,towall1};
+ double y4[] = {wall1,wall1,wall2,wall2,towall1};
+ AddBinWithCenter(5,x4,y4);
+
+ //bin4
+ double x5[] = {towall3,6000,6000,towall3};
+ double y5[] = {wall1,wall1,wall2,wall2};
+ AddBinWithCenter(4,x5,y5);
+
+ //bin5
+ double x6[] = {wall2,towall4,towall4,wall2};
+ double y6[] = {wall2,wall2,towall4,wall2};
+ AddBinWithCenter(4,x6,y6);
+
+ //bin6
+ double x7[] = {towall4,6000,6000,towall4};
+ double y7[] = {wall2,wall2,towall4,towall4};
+ AddBinWithCenter(4,x7,y7);
+
+ //bin7
+ double x8[] = {towall4,6000,6000,towall4};
+ double y8[] = {towall4,towall4,6000,towall4};
+ AddBinWithCenter(4,x8,y8);
+ 
+
+
+ return;
+
+}
+
 
 
 //////////////////////////////////////////////////////
@@ -184,13 +594,14 @@ void TH2FV::InitSplitDiagonal(){
    double dwall = (fYMax-fYMin)/(double)fNBinsY;
    double towall = fXMin;
 
-  double binxval[5];
-  double binyval[5];
+  double binxval[4];
+  double binyval[4];
 
 
    //get coordinate arrays
    for (int i=0;i<=fNBinsX;i++){
      xx[i]=towall;
+ //    cout<<"xx"<<i<<" = "<<towall<<endl;
      towall+=dtowall;
    }
    for (int i=0; i<=fNBinsY; i++){
@@ -215,7 +626,8 @@ void TH2FV::InitSplitDiagonal(){
          SetSplitBins(binxval, binyval); 
        }
        else{
-         AddBin(4,binxval,binyval);
+         AddBinWithCenter(4,binxval,binyval);
+        // AddBin(4,binxval,binyval);
        }
      }
    }
@@ -242,7 +654,7 @@ void TH2FV::SetSplitBins(double* binxval, double* binyval){
     splitbiny[1]=binyval[2];
     splitbinx[2]=binxval[3];
     splitbiny[2]=binyval[3];
-    AddBin(3,splitbinx,splitbiny);
+    AddBinWithCenter(3,splitbinx,splitbiny);
     //lower pentagon
     splitbinx[0]=binxval[0];
     splitbiny[0]=binyval[0];
@@ -254,7 +666,7 @@ void TH2FV::SetSplitBins(double* binxval, double* binyval){
     splitbiny[3]=binyval[2];
     splitbinx[4]=binxval[3];
     splitbiny[4]=binxval[3];
-    AddBin(5,splitbinx,splitbiny);
+    AddBinWithCenter(5,splitbinx,splitbiny);
   }
   else{
     //lower triangle
@@ -264,7 +676,7 @@ void TH2FV::SetSplitBins(double* binxval, double* binyval){
     splitbiny[1]=binyval[1];
     splitbinx[2]=binxval[1];
     splitbiny[2]=binxval[1];
-    AddBin(3,splitbinx,splitbiny);
+    AddBinWithCenter(3,splitbinx,splitbiny);
     //upper pentagon
     splitbinx[0]=binxval[0];
     splitbiny[0]=binyval[0];
@@ -276,7 +688,7 @@ void TH2FV::SetSplitBins(double* binxval, double* binyval){
     splitbiny[3]=binyval[2];
     splitbinx[4]=binxval[3];
     splitbiny[4]=binxval[3];
-    AddBin(5,splitbinx,splitbiny);
+    AddBinWithCenter(5,splitbinx,splitbiny);
   }
 
   return;
@@ -299,10 +711,25 @@ int TH2FV::LineIntersects(double* binx, double* biny){
 
 void TH2FV::Init(){
 
-  if (fBinType==1) InitSplitDiagonal();
+  if (fBinType==-1) InitSplitDiagonal();
   if (fBinType==0) InitFVBins();
-  if (fBinType==2) InitFVBins2();
-  if (fBinType==3) InitFVBins3(); //< template for perimeter bins
+  if (fBinType==1) InitStdBins(80.,200.,300.,6000.,800.,800.);
+  if (fBinType==2) InitStdBins(80.,200.,550.,6000.,1050.,1050.);
+  if (fBinType==3) InitStdBins(140.,260.,300.,6000.,800.,800.);
+  if (fBinType==4) InitStdBins(140.,260.,550.,6000.,1050.,1050.);
+
+
+
+
+//  if (fBinType==2) InitFVBins2();
+//  if (fBinType==3) InitFVBins3(); //< template for perimeter bins
+//  if (fBinType==4) InitFVBins4(); //< template for perimeter bins
+//  if (fBinType==5) InitFVBins5(); //< template for perimeter bins
+//  if (fBinType==6) InitFVBins6(); //< template for perimeter bins
+//  if (fBinType==7) InitFVBins7(); //< template for perimeter bins
+
+
+
   return;
 }
 
@@ -311,7 +738,9 @@ TH2FV::TH2FV(const char* name, int bintype, int nbinsx , double xmin, double xma
                                        int nbinsy , double ymin, double ymax){
 
   TH2Poly();
-
+  GetXaxis()->SetTitle("Towall [cm]");
+  GetYaxis()->SetTitle("Wall [cm]");
+  GetYaxis()->SetTitleOffset(1.2);
   fBinType = bintype;
   fXMin = xmin;
   fXMax = xmax;
@@ -321,6 +750,8 @@ TH2FV::TH2FV(const char* name, int bintype, int nbinsx , double xmin, double xma
   fNBinsY = nbinsy;
 
   SetName(name);
+
+  ChangePartition(100,100);
 
   Init(); 
 }

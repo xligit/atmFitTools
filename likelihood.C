@@ -43,6 +43,10 @@ double evalLnL(double ndata, double nmc, double norm = 1.){
   if (ndata==0) return nmc*norm;
   double Nmc = nmc*norm;
   double ngLnL = (Nmc-ndata) + ndata*TMath::Log(ndata/Nmc);
+//  if (isnan(ngLnL)){
+//    cout<<"WARNING: NAN IN LIKELIHOOOD"<<endl;
+//    cout<<"NDATA: "<<ndata<<" NMC: "<<nmc<<" NORM: "<<norm<<endl;
+//  }
   return ngLnL;
 }
 

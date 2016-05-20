@@ -1,6 +1,11 @@
+#ifndef SPLINEFACTORY_C
+#define SPLINEFACTORY_C
+
 #include "hSplines.C"
+
 //#include "shared.h"
 //#include "fQreader.C"
+
 #include "histoManager.C"
 #include "sharedPars.C"
 #include "atmFitPars.C"
@@ -618,3 +623,5 @@ splineFactory::splineFactory(int isamp, int ibin, int icomp, int iatt, int isyst
   foutName = "splineFactoryOutput.root";
 }
 
+
+#endif

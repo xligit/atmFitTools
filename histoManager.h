@@ -15,7 +15,7 @@
 #include "histoTransforms.C"
 #include "sharedPars.C"
 
-#define NSAMPMAX 5
+#define NSAMPMAX 7
 #define NCOMPMAX 20
 #define NATTMAX 20
 #define NBINMAX 10

@@ -170,7 +170,9 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
       hMCModified[isamp][ibin][icomp][iatt]->SetBinError(i,hMC[isamp][ibin][icomp][iatt]->GetBinError(i));
     }
   }
-
+  // do nothing if histogram has hardly any events
+  if (hMC[isamp][ibin][icomp][iatt]->GetEntries()<10) return hMC[isamp][ibin][icomp][iatt];
+  // otherwise, modifiy this histogram
   smearThisHistoFastMean( (*hMCModified[isamp][ibin][icomp][iatt]),
                           binContents, 
                           fitPars->getHistoParameter(ibin,icomp,iatt,0),
@@ -193,17 +195,17 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   int color[NCOMPMAX];
   color[0] = 4;
   color[1] = 2;
-  color[2] = 9;
-  color[3] = 46;
-  color[4] = 7;
-  color[5] = 5;
+  color[2] = 7;
+  color[3] = 6;
+  color[4] = 5;
+  color[5] = 8;
   color[6] = 15;
   color[7] = 1;
   int style[NCOMPMAX];
   style[0] = 1001;
   style[1] = 1001;
-  style[2] = 3001;
-  style[3] = 3001;
+  style[2] = 1001;
+  style[3] = 1001;
   style[4] = 1001;
   style[5] = 1001;
   style[6] = 1001;
@@ -232,9 +234,9 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   }
   double norm = 1.;
   //if ((double)mcTree->GetEntries()>0) norm = (double)dataTree->GetEntries()/(double)mcTree->GetEntries();
-  hMC[isample][ibin][hitolo[0]][iatt]->Draw();
-  for (int j=0;j<nComponents;j++){
-     hMC[isample][ibin][hitolo[j]][iatt]->Draw("same");
+  hMC[isample][ibin][hitolo[0]][iatt]->Draw("h");
+  for (int j=1;j<nComponents;j++){
+     hMC[isample][ibin][hitolo[j]][iatt]->Draw("sameh");
   }
   if (Leg) Leg->Delete();
   Leg = new TLegend(0.7,0.6,0.9,0.9);
@@ -243,8 +245,8 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   Leg->AddEntry(hMC[isample][ibin][2][iatt],"CCeOth","F");
   Leg->AddEntry(hMC[isample][ibin][3][iatt],"CC#muOth","F");
   Leg->AddEntry(hMC[isample][ibin][4][iatt],"Single #pi^{0}","F");
-  Leg->AddEntry(hMC[isample][ibin][5][iatt],"Single #pi^{+}","F");
-  Leg->AddEntry(hMC[isample][ibin][6][iatt],"Other","F");
+  Leg->AddEntry(hMC[isample][ibin][5][iatt],"Other","F");
+ // Leg->AddEntry(hMC[isample][ibin][6][iatt],"Other","F");
   Leg->Draw("same");
   return;
 }

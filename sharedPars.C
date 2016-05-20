@@ -3,7 +3,6 @@
 
 #include "TString.h"
 
-
 #include "keyread.C"
 
 #include <iostream>
@@ -52,6 +51,8 @@ class sharedPars{
   double preProcToWallMinCut;
   int    preProcNseMax0;
   int    preProcNseMin;
+  int    preProcMaskFlg;
+  TString preProcMaskFile;
   double  preProcInGateCut;
   int     preProcAddMoreVars;
   TString FVBinName0;
@@ -180,6 +181,8 @@ void sharedPars::readParsFromFile(const char* filename){
   preProcessFVBinning = kr->getKeyI("preProcessFVBinning");
   preProcessMCSamples = kr->getKeyI("preProcessMCSamples");
   preProcAddMoreVars = kr->getKeyI("preProcAddMoreVars");
+  preProcMaskFile = kr->getKeyS("preProcMaskFile");
+  preProcMaskFlg = kr->getKeyI("preProcMaskFlg");
   globalRootName = kr->getKeyS("globalRootName");
   splineFactoryOutput = kr->getKeyS("splineFactoryOutput");
   sysParType = kr->getKeyS("sysParType");

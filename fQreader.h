@@ -1,8 +1,7 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Fri Apr 29 14:46:21 2016 by ROOT version 5.28/00c
-// from TTree h1/DST
-// found on file: t2kmc_numu_ppmc_2_.root
+// Thu May 19 14:41:44 2016 by ROOT version 5.28/00c
+// from TChain h1/
 //////////////////////////////////////////////////////////
 
 #ifndef fQreader_h
@@ -244,11 +243,84 @@ fQreader::fQreader(TTree *tree)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("t2kmc_numu_ppmc_2_.root");
+
+#ifdef SINGLE_TREE
+      // The following code should be used if you want this class to access
+      // a single tree instead of a chain
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("Memory Directory");
       if (!f) {
-         f = new TFile("t2kmc_numu_ppmc_2_.root");
+         f = new TFile("Memory Directory");
+         f->cd("Rint:/");
       }
       tree = (TTree*)gDirectory->Get("h1");
+
+#else // SINGLE_TREE
+
+      // The following code should be used if you want this class to access a chain
+      // of trees.
+      TChain * chain = new TChain("h1","");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_0_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_10_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_11_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_12_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_13_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_14_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_15_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_16_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_17_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_18_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_19_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_1_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_20_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_21_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_22_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_23_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_24_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_25_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_26_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_27_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_28_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_29_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_2_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_3_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_4_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_5_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_6_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_7_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_8_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_9_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_0_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_10_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_11_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_12_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_13_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_14_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_15_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_16_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_17_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_18_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_19_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_1_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_20_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_21_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_22_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_23_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_24_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_25_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_26_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_27_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_28_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_29_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_2_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_3_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_4_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_5_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_6_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_7_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_8_.root/h1");
+      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_9_.root/h1");
+      tree = chain;
+#endif // SINGLE_TREE
 
    }
    Init(tree);

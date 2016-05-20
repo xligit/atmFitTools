@@ -43,8 +43,8 @@ class makeCov{
 void makeCov::buildMatrix(){
 
   //setup mcmc trees
-  double par[1000];
-  double mean[1000];
+  double par[500];
+  double mean[500];
   int npar;
   partree->SetBranchAddress("par",par);
   partree->SetBranchAddress("npars",&npar);

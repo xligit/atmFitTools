@@ -9,12 +9,12 @@
   gROOT->ProcessLine(".x ~/style.c");
 
   //run histo factory from parameter file
-//  histoFactory* hfact = new histoFactory("atmpars2.dat");
- // hfact->runHistoFactory();
+  histoFactory* hfact = new histoFactory("atmpars1.dat");
+  hfact->runHistoFactory();
 
   //run spline factory form parameter file
-  splineFactory *sfact = new splineFactory("atmpars2.dat"); //< atmospheric pars
-  sfact->runSplineFactory();
+  //splineFactory *sfact = new splineFactory("atmpars1.dat"); //< atmospheric pars
+  //sfact->runSplineFactory();
 
 
 }

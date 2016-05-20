@@ -8,7 +8,7 @@
 #include "TFile.h"
 #include "atmFitPars.C"
 
-#define NMCMCPARS 100
+#define NMCMCPARS 500
 
 using namespace std;
 
@@ -289,7 +289,7 @@ void markovTools::Init(int npars){
   //branch setup
   pathTree->Branch("npars",&nPars,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
-  pathTree->Branch("par",oldPars,"par[100]/D");
+  pathTree->Branch("par",oldPars,"par[500]/D");
 
   //done
   return;
@@ -307,7 +307,7 @@ markovTools::markovTools(int npars){
   //branch setup
   pathTree->Branch("npars",&nPars,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
-  pathTree->Branch("par",oldPars,"par[100]/D");
+  pathTree->Branch("par",oldPars,"par[500]/D");
 }
 
 ////////////////////////////////////////////

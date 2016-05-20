@@ -205,7 +205,7 @@ TH1D* histoFactory::getHistogram(int iatt, const char* thename){
  // if (iatt==1){
  //    hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
  // }
-  return hnew;
+//  return hnew;
 }
 
 //calculates attributes from the raw fiTQun output
