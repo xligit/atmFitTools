@@ -72,7 +72,6 @@ void splineFactory::setMCTree(TChain* tr){
   return;
 }
 
-
 void splineFactory::debugtest(){
   //create new factory
   splineFactory* sfactory = new splineFactory(3,3,7,1,1,"debugtest");
@@ -128,59 +127,59 @@ void splineFactory::fillLeaves(int isamp,int ibin,int icomp,int iatt,int isyst, 
      nhistobins = hMCMode0[isamp][ibin][icomp][iatt][0]->GetNbinsX();
      for (int ipt=0;ipt<npoints;ipt++){
        for (int jhistobin=1;jhistobin<=nhistobins;jhistobin++){
-	 if (hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin)<1e-4){
+	 if (hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin)<1e-4){
 	   binWeight[ipt][jhistobin] = 1.;
 	 } else{
 	   switch (imode) {
 	   case 0:
 	     binWeight[ipt][jhistobin] =
 	       ((double)hMCMode0[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-	       (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+	       (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
 	     break;
 	   case 1:
              binWeight[ipt][jhistobin] =
                ((double)hMCMode1[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-               (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+               (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
              break;
 	   case 2:  
 	     binWeight[ipt][jhistobin] =
                ((double)hMCMode2[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-               (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+               (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
              break;
            case 3:
              binWeight[ipt][jhistobin] =
                ((double)hMCMode3[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-               (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+               (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
              break;
            case 4:
              binWeight[ipt][jhistobin] =
                ((double)hMCMode4[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-               (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+               (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
              break;
            case 5:
              binWeight[ipt][jhistobin] =
                ((double)hMCMode5[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-               (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+               (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
              break;
            case 6:
              binWeight[ipt][jhistobin] =
                ((double)hMCMode6[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-               (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+               (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
              break;
            case 7:
              binWeight[ipt][jhistobin] =
                ((double)hMCMode7[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-               (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+               (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
              break;
            case 8:
              binWeight[ipt][jhistobin] =
                ((double)hMCMode8[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-               (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+               (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
              break;
 	   case 9:
 	     binWeight[ipt][jhistobin] = 
 	       ((double)hMCMode9[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/ 
-	       (double)hManager->getHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
+	       (double)hManager->getNominalHistogram(isamp,ibin,icomp,imode,iatt)->GetBinContent(jhistobin);
 	     break;
 	   default:
 	     binWeight[ipt][jhistobin] = 1.;
@@ -333,13 +332,13 @@ void splineFactory::incrementSystPars(double nsig, int isyst){
   setupSystPars();
   if (sysName[isyst].find("hc_")!=std::string::npos) return;
   if (sysName[isyst].find("_C")!=std::string::npos) return;
-  if (sysName[isyst].find("RPA_O") != std::string::npos) sysPar[isyst] = mcEvt->rpa[nsig];
-  else if (sysName[isyst].find("HAD") != std::string::npos) sysPar[isyst] = mcEvt->rpa[nsig];
+  //if (sysName[isyst].find("RPA_O") != std::string::npos) sysPar[isyst] = mcEvt->rpa[nsig];
+  //else if (sysName[isyst].find("HAD") != std::string::npos) sysPar[isyst] = mcEvt->rpa[nsig];
   else if (sysName[isyst].find("MAQE") != std::string::npos) sysPar[isyst] = mcEvt->maqe[nsig];
   else if (sysName[isyst].find("pF_O") != std::string::npos) sysPar[isyst] = mcEvt->pf_o[nsig];
   else if (sysName[isyst].find("EB_O") != std::string::npos) sysPar[isyst] = mcEvt->eb_o[nsig];
   else if (sysName[isyst].find("CA5") != std::string::npos) sysPar[isyst] = mcEvt->ca5[nsig];
-  else if (sysName[isyst].find("MANFFRES") != std::string::npos) sysPar[isyst] = mcEvt->manffres[nsig];
+  else if (sysName[isyst].find("MANFF") != std::string::npos) sysPar[isyst] = mcEvt->manffres[nsig];
   else if (sysName[isyst].find("BgRES") != std::string::npos) sysPar[isyst] = mcEvt->bgres[nsig];
   else if (sysName[isyst].find("DISMPISHP") != std::string::npos) sysPar[isyst] = mcEvt->dismpishp[nsig];
   //else if (sysName[isyst].find("RPA") != std::string::npos) sysPar[isyst] = mcEvt->rpa[nsig];
@@ -405,15 +404,15 @@ void splineFactory::setupSystPars(){
     sysUnc[nSyst] = 0.05;
     nSyst++;
   }
-  if (!sysParType.CompareTo("t2k")) {
+  if (!sysParType.CompareTo("t2k") || !sysParType.CompareTo("banff")) {
     nSyst = fitPars->nSysPars;
     for (int i = 0; i < nSyst; ++i) {
       sysPar[i] = fitPars->sysPar[i];
       sysUnc[i] = fitPars->sysParUnc[i];
       sysName[i] = fitPars->sysParName[i];
       //std::cout<<i<<", "<<sysName[i]<<" "<<sysPar[i]<<" +- "<<sysUnc[i]<<std::endl;
-      if (sysName[i].find("RPA_O") != std::string::npos || sysName[i].find("HAD") != std::string::npos) nP[i] = 2;
-      else if (sysName[i].find("MAQE") != std::string::npos) nP[i] = 21;
+      //if (sysName[i].find("RPA_O") != std::string::npos || sysName[i].find("HAD") != std::string::npos) nP[i] = 2;
+      if (sysName[i].find("MAQE") != std::string::npos) nP[i] = 21;
       else nP[i] = 13;
     }
   }
@@ -446,70 +445,69 @@ void splineFactory::setupHistos(){
 	for (int ibin=0;ibin<nBin;ibin++){
 	  for (int icomp=0;icomp<nComp;icomp++){
 	    for (int iatt=0;iatt<nAtt;iatt++){
-	      htemplate = hManager->getHistogram(isamp,ibin,icomp,0,iatt);
+	      htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,0,iatt);
 	      hname = htemplate->GetName();
 	      hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,0,iatt));
 	      //cout<<"setting histogram template: "<<hname.Data()<<endl;
 	      hMCMode0[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
 	      hMCMode0[isamp][ibin][icomp][iatt][ipt]->Reset();
-
-              htemplate = hManager->getHistogram(isamp,ibin,icomp,1,iatt);
-              hname = htemplate->GetName();
+              htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,1,iatt);
+	      hname = htemplate->GetName();
               hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,1,iatt));
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
               hMCMode1[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
               hMCMode1[isamp][ibin][icomp][iatt][ipt]->Reset();
 
-              htemplate = hManager->getHistogram(isamp,ibin,icomp,2,iatt);
+              htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,2,iatt);
               hname = htemplate->GetName();
               hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,2,iatt));
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
               hMCMode2[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
               hMCMode2[isamp][ibin][icomp][iatt][ipt]->Reset();
 
-              htemplate = hManager->getHistogram(isamp,ibin,icomp,3,iatt);
+              htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,3,iatt);
               hname = htemplate->GetName();
               hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,3,iatt));
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
               hMCMode3[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
               hMCMode3[isamp][ibin][icomp][iatt][ipt]->Reset();
 
-              htemplate = hManager->getHistogram(isamp,ibin,icomp,4,iatt);
+              htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,4,iatt);
               hname = htemplate->GetName();
               hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,4,iatt));
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
               hMCMode4[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
               hMCMode4[isamp][ibin][icomp][iatt][ipt]->Reset();
 
-              htemplate = hManager->getHistogram(isamp,ibin,icomp,5,iatt);
+              htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,5,iatt);
               hname = htemplate->GetName();
               hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,5,iatt));
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
               hMCMode5[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
               hMCMode5[isamp][ibin][icomp][iatt][ipt]->Reset();
 
-              htemplate = hManager->getHistogram(isamp,ibin,icomp,6,iatt);
+              htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,6,iatt);
               hname = htemplate->GetName();
               hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,6,iatt));
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
               hMCMode6[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
               hMCMode6[isamp][ibin][icomp][iatt][ipt]->Reset();
 
-              htemplate = hManager->getHistogram(isamp,ibin,icomp,7,iatt);
+              htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,7,iatt);
               hname = htemplate->GetName();
               hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,7,iatt));
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
               hMCMode7[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
               hMCMode7[isamp][ibin][icomp][iatt][ipt]->Reset();
 
-              htemplate = hManager->getHistogram(isamp,ibin,icomp,8,iatt);
+              htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,8,iatt);
               hname = htemplate->GetName();
               hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,8,iatt));
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
               hMCMode8[isamp][ibin][icomp][iatt][ipt]=(TH1D*)htemplate->Clone(hname.Data());
               hMCMode8[isamp][ibin][icomp][iatt][ipt]->Reset();
 
-	      htemplate = hManager->getHistogram(isamp,ibin,icomp,9,iatt);
+	      htemplate = hManager->getNominalHistogram(isamp,ibin,icomp,9,iatt);
               hname = htemplate->GetName();
               hname.Append(Form("_%d%d%d%d%d%d",ipt,isamp,ibin,icomp,9,iatt));
               //cout<<"setting histogram template: "<<hname.Data()<<endl;
@@ -535,9 +533,27 @@ void splineFactory::makeManagerFromFile(const char* fname){
   return;
 }
 
+int splineFactory::getBest2RFitID(){
+  int nfits = mcEvt->fqnmrfit;
+
+  double ngLnLBest = 1000000.;
+  int bestindex = 0;
+
+  for (int ifit=0;ifit<nfits;ifit++){
+    int fitID = mcEvt->fqmrifit[ifit]; //< fit fit ID code
+    if ((fitID-320000000)<0) continue; //< we want best 2R fits
+    if (mcEvt->fqmrnll[ifit]<ngLnLBest) bestindex = ifit;
+  }
+  return bestindex;
+
+}
+
 void splineFactory::fillAttributes(){
   attribute[0] = mcEvt->fq1rnll[0][2]-mcEvt->fq1rnll[0][1];
-  attribute[1] = mcEvt->fq1rnll[1][2]-mcEvt->fq1rnll[1][1];
+  int ibest = getBest2RFitID();
+  double best1Rnglnl = fmin(mcEvt->fq1rnll[0][1],mcEvt->fq1rnll[0][2]);
+  attribute[1] = best1Rnglnl-mcEvt->fqmrnll[ibest];
+  //attribute[1] = mcEvt->fq1rnll[1][2]-mcEvt->fq1rnll[1][1];
   return;
 }
 
@@ -762,12 +778,12 @@ double splineFactory::getEvtWeight(int ipar){
       }
     }
     else if (sysName[ipar].find("HAD_MUL")!=std::string::npos) {}//do nothing for now
-    else if (sysName[ipar].find("RPA_O")!=std::string::npos) {
+    /*else if (sysName[ipar].find("RPA_O")!=std::string::npos) {
       if (nmode == 0) {
 	ww *= mcEvt->byEv_rpa_ccqe_gr->Eval(sysPar[ipar]);
 	std::cout<<sysName[ipar]<<" "<<nmode<<" "<<mcEvt->byEv_rpa_ccqe_gr->Eval(sysPar[ipar])<<" | ";
       }
-    }
+      }*/
     else if (sysName[ipar].find("MEC_O")!=std::string::npos) {
       if (nmode == 8) {
 	ww *= (sysPar[ipar]+fitPars->sysParNom[ipar]);
@@ -826,7 +842,7 @@ double splineFactory::getEvtWeight(int ipar){
     else {} // all other systematic parameters don't change the weights
      */
   }
-  std::cout<<"----------- "<<"mode = "<<nmode<<" "<<ww<<" -----------"<<std::endl;
+  std::cout<<"----------- "<<sysName[ipar]<<" mode = "<<nmode<<" "<<ww<<" -----------"<<std::endl;
   
   //--------------------------------------------------------------
   /*

@@ -44,7 +44,7 @@ void compareToEventByEvent::compareAllComp(int isamp, int ibin, int iatt, int is
   for (int i = 0; i < mcTree->GetEntries(); ++i) {
     mcTree->GetEvent(i);
     fillAttributes();
-    float weight = mcEvt->evtweight * getEvtWeight(isys);
+    float weight = mcEvt->rfgweight * getEvtWeight(isys);
     if (i%50000==0) std::cout<<thePars->sysParName[isys]<<" "<<mcEvt->nmode<<" wgt = "<<weight<<std::endl;
     if ((mcEvt->nbin==ibin)&&(mcEvt->nsample==isamp)) {
       htmp1->Fill(att[iatt], weight);
@@ -80,7 +80,7 @@ void compareToEventByEvent::compareAllComp(int isamp, int ibin, int iatt)
   for (int i = 0; i < mcTree->GetEntries(); ++i) {
     mcTree->GetEvent(i);
     fillAttributes();
-    float weight = mcEvt->evtweight;
+    float weight = mcEvt->rfgweight;
     for (int isys = 0; isys < thePars->nSysPars; ++isys) {
       if (thePars->sysParName[isys].find("hc_")!=std::string::npos) continue;
       if (thePars->sysParName[isys].find("HAD")!=std::string::npos) continue;
@@ -121,26 +121,28 @@ void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int i
   for (int iev=0;iev<mcTree->GetEntries();iev++){
     mcTree->GetEvent(iev);
     fillAttributes();
-    float weight = mcEvt->evtweight * getEvtWeight(isys);
+    float weight = mcEvt->rfgweight * getEvtWeight(isys);
     if (iev%50000==0) std::cout<<thePars->sysParName[isys]<<" "<<mcEvt->nmode<<" wgt = "<<weight<<std::endl;
     if ((mcEvt->nbin==ibin)&&(mcEvt->nsample==isamp)&&(mcEvt->ncomponent==icomp)&&(mcEvt->nmode==imode)){
       htmp1->Fill(att[iatt],weight);
     }
   }
-  htmp1->SetLineColor(kBlack); // event-by-event modified histogram
+  htmp1->SetLineColor(kRed); // event-by-event modified histogram
   htmp1->SetLineWidth(2);
-  htmp2->SetLineColor(kRed); // spline modified histogram
-  htmp2->SetFillColor(kRed-9);
+  htmp1->SetMarkerColor(kRed);
+  htmp2->SetLineColor(kBlack); // spline modified histogram
+  //htmp2->SetFillColor(kRed-9);
   htmp3->SetLineColor(kBlue); // original histogram
+  std::cout<<"h1 "<<htmp1->Integral()<<"; h2 "<<htmp2->Integral()<<"; h3 "<<htmp3->Integral()<<std::endl;
   TCanvas c;
   c.cd();
-  htmp2->Draw("samee2");
-  //htmp2->Draw("sameh");
-  htmp1->Draw("sameh");
-  htmp1->Draw("samee");
+  htmp1->Draw("h");
+  htmp1->Draw("samee2");
+  htmp2->Draw("samee");
+  htmp2->Draw("sameh");
   htmp3->Draw("samee");
   htmp3->Draw("sameh");
-  c.SaveAs(Form("compare%d.eps",isys));
+  c.Print(Form("compare%d.pdf",isys));
   return;
 }
 
@@ -154,9 +156,10 @@ void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int i
   
   //fill histogram from tree
   for (int iev=0;iev<mcTree->GetEntries();iev++){
+    break;
     mcTree->GetEvent(iev);
     fillAttributes();
-    float weight = mcEvt->evtweight;
+    float weight = mcEvt->rfgweight;
     for (int isys = 0; isys < thePars->nSysPars; ++isys) {
       weight *= getEvtWeight(isys);
       if (iev%50000==0) std::cout<<thePars->sysParName[isys]<<" "<<mcEvt->nmode<<" wgt = "<<weight<<std::endl;
@@ -182,11 +185,28 @@ void compareToEventByEvent::comparePrediction(int isamp,int ibin,int icomp,int i
   return;
 }
 
+int compareToEventByEvent::getBest2RFitID(){
+  int nfits = mcEvt->fqnmrfit;
+
+  double ngLnLBest = 1000000.;
+  int bestindex = 0;
+
+  for (int ifit=0;ifit<nfits;ifit++){
+    int fitID = mcEvt->fqmrifit[ifit]; //< fit fit ID code
+    if ((fitID-320000000)<0) continue; //< we want best 2R fits
+    if (mcEvt->fqmrnll[ifit]<ngLnLBest) bestindex = ifit;
+  }
+  return bestindex;
+}
 
 void compareToEventByEvent::fillAttributes(){
-  att[0] = mcEvt->fq1rnll[0][2]-mcEvt->fq1rnll[0][1];
-  att[1] = mcEvt->fq1rnll[1][2]-mcEvt->fq1rnll[1][1];
-  return;
+  //att[0] = mcEvt->fq1rnll[0][2]-mcEvt->fq1rnll[0][1];
+  //att[1] = mcEvt->fq1rnll[1][2]-mcEvt->fq1rnll[1][1];
+  //int ibest = getBest2RFitID();
+  //double best1Rnglnl = fmin(mcEvt->fq1rnll[0][1],mcEvt->fq1rnll[0][2]);
+  //att[1] = best1Rnglnl-mcEvt->fqmrnll[ibest];
+  att[0] = mcEvt->attribute[0];
+  att[1] = mcEvt->attribute[1];
 }
 
 float compareToEventByEvent::getEvtWeight(int ipar){
@@ -280,12 +300,12 @@ float compareToEventByEvent::getEvtWeight(int ipar){
     }
   }
   else if (thePars->sysParName[ipar].find("HAD_MUL")!=std::string::npos) {}//do nothing for now
-  else if (thePars->sysParName[ipar].find("RPA_O")!=std::string::npos) {
+  /*else if (thePars->sysParName[ipar].find("RPA_O")!=std::string::npos) {
     if (nmode == 0) {
       ww *= mcEvt->byEv_rpa_ccqe_gr->Eval((thePars->sysPar[ipar]-thePars->sysParNom[ipar]));
       //std::cout<<thePars->sysParName[ipar]<<" "<<nmode<<" "<<mcEvt->byEv_rpa_ccqe_gr->Eval((thePars->sysPar[ipar]-thePars->sysParNom[ipar]))<<" | ";
     }
-  }
+    }*/
   else if (thePars->sysParName[ipar].find("MEC_O")!=std::string::npos) {
     if (nmode == 8) {
       ww *= thePars->sysPar[ipar];

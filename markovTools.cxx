@@ -102,6 +102,7 @@ int markovTools::acceptStepLnL(double newL){
     atmPars->acceptStep();
     pathTree->Fill();
     iaccept = 1;
+    std::cout<<iStep<<" accepted, LnL = "<<newL<<std::endl;
   } /*
   else{
     for (int i=0;i<nPars;i++){
@@ -231,7 +232,7 @@ void markovTools::Init(int npars){
   //branch setup
   pathTree->Branch("npars",&nPars,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
-  pathTree->Branch("par",oldPars,"par[100]/D");
+  pathTree->Branch("par",oldPars,"par[500]/D");
 
   //done
   return;
@@ -249,7 +250,7 @@ markovTools::markovTools(int npars){
   //branch setup
   pathTree->Branch("npars",&nPars,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
-  pathTree->Branch("par",oldPars,"par[100]/D");
+  pathTree->Branch("par",oldPars,"par[500]/D");
 }
 
 ////////////////////////////////////////////

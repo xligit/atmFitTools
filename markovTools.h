@@ -1,4 +1,4 @@
-#include "TRandom2.h"
+#include "TRandom3.h"
 #include "TMath.h"
 #include "TH1D.h"
 #include "TH2D.h"
@@ -14,7 +14,7 @@ using namespace std;
 
 #ifndef GLOBAL_RANDOM
 #define GLOBAL_RANDOM
-TRandom2* randy = new TRandom2();
+TRandom3* randy = new TRandom3();
 #endif
 
 //class to manage a Markov Chain Monte Carlo

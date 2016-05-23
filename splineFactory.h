@@ -97,6 +97,7 @@ class splineFactory{
 
 //  private:
   void fillAttributes();
+  int getBest2RFitID();
   void setupHistos();
   void setupSystPars(); //sets up systematic parameters
   void incrementSystPars(double nsig);

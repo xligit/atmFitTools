@@ -1,9 +1,6 @@
 {
- gROOT->ProcessLine(".L histoManager.C++");
- gROOT->ProcessLine(".L hSplines.C++");
- gROOT->ProcessLine(".L histoCompare.C++");
- gROOT->ProcessLine(".L atmFitPars.C++");
  gROOT->ProcessLine(".x ~/rootlogon.C");
+ gROOT->ProcessLine(".x /home/xiaoyue/atmFitTools/loadClasses.C");
  TH1F* hpdat = new TH1F("hpdat","hpdat",50,0,100);
  TH1F* hpmc = new TH1F("hpmc","hpmc",50,0,100);
  TH1F* hpiddat = new TH1F("hpiddat","hpiddat",50,-1000,600);

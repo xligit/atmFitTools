@@ -172,6 +172,8 @@ void histoFactory::init(){
 	      hname.Append(Form("samp%d_bin%d_comp%d_mode%d_att%d",isamp,ibin,icomp,imode,iatt));
 	      //  cout<<"Making histogram: "<<hname.Data()<<endl;
 	      hManager->setHistogram(isamp,ibin,icomp,imode,iatt,0,getHistogram(iatt,hname.Data()));
+	      hname.Append("nom");
+	      hManager->setNominalHistogram(isamp,ibin,icomp,imode,iatt,getHistogram(iatt,hname.Data()));
 	    }
 	  }
 	}
@@ -313,9 +315,10 @@ void histoFactory::fillHistos(){
     for (int jatt=0;jatt<nAttributes;jatt++){
       if (!separateNeutMode) {
 	hManager->fillHistogram(fqMC->nsample,fqMC->nbin,fqMC->ncomponent,
-				jatt,fqMC->attribute[jatt],fqMC->evtweight);
+				jatt,fqMC->attribute[jatt],fqMC->rfgweight);
       } else {
-	hManager->fillHistogram(fqMC->nsample, fqMC->nbin, fqMC->ncomponent, fqMC->nmode, jatt, fqMC->attribute[jatt], fqMC->evtweight);
+	hManager->fillHistogram(fqMC->nsample, fqMC->nbin, fqMC->ncomponent, fqMC->nmode, jatt, fqMC->attribute[jatt], fqMC->rfgweight);
+	hManager->fillNominalHistogram(fqMC->nsample, fqMC->nbin, fqMC->ncomponent, fqMC->nmode, jatt, fqMC->attribute[jatt], fqMC->evtweight);
       }
     //  hManager->fillHistogram(fqMC->nsample,fqMC->nbin,fqMC->ncomponent,jatt,att[jatt],fqMC->evtweight);
     }

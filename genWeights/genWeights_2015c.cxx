@@ -680,8 +680,7 @@ int main(int argc, char *argv[])
     rw.Systematics().SetTwkDial(t2krew::kNIWG_rpaCCQE_norm,1);
     rw.Systematics().SetTwkDial(t2krew::kNIWG_rpaCCQE_shape,0);
     rw.Systematics().SetTwkDial(t2krew::kNXSec_VecFFCCQE, 2); // Note that when we set MAQE, we need to set NXSec_VecFFCCQE to 2 for SF->RFG MC. Should be set to 2 all the time, except for SF MAQE variations (127 - 147) to ensure we get the correct behaviour when SF->RFG tuning is applied later.
-    
-    
+        
     rw.Reconfigure();
     
     // Store the values of the current set of parameters

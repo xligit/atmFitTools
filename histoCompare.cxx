@@ -190,18 +190,16 @@ void histoCompare::runMCMC(int nsteps){
   ///////////////////////////////////////////////
   //fill parameter array and set uncertainties
   for (int ipar=0;ipar<thePars->nTotPars;ipar++){
-//    par[ipar]=thePars->getParameter(ipar);
+    //par[ipar]=thePars->getParameter(ipar);
     mc->setParVar(ipar,thePars->parUnc[ipar]);
   }
   
   ///////////////////////////////////////////////////
   //set initial state
-
   
  // getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
   result = getTotLnL();
   mc->setL(result);//< sets the initial likelihood
-
   //loop through steps
   int currentstep=0;
   while (currentstep<nsteps){
@@ -1429,37 +1427,61 @@ double histoCompare::getTotSumSqDebug(){
 double histoCompare::getTotLnL(){
 
   double totL = 0.;
-
-  ////////////////////////////////////////
-  //contribution from histogram comparison  
-  for (int isamp=0;isamp<nSamp;isamp++){
-    for (int ibin=0;ibin<nBin;ibin++){
-      for (int iatt=0;iatt<nAtt;iatt++){
-     //    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
-     //    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
-         TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
-         TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
-         double hnorm = hDataTmp->Integral()/hPrediction->Integral();
-
-   //      double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
-   //      cout<<"partialL :"<<partialL<<endl;     
-
-         totL+=getLnL(hPrediction,hDataTmp,hnorm);
+  if(!separateNeutMode) {
+    ////////////////////////////////////////
+    //contribution from histogram comparison  
+    for (int isamp=0;isamp<nSamp;isamp++){
+      for (int ibin=0;ibin<nBin;ibin++){
+	for (int iatt=0;iatt<nAtt;iatt++){
+	  //    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
+	  //    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
+	  TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
+	  TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
+	  double hnorm = hDataTmp->Integral()/hPrediction->Integral();	  
+	  //      double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
+	  //      cout<<"partialL :"<<partialL<<endl;     	  
+	  totL+=getLnL(hPrediction,hDataTmp,hnorm);
+	}
       }
     }
+    
+    //////////////////////////////////////////////
+    //contribution from flux/xsec priors
+    double pull;
+    for (int isys=0;isys < 2;isys++){
+      pull = thePars->sysPar[isys]-1.;
+      pull/=thePars->sysParUnc[isys];
+      totL+=(0.5)*(pull*pull);
+    }
+    totL += thePars->cov->getLikelihood();
+    return totL;
+  } else {
+    for (int isamp=0;isamp<nSamp;isamp++){
+      for (int ibin=0;ibin<nBin;ibin++){
+	for (int iatt=0;iatt<nAtt;iatt++){
+	  //    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
+	  //    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
+	  TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
+	  TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
+	  //double hnorm = hDataTmp->Integral()/hPrediction->Integral();
+	  //      double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
+	  //      cout<<"partialL :"<<partialL<<endl;     	  
+	  totL+=getLnL(hPrediction,hDataTmp,scaling);
+	  //std::cout<<hDataTmp->Integral()<<" "<<hPrediction->Integral()<<std::endl;
+	}
+      }
+    }    
+    //////////////////////////////////////////////
+    //contribution from flux/xsec priors
+    double pull;
+    for (int isys=0;isys < 2;isys++){
+      pull = thePars->sysPar[isys]-1.;
+      pull/=thePars->sysParUnc[isys];
+      totL+=(0.5)*(pull*pull);
+    }
+    totL += thePars->cov->getLikelihood();
+    return totL;
   }
-  
-  //////////////////////////////////////////////
-  //contribution from flux/xsec priors
-  double pull;
-  for (int isys=0;isys < 2;isys++){
-    pull = thePars->sysPar[isys]-1.;
-    pull/=thePars->sysParUnc[isys];
-    totL+=(0.5)*(pull*pull);
-  }
-  totL += thePars->cov->getLikelihood();
-
-  return totL;
 }
 
 
@@ -1572,11 +1594,49 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
   return;
 }
 
+void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, int ncomp, int nmode, int natt){
+  nSamp = nsamp;
+  nBin  = nbin;
+  nComp = ncomp; 
+  nAtt  = natt;
+  nMode = nmode;
+  hManager = new histoManager(filerootname,nsamp,nbin,ncomp,natt,nmode,true);
+  double ndataevents=0;
+  double nmcevents=0;
+  double events;
+  //count total events
+  /*
+  for (int jsamp=0;jsamp<nSamp;jsamp++){
+    for (int jbin=0;jbin<nBin;jbin++){
+      for (int jatt=0;jatt<nAtt;jatt++){
+        events =  hManager->hData[jsamp][jbin][jatt]->Integral();
+        cout<<"histo "<<jsamp<<"-"<<nbin<<"-"<<jatt<<" has "<<events<<" events."<<endl;
+        ndataevents+=events;
+        for (int jcomp=0;jcomp<nComp;jcomp++){
+          events = hManager->hMC[jsamp][jbin][jcomp][jatt]->Integral();
+          cout<<"MC histo "<<jsamp<<"-"<<jbin<<"-"<<jcomp<<"-"<<jatt<<" has "<<events<<" events."<<endl;
+          nmcevents+=events;
+        }
+      }
+    }
+    }*/
+  //Norm = ndataevents/nmcevents;
+  Norm = scaling;
+  return;
+}
+
+
 void histoCompare::setupPars(int nsyspars){
   thePars = new atmFitPars(nSamp,nBin,nComp,nAtt,"tn186");
  // thePars->setNorm(Norm);
   hManager->setFitPars(thePars);
   return;
+}
+
+void histoCompare::setupPars(atmFitPars *a)
+{
+  thePars = a;
+  hManager->setFitPars(thePars);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1614,7 +1674,9 @@ histoCompare::histoCompare(){
   return;
 }
 
-histoCompare::histoCompare(const char* parfile){
+histoCompare::histoCompare(const char* parfile, bool sep)
+  : separateNeutMode(sep)
+{
 
   //read in parameter file
   runPars = new sharedPars(parfile);
@@ -1634,6 +1696,7 @@ histoCompare::histoCompare(const char* parfile){
   MCMCNSteps = runPars->MCMCNSteps;
 
   //read in pre-filled histograms using histoManager
+  /*
   int nbins = runPars->nFVBins;
   int ncomponents = runPars->nComponents;
   int nsamples = runPars->nSamples;
@@ -1645,13 +1708,12 @@ histoCompare::histoCompare(const char* parfile){
   //setup fit parameters
   thePars = new atmFitPars(parfile);
   hManager->setFitPars(thePars);
-
   
   //read in splines if you're into that
   if (runPars->useSplinesFlg){
     setupSplines(runPars->splineFactoryOutput.Data(),nsyspars);
   }
-
+  */
 
 }
 

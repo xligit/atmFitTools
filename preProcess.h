@@ -11,6 +11,7 @@
 #include "TString.h"
 #include "FVCalculators.cxx"
 #include "sharedPars.h"
+#include "shared.h"
 
 using namespace std;
 
@@ -32,15 +33,12 @@ class preProcess{
   preProcess();
   preProcess(TChain* chin,const char* name="");
   preProcess(TTree* trin,const char* name="");
-  preProcess(TChain *mc, TChain *banff, TChain *spline, const std::string name);
-
+  preProcess(TChain *mc, TChain *spline, const std::string name);
   /////////////////////
   //internal variables
   TChain* chmc;
   TChain* chdat;
-  TChain *chbanff;
   TChain *chspline;
-  TTree *trbanff;
   TTree *trspline;
   TTree* tr;
   TTree* trout;
@@ -54,10 +52,8 @@ class preProcess{
   int MCComponents;
   int FVBinning;
   int nFiles;
-  int nFilesBANFF;
   int nFilesSpline;
   bool isData;
-  bool existBANFF;
   bool existSpline;
   ////////////////////////
   //for cuts
@@ -73,13 +69,15 @@ class preProcess{
   //new branch variables
   float towall;
   float wall;
-  float evtweight;
+  float evtweight; // banff weight
+  float rfgweight;
   float attribute[1000];
   int ncomponent;
   int nsample;
   int nbin;
   int nmode;
   float fWeight;
+  float rfgWeight;
   float oscwgt;
   TGraph          *byEv_maqe_ccqe_gr;
   TGraph          *byEv_pfo_ccqe_gr;
@@ -123,7 +121,7 @@ class preProcess{
   //methods
   void setTree(TTree* trin);
   void setTree(TChain* trin);
-  void setTree(TTree*, TTree*, TTree*);
+  void setTree(TTree*, TTree*);
   void setupSplineTree(TTree *h);
   void setParFileName(const char* filename){parFileName=filename;}
   void runPreProcessing();
@@ -137,11 +135,12 @@ class preProcess{
   int getBin();
   int getMode();
   int getBest2RFitID();
-  float getWeight();
+  float getBANFFWeight();
+  float getFixedWeight();
   void processFile(const char* fname,const char* outname="");
-  void processFile(const char* f1, const char* f2, const char* f3, const char* outname="");
+  void processFile(const char* f1, const char* f2, const char* outname);
   void processAllFiles(TChain* chain);
-  void processAllFiles(TChain*, TChain*, TChain*);
+  void processAllFiles(TChain*, TChain*);
 
 };
 

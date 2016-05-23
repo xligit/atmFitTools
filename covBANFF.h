@@ -21,6 +21,7 @@ class covBANFF : public covBase
  protected:
   void InitPars(float stepScale, unsigned int seed);
 
+  TVectorD *banff_param_pre;
   TVectorD *banff_param_prior;
   TVectorD *banff_param_nom;
   TVectorD *banff_param_lb;
@@ -40,8 +41,9 @@ class covBANFF : public covBase
   TString *banffnames;
 
   double linex[2];
-  double *fParNom;
-  double *fParType;
+  double *fParPrefit;
+  int *fParType;
+  double *fParPrior;
   int nBeamPars;
 };
 

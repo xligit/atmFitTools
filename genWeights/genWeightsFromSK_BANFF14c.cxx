@@ -1,344 +1,293 @@
 //
-// Example to show how to reweight NEUT events from the SK tree. Run with:
+// 2015 NIWG-oscillation analysis dials for spline generation.
+// See TN192 for details
 //
-// ./genWeightsFromSK_NEUTFSI.exe -s "sk_inputfile(s)"
-//                                -o output filename (without .root extension)
-//                                -n <number of events to reweight>
-//                                -h "list of systematic names"
-//                                -v "corresponding list of systematic values"
-//           //added by maggie
-//                                -m define which set of parameters is used (0-24)
-//                                -t tune multiplicity to CHORUS data
+//  Run with: 
 //
-// Patrick de Perio - Nov. 4, 2011
-//         This example has the FSI parameters enabled in the code (you do
-//         not need to specify the paramters by command line, i.e. -h & -v).
-//         It reads the FSI parameter values from a table (fsi_pars.txt) and converts
-//         it to the proper units for T2KReWeight.
+// ./generateWeightsFromSK_NIWG2015.exe -s sk_inputfile [optional nevents] 
 //
 //
+// Uses NIWGReWeight2015 and NEUT 3.3.3. Source the correct versions of 
+// everything by doing:
+// 
+// Systematics for splines (in order):
+//
+// These ones have 13 dials (-3 sigma to 3 sigma in 0.5 sigma steps):
+// MaQE
+// Fermi momentum, pF (O)
+// Binding energy, Eb (O)
+// CA5
+// 1pi axial form factor, MaNFFRES
+// Isospin=1/2 background normalisation (BgSclRES)
+// CC other shape uncertainty, dismpishp
+// Second class currents (vector), SCCVecQE
+// Second class currents (axial), SCCAxlQE
+//
+// This one has 1 dial only (tuning on):
+// Rel RPA (note: calculate weights relative to untuned MC. Eventually will be applied on top of SF->RFG tuning and Non-rel RPA tuning, but we do not consider the errors associated with these two)
+// 
 #include <stdlib.h>
 #include <cstdlib>
-
-#include <iostream>
-#include <fstream>
 #include <math.h>
-#include <string>
-#include <sstream>
+#include <iostream>
 
 #include "TFile.h"
 #include "TTree.h"
-#include "TChain.h"
+#include "TClonesArray.h"
 #include "TString.h"
+#include "TVectorD.h"
+#include "TMatrixDSym.h"
 #include "TMath.h"
 
 #include "T2KReWeight.h"
 #include "T2KSyst.h"
-#include "T2KWeightsStorer.h"
 
-#include "T2KGenieReWeight.h"
+#include "T2KGenieReWeight.h" 
 #include "T2KNeutReWeight.h"
+#include "T2KJNuBeamReWeight.h"
 #include "T2KNIWGReWeight.h"
-//#include "T2KSKReWeight.h"
-#include "T2KGEANTReWeight.h"
 
 #include "SK__h1.h"
+// For weight storer class
+#include "T2KWeightsStorer.h"
 
-using namespace std;
+using std::cout;
+using std::cerr;
+using std::endl;
+
 using namespace t2krew;
 
 int fNskEvts = -1;
 TString fSKFileName;
-TString outfilename = "";
-//char *outhistofilename = "";
+TString fInputParFileName;
+TString fOutputFileName;
 
-int flgRW = 0;
+const int nPars = 7;
+TString parNames[nPars] = {"MAQE","pF_O","EB_O","CA5","MANFFRES","BgRES","DISMPISHP"};
+TString dialNames[nPars] = {"NXSec_MaCCQE", "NIWG2014a_pF_O16", "NIWG2014a_Eb_O16", "NXSec_CA5RES","NXSec_MaNFFRES","NXSec_BgSclRES","NIWG2012a_dismpishp"};
+double sigma[nPars];
+double nominal[nPars];
+double prefit[nPars];
+// set lower and upper bound by hand :(
+double lb[nPars] = {0, 0.89, 0.44, 0, 0, 0, -9999};
+double up[nPars] = {9999, 1.22, 1.56, 9999, 9999, 9999, 9999};
 
-//added by maggie
-//int parset_defined=0;
-int chorus_tune_flag=0;
-
-//enum sampleEnum {MultiGeV_elike_nue, MultiRing_mulike};
-
-//int muedcyBuild(SK::SK__h1 *skVtxs);
-//int mringtype(SK::SK__h1 *skVtxs);
-
-int getArgs(int argc, char* argv[]);
-vector<string> separate(string input_uptions);
-void include_systematics(t2krew::T2KReWeight *rw, vector<string> handles, vector<string> values);
-string handles_input="";
-string values_input="";
+void Usage();
+int ParseArgs(int argc, char *argv[]);
 
 int main(int argc, char *argv[])
 {
-  
+ 
   // process the arguments
-  int args = getArgs(argc, argv);
+  int args = ParseArgs(argc, argv);
   if(args != 0){
-    cout << "Usage " << endl;
+    std::cerr << "Usage " << std::endl;
     return 0;
   }
+  //T2KWeightsStorer *storer = new T2KWeightsStorer("testweights_skexample_nue.root"); //forweightstorer
+  T2KWeightsStorer *storer = new T2KWeightsStorer(fOutputFileName);
   
-  if (outfilename.CompareTo("")==0) {
-    outfilename = fSKFileName;
-    outfilename.ReplaceAll(".root","_wgt.root");
+  cout << "Starting to reweight NIWG events from SK file: " << fSKFileName << endl;
+    
+  // Load the SK "h1" tree
+  TFile * SK_infile = new TFile(fSKFileName, "OPEN");
+  if(!SK_infile){
+    cerr << "Cannot open SK file!" << endl;
+   exit(1);
   }
+  TTree * SK_tree;
+  SK_tree = (TTree*) SK_infile->Get("h1");
+  if(!SK_tree){
+    cerr << "Cannot find tree h1! Looking for mtuple instead" << endl;
+    SK_tree = (TTree*) SK_infile->Get("mtuple");
+  }
+  if(!SK_tree){
+    cerr << "Cannot find tree mtuple! Looking for minituple instead" << endl;
+    SK_tree = (TTree*) SK_infile->Get("minituple");
+  }
+  if(!SK_tree){
+    cerr << "Cannot find tree mtuple! This is a real problem." << endl;
+  }  
+  std::cout << "Number of entries in SK_tree: " << SK_tree->GetEntries() << std::endl;
   
-  // Parse command line input of systematic names and values
-  vector<string> handles = separate(handles_input);
-  vector<string> values = separate(values_input);
-  
-  bool fDoFSIrw = true;
-  bool fDoSIrw = true;
-  if (flgRW%2) fDoSIrw = false;
-  if ((flgRW/2)%2) fDoFSIrw = false;
-  cout << "FSI reweight : " << ( fDoFSIrw ? "Yes" : "No" ) << endl;
-  cout << "SI reweight : " << ( fDoSIrw ? "Yes" : "No" ) << endl;
-  
-  cout << "Starting to reweight NEUT events from SK file(s): " << fSKFileName << endl;
-  
-  
-  // Load the tree(s)
-  TChain *SK_tree = new TChain();
-  SK_tree->Add(Form("%s/h1",fSKFileName.Data()));
-  
-  // Instantiate the tree object to be read by T2KReWeight
+  // Instantiate the reader of the SK tree class
   SK::SK__h1 *skVtxs = new SK::SK__h1(SK_tree,1);
+  std::cout << "Number of entries in skVtxs: " << skVtxs->GetEntries() << std::endl;
   
-  // Make a t2kreweighting object and add a NEUT weighting engine.
-  t2krew::T2KReWeight *rw = new T2KReWeight();
-  rw->AdoptWghtEngine("neut_rw", new t2krew::T2KNeutReWeight());
-  //rw->AdoptWghtEngine("niwg_rw", new t2krew::T2KNIWGReWeight());
-  //rw->AdoptWghtEngine("sk_rw", new t2krew::T2KSKReWeight());
-  rw->AdoptWghtEngine("geant_rw", new t2krew::T2KGEANTReWeight());
-  
-  // For storing the tree of weights for each event
-  T2KWeightsStorer *wt_storer = new T2KWeightsStorer(outfilename.Data());
-  
-  // Enable systematics from command line argument
-  include_systematics(rw,handles,values);
-  
-  // Enable CHORUS tuning parameter
-  //rw->Systematics().Include(t2krew::kNIWGPiMult_CorrSwitch);
-  //rw->Systematics().SetAbsTwk(t2krew::kNIWGPiMult_CorrSwitch);
-  //rw->Systematics().SetTwkDial(t2krew::kNIWGPiMult_CorrSwitch, chorus_tune_flag);
-  
-  // Enable NEUT FSI parameters
-  rw->Systematics().Include(t2krew::kNCasc_FrAbs_pi);      // abs
-  rw->Systematics().Include(t2krew::kNCasc_FrCExLow_pi);   // cxl
-  rw->Systematics().Include(t2krew::kNCasc_FrInelLow_pi);  // qel
-  rw->Systematics().Include(t2krew::kNCasc_FrPiProd_pi);   // had
-  rw->Systematics().Include(t2krew::kNCasc_FrCExHigh_pi);  // cxh
-  rw->Systematics().Include(t2krew::kNCasc_FrInelHigh_pi); // qeh
-  
-  // Set units to absolute fractional change from default value
-  rw->Systematics().SetAbsTwk(t2krew::kNCasc_FrAbs_pi);
-  rw->Systematics().SetAbsTwk(t2krew::kNCasc_FrCExLow_pi);
-  rw->Systematics().SetAbsTwk(t2krew::kNCasc_FrInelLow_pi);
-  rw->Systematics().SetAbsTwk(t2krew::kNCasc_FrPiProd_pi);
-  rw->Systematics().SetAbsTwk(t2krew::kNCasc_FrCExHigh_pi);
-  rw->Systematics().SetAbsTwk(t2krew::kNCasc_FrInelHigh_pi);
-  
-  rw->Systematics().Include(t2krew::kGEANT_PionXSecTbl);
-  
-  const int nFSIsets = 25;  // Number of FSI parameter variations
-  const int nFSIpars = 6;   // Number of FSI parameters
-  
-  // Following enumeration must correspond to order of columns of input
-  // FSI parameter value table (fsi_pars.txt; from Table 13, T2K-TN-032)
-  enum FSIenum {FSIqel, FSIqeh, FSIhad, FSIabs, FSIcxl, FSIcxh};
-  
-  int iFSI[nFSIsets];
-  double FSIval[nFSIsets][nFSIpars];  // Value of each FSI parameter
-  
-  // Load parameter values from file
-  cout << "Opening loading FSI parameter variations..." << endl;
-  ifstream fsipars("pi_fsi_tbl.txt");
-  
-  string strtemp;
-  if( fsipars.is_open() ){
-    
-    getline(fsipars,strtemp);
-    
-    int iparset = 0;
-    while ( !fsipars.eof() ) {
-      
-      if (iparset>=nFSIsets) {
-        cout << "Too many rows in file!" << endl;
-        break;
+  const int ndraws = 13*nPars+8;//13*9+2+7;//+21*2+16; // -3 sigma ... +3 sigma in 0.5sigma steps (13 variations) for 9 parameters, plus 2 RPA tunings, plus 7 extra tweaks (-7 sigma to -3.5 sigma) for MaQE, plus SF-mode MaQE and pFsf (both 10 sigma in 0.5 sigma steps), plus MEC q3 (16 steps)
+
+  // input parameters file
+  TFile *parfile = new TFile(fInputParFileName, "OPEN");
+  if(!parfile->IsOpen()) exit(1);  
+  cout << "Loading input parameters file: " << fInputParFileName << endl << endl;  
+  // Get included parameters from file
+  TObjArray *param_list_arr = (TObjArray*)parfile->Get("param_list");
+  TMatrixDSym *prefit_cov = (TMatrixDSym*)parfile->Get("prefit_cov");
+  TVectorD *prefit_params = (TVectorD*)parfile->Get("prefit_params");
+
+  for (int i=0; i<param_list_arr->GetEntries(); i++) {
+    TObjString *param_list_obj = (TObjString*)param_list_arr->At(i);
+    TString paramStr = param_list_obj->GetString().Data();// name of the parameter in BANFF output file
+    if (paramStr.Contains("SK")) continue;
+    for (int ipar=0; ipar<nPars; ipar++) {
+      if (parNames[ipar] == paramStr) {
+	if (paramStr.Contains("DISMPISHP")) nominal[ipar] = 0;
+	else nominal[ipar] = 1;
+	sigma[ipar] = TMath::Sqrt((*prefit_cov)(i,i));
+	prefit[ipar] = (*prefit_params)(i);
       }
-      
-      fsipars >> iFSI[iparset];
-      for(int ipar=0; ipar<nFSIpars; ipar++){
-        fsipars >> FSIval[iparset][ipar];
-      }
-      
-      iparset++;
-      
     }
-    fsipars.close();
-    
   }
-  else {
-    printf( "pi_fsi_tbl.txt file not found!!\n" );
-    exit(-1);
-  }
+
+    
+#ifdef __T2KRW_NIWG_ENABLED__
+#ifdef __T2KRW_NEUT_ENABLED__
+  // Make a t2kreweighting object and add a NIWG and NEUT weighting engine. 
+  t2krew::T2KReWeight rw; 
+  rw.AdoptWghtEngine("neut_rw", new t2krew::T2KNeutReWeight());
+  rw.AdoptWghtEngine("niwg_rw", new t2krew::T2KNIWGReWeight());
   
-  cout << " Loaded " << nFSIsets << " variations:" << endl;
-  cout << strtemp << endl;
-  for(int iparset=0; iparset<nFSIsets; iparset++){
-    cout << iFSI[iparset] << "\t";
-    for(int ipar=0; ipar<nFSIpars; ipar++){
-      cout << FSIval[iparset][ipar] << "\t";
-    }
-    cout << endl;
-  }
-  cout << endl;
+  // NIWG 2015
+  // Uncertainties
+  rw.Systematics().Include(t2krew::kNXSec_MaCCQE);
+  rw.Systematics().Include(t2krew::kNIWG2014a_pF_O16);
+  rw.Systematics().Include(t2krew::kNIWG2014a_Eb_O16); 
+  rw.Systematics().Include(t2krew::kNXSec_CA5RES);
+  rw.Systematics().Include(t2krew::kNXSec_MaNFFRES);
+  rw.Systematics().Include(t2krew::kNXSec_BgSclRES);
+  rw.Systematics().Include(t2krew::kNIWG2012a_dismpishp);
+  //rw.Systematics().Include(t2krew::kNXSec_SCCVecQE);
+  //rw.Systematics().Include(t2krew::kNXSec_SCCAxlQE);
+  //rw.Systematics().Include(t2krew::kNIWGSpectralFunc_pFsfO16_smooth);
+  //rw.Systematics().Include(t2krew::kNIWGMEC_q3Cut);
   
+  // Tunings
+  //rw.Systematics().Include(t2krew::kNIWG_rpaCCQE_norm);
+  //rw.Systematics().Include(t2krew::kNIWG_rpaCCQE_shape);
+  rw.Systematics().Include(t2krew::kNXSec_VecFFCCQE); // used to set MAQE to act according to for RFG MC (2) or SF MC (402). Should always be set to 2 to ensure that we get the correct splines when SF -> RFG tuning is applied later, except for in the case of SF mode MAQE.  
   
-  // Loop over parameter sets
-  for (int iparset=0; iparset<nFSIsets; iparset++) {
-    
-    cout << endl << "Var. #" << iFSI[iparset] << " : \t";
-    for(int ipar=0; ipar<nFSIpars; ipar++){
-      cout << FSIval[iparset][ipar] << "\t";
-    }
-    cout << endl;
-    
-//    if(iparset != parset_defined) continue;
-    
-    double dial[nFSIpars];
-    // Convert FSI value to fractional change from default
-    // (Warning: Assumes default is the first row of input table)
-    for (int ipar=0; ipar<nFSIpars; ipar++) {
-      dial[ipar] = (FSIval[iparset][ipar]-FSIval[0][ipar])/FSIval[0][ipar];
-    }
-    
-    Double_t dialtbl = 0.; // for secondary int.
-    if(iFSI[iparset]!=0) dialtbl = (iFSI[iparset]-7)%8+1;
-    
-    // Set value for each FSI parameter
-    if (fDoFSIrw) {
-      rw->Systematics().SetTwkDial(t2krew::kNCasc_FrAbs_pi,     dial[FSIabs]);
-      rw->Systematics().SetTwkDial(t2krew::kNCasc_FrCExLow_pi,  dial[FSIcxl]);
-      rw->Systematics().SetTwkDial(t2krew::kNCasc_FrInelLow_pi, dial[FSIqel]);
-      rw->Systematics().SetTwkDial(t2krew::kNCasc_FrPiProd_pi,  dial[FSIhad]);
-      rw->Systematics().SetTwkDial(t2krew::kNCasc_FrCExHigh_pi, dial[FSIcxh]);
-      rw->Systematics().SetTwkDial(t2krew::kNCasc_FrInelHigh_pi,dial[FSIqeh]);
-    }
-    
-    if (fDoSIrw) {
-      rw->Systematics().SetTwkDial(t2krew::kGEANT_PionXSecTbl,dialtbl);
-    }
-    
-    // Propagate changes to NEUT reweighting engine
-    rw->Reconfigure();
-    
-    // Store the values of the current set of parameters
-    wt_storer->NewSystSet(rw->Systematics());
-    
-    if(fNskEvts < 0) fNskEvts = skVtxs->GetEntries();
-    
-    // Loop over SK entries and calculate weights.
-    cout << "Will reweight SK nevents: " << fNskEvts << endl;
-    for(int i = 0; i < fNskEvts; i++){
-      
-      skVtxs->GetEntry(i);
-      
-      if (i%1000==0)
-        cout << "Event " << i << endl;
-      
-      
-      double weight = rw->CalcWeight(skVtxs);
-      //if ((weight-skVtxs->Fsivarwt[iparset-1])/weight > 0.000001)
-      //  cout << weight << " " << skVtxs->Fsivarwt[iparset-1] << endl;
-      
-      // Store weight in tree
-      wt_storer->AddWeight(weight);
-      
-    }
-    cout << " - Reweighting is complete!" << endl << endl;
-    
-  }
+  // Absolute tweak dials set the fractional uncertainty, instead of 
+  // in units of "sigma", defined in the code.
+  // Useful so that you define the uncertainty within the code, as what is
+  // hardcoded may not be the same as what is used for analysis. 
   
-  wt_storer->SaveToFile();
-  delete wt_storer;
-  
-  return 0;
-}
-
-
-int getArgs(int argc, char* argv[]){
-
-  while( (argc > 1) && (argv[1][0] == '-') ){
-    switch(argv[1][1]){
-
-      // Get ROOT input root files
-    case 's': 
-      fSKFileName = argv[2];
-      ++argv; --argc;
-      break;
-
-    case 'o':
-      outfilename = argv[2];
-      ++argv; --argc;
-      break;
-      
-//    case 'h':
-//      outhistofilename = argv[2];
-//      ++argv; --argc;
-//      break;
-
-    case 'v':
-      values_input = argv[2];
-      ++argv; --argc;
-      break;
-
-    case 'r':
-      flgRW = atoi(argv[2]);
-      ++argv; --argc;
-      break;
-
-//added by maggie      
-//    case 'm':
-//      parset_defined = atoi(argv[2]);
-//      ++argv; --argc;
-//      break;
+  // Uncertanties:
+  rw.Systematics().SetAbsTwk(t2krew::kNXSec_MaCCQE);
+  rw.Systematics().SetAbsTwk(t2krew::kNIWG2014a_pF_O16);
+  rw.Systematics().SetAbsTwk(t2krew::kNIWG2014a_Eb_O16); 
+  rw.Systematics().SetAbsTwk(t2krew::kNXSec_CA5RES);
+  rw.Systematics().SetAbsTwk(t2krew::kNXSec_MaNFFRES);
+  rw.Systematics().SetAbsTwk(t2krew::kNXSec_BgSclRES);
+  rw.Systematics().SetAbsTwk(t2krew::kNIWG2012a_dismpishp);
+  //rw.Systematics().SetAbsTwk(t2krew::kNXSec_SCCVecQE);
+  //rw.Systematics().SetAbsTwk(t2krew::kNXSec_SCCAxlQE);
+  //rw.Systematics().SetAbsTwk(t2krew::kNIWGSpectralFunc_pFsfO16_smooth);
+  //rw.Systematics().SetAbsTwk(t2krew::kNIWGMEC_q3Cut);
    
-    case 't':
-      chorus_tune_flag = atoi(argv[2]);
-      ++argv; --argc;
-      break;
+  // Tunings:
+  //rw.Systematics().SetAbsTwk(t2krew::kNIWG_rpaCCQE_norm);
+  //rw.Systematics().SetAbsTwk(t2krew::kNIWG_rpaCCQE_shape);
+  
+  std::cout << std::endl
+            << "-------------------------------------------------" << std::endl
+            << "1-sigma errors are set as: " << std::endl
+            << "MaQE: " << sigma[0] << std::endl
+            << "pF (O): put in by hand between boundaries" << sigma[1] << std::endl
+            << "Eb (O): put in by hand between boundaries" << sigma[2] << std::endl
+            << "Ca5: " << sigma[3] << std::endl
+            << "MaNFFRES: " << sigma[4] << std::endl
+            << "BgSclRES: " << sigma[5] << std::endl
+            << "Dismpishp: " << sigma[6] << std::endl
+            << "-------------------------------------------------"
+            << std::endl << std::endl;
+
+  // loop over total variations, changing each tweak dial accordingly
+  for(int dial=0; dial<=ndraws; dial++){
+  
+    rw.Systematics().SetTwkDial(t2krew::kNXSec_VecFFCCQE, 2); // Note that when we set MAQE, we need to set NXSec_VecFFCCQE to 2 for SF->RFG MC. Should be set to 2 all the time, except for SF MAQE variations (127 - 147) to ensure we get the correct behaviour when SF->RFG tuning is applied later.
+    double maqedial = 0;
+    double pfodial = 0;
+    double ebodial = 0;
+    double cadial = 0;
+    double manresdial = 0;
+    double bkgdial = 0;
+    double dismpidial = 0;
+
+    // Set uncertainties
+    if(dial>=0&&dial<=20){
+      maqedial = prefit[0] - nominal[0] + (dial - 14)*0.5*sigma[0];
+    }else if(dial>=21&&dial<=33){
+      if (dial < 27) pfodial = (dial-21-6)*0.5*0.11/3.0;
+      else           pfodial = (dial-21-6)*0.5*0.22/3.0;
+    }else if(dial>=34&&dial<=46){
+      ebodial = (dial-34-6)*0.5*0.56/3.0;
+    }else if(dial>=47&&dial<=59){
+      cadial = (dial-47-6)*0.5*sigma[3]; 
+    }else if(dial>=60&&dial<=72){
+      manresdial = (dial-60-6)*0.5*sigma[4]; 
+    }else if(dial>=73&&dial<=85){
+      bkgdial = (dial-73-6)*0.5*sigma[5]; 
+    }else if(dial>=86&&dial<=98){
+      dismpidial = (dial-86-6)*0.5*sigma[6]; 
     }
 
-    ++argv; --argc;
-  }
+    // Set uncertainty dials
+    rw.Systematics().SetTwkDial(t2krew::kNXSec_MaCCQE, maqedial);
+    rw.Systematics().SetTwkDial(t2krew::kNIWG2014a_pF_O16, pfodial);
+    rw.Systematics().SetTwkDial(t2krew::kNIWG2014a_Eb_O16, ebodial);
+    rw.Systematics().SetTwkDial(t2krew::kNXSec_CA5RES, cadial);
+    rw.Systematics().SetTwkDial(t2krew::kNXSec_MaNFFRES, manresdial);
+    rw.Systematics().SetTwkDial(t2krew::kNXSec_BgSclRES, bkgdial);
+    rw.Systematics().SetTwkDial(t2krew::kNIWG2012a_dismpishp, dismpidial);
 
+    rw.Reconfigure();
+    storer->NewSystSet(rw.Systematics()); // save the current twk dial values to the weight storer class
+
+   // Loop over SK entries and calculate weights.
+   if(fNskEvts < 0) fNskEvts = skVtxs->GetEntries();
+   
+   for(int i = 0; i < fNskEvts; i++){
+
+   skVtxs->GetEntry(i);
+   Double_t weight =1.0;
+   weight = rw.CalcWeight(skVtxs);
+   storer->AddWeight(weight); // add weight for each
+   } // event loop
+
+ } // index of tweak dial changes
+
+
+  cout << "Outputfile testweights_skexample_nue.root has weight storer tree"  << endl;
+
+
+ storer->SaveToFile(); // save the weights to a file
+ #endif // __T2KRW_NIWG_ENABLED__
+ #endif // __T2KRW_NEUT_ENABLED__
+ delete storer; 
+ 
+ return 0;
+}
+
+// Print the cmd line syntax
+void Usage(){
+  cout << "Cmd line syntax should be:" << endl;
+  cout << "generateWeightsFromSK_NIWGexample.exe -s sk_inputfile [-e nevents] -i banff_file -o outfile" << endl;
+  exit(1);
+}
+
+int ParseArgs(int argc, char **argv){
+  int nargs = 3;
+  if (argc < (nargs*2+1)) { Usage(); }
+  for(int i = 1; i < argc; i++){
+    if(string(argv[i]) == "-i") {fInputParFileName = argv[i+1]; i++;}
+    else if(string(argv[i]) == "-s") {fSKFileName = argv[i+1]; i++; }
+    else if(string(argv[i]) == "-e") {fNskEvts = std::atoi(argv[i+1]); i++;}
+    else if(string(argv[i]) == "-o") {fOutputFileName = argv[i+1]; i++; }
+    else {
+      cout << "Invalid argument:" << argv[i] << " "<< argv[i+1] << endl;
+      Usage();
+    }
+  }
   return 0;
-
 }
 
-
-vector<string> separate(string input_options){
-  vector<string> options_string;
-  istringstream iss(input_options);
-  while(iss){
-    string sub;
-    iss >> sub;
-    options_string.push_back(sub);
-  }
-  options_string.pop_back();
-  return options_string;
-}
-
-void include_systematics(t2krew::T2KReWeight *rw, vector<string>handles, vector<string>values) {
-  
-  // For reconfiguring the NEUT engine
-  
-  for(unsigned int i=0;i<handles.size();i++){
-    rw->Systematics().Include(T2KSyst::FromString(handles[i])); 
-    rw->Systematics().SetTwkDial(T2KSyst::FromString(handles[i]),atof(values[i].c_str()));
-    
-  }
-  return;
-}

@@ -1,6 +1,7 @@
 #ifndef HISTCOMPARE_H
 #define HISTCOMPARE_H
 
+#include "shared.h"
 #include "histoManager.h"
 #include "TMath.h"
 #include "TRandom2.h"
@@ -12,25 +13,27 @@
 
 using namespace std;
 
-
 //class to compare histograms and evaluate likelihoods
 class histoCompare{
   public:
 
   //constructors//
-  histoCompare(const char* parfile);  //construct from parameter file
+  histoCompare(const char* parfile, bool sepearteneutmode = false);  //construct from parameter file
   histoCompare();  //standard constructor
 
   //internal variables
+  bool separateNeutMode;
   TString nameTag;  //name associated with this instance
   int nSamp;  //number of samples
   int nBin;  //number of bins
   int nComp;  //number of  components
   int nAtt;  //nummboer of attributes
+  int nMode;
   double tunePar; //tuning parameter for MCMC
   //tools for histogram manager management
   //created histo manager from file
   void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int natt);
+  void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int imode, int natt);
   histoManager* hManager;
   //atmospheric pars
   atmFitPars* thePars;
@@ -56,6 +59,7 @@ class histoCompare{
   void setCompName(int icomp, const char* name){compName[icomp]=name;}
   void setAttName(int iatt, const char* name){attName[iatt]=name;}
   void setupPars(int nsyspars=0); //sets up all parameters
+  void setupPars(atmFitPars *a);
   //post-fit toolts
   void profileL(int ibin, int icomp, int iatt, int imod, double range, int npts=100);
   void profileL(int ipar,double range, int npts=100,int sameflg=0);

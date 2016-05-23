@@ -18,6 +18,7 @@ class compareToEventByEvent{
   float getEvtWeight(int isys);
   float att[1000];
   void fillAttributes();
+  int getBest2RFitID();
   void comparePrediction(int isamp,int ibin, int icomp, int iatt, int isys);
   void comparePrediction(int isamp,int ibin, int icomp, int imode, int iatt, int isys); 
   void comparePrediction(int isamp,int ibin, int icomp, int imode, int iatt, bool all);

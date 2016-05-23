@@ -50,6 +50,7 @@ class histoManager{
   TH1D* hMCModified[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //array of all MODIFIED MC histograms
   TH1D* hMCNeut[NSAMPMAX][NBINMAX][NCOMPMAX][NMODE][NATTMAX];
   TH1D* hMCNeutModified[NSAMPMAX][NBINMAX][NCOMPMAX][NMODE][NATTMAX];
+  TH1D *hMCNeutNom[NSAMPMAX][NBINMAX][NCOMPMAX][NMODE][NATTMAX]; 
   TH1D* hSumHisto[NSAMPMAX][NBINMAX][NATTMAX];
   TH1D* hSumHistoMod[NSAMPMAX][NBINMAX][NATTMAX];
   TH1D* hMod;
@@ -76,17 +77,19 @@ class histoManager{
   void fillHistogram(int isamp, int ibin, int icomp, int iatt,double value,double weight=1.);
   void fillHistogram(int isamp, int ibin, int icomp, int imode, int iatt, double valuem, double weight);
   void fillHistogramData(int isamp, int ibin, int iatt,double value,double weight=1.);
-
+  void fillNominalHistogram(int isamp, int ibin, int icomp, int imode, int iatt, double value, double weight);
   ///////////////////////////
   //setters
   void setHistogram(int isamp, int ibin, int icomp, int iatt, int dataflg,TH1D* h);
   void setHistogram(int isamp, int ibin, int icomp, int imode, int iatt, int dataflg, TH1D *h);
+  void setNominalHistogram(int isamp, int ibin, int icomp, int imode, int iatt, TH1D *h);
 
   ///////////////////////////
   //getters
   TH1D* getHistogram(int isamp, int ibin, int icomp, int iatt);
   TH1D* getModHistogram(int isamp, int ibin, int icomp, int iatt); //gets histogram modified from atm pars
-  TH1D *getHistogram(int isamp, int ibin, int icomp, int imode, int iatt); // neut
+  TH1D* getHistogram(int isamp, int ibin, int icomp, int imode, int iatt); // neut
+  TH1D* getNominalHistogram(int isamp, int ibin, int icomp, int imode, int iatt);
   TH1D* getModHistogram(int isamp, int ibin, int icomp, int imode, int iatt); // neut
   TH1D* getHistogramData(int isamp, int ibin, int iatt){return hData[isamp][ibin][iatt];}
   hSplines* getSplines(int isamp, int ibin, int icomp, int iatt){return theSplines[isamp][ibin][icomp][iatt];}

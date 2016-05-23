@@ -13,14 +13,14 @@ covBANFF::covBANFF(std::string name, std::string file, unsigned seed, bool postf
   if (postfit) {
     banff_param_nom = (TVectorD*)infile.Get("postfit_params");
     banff_param_prior = (TVectorD*)infile.Get("postfit_params");
+    banff_param_pre = (TVectorD*)infile.Get("prefit_params");
     std::cout<<"Using post-fit parameters"<<std::endl;
   } else {
     banff_param_nom = (TVectorD*)infile.Get("prefit_params");
     banff_param_prior = (TVectorD*)infile.Get("prefit_params");
+    banff_param_pre = (TVectorD*)infile.Get("prefit_params");
     std::cout<<"Using pre-fit parameters"<<std::endl;
   }
-  //banff_param_lb = (TVectorD*)infile.Get("banff_param_lb");
-  //banff_param_ub = (TVectorD*)infile.Get("banff_param_ub");
   
   nu_numubins = (TAxis*)infile.Get("sk_numode_numu_bins");
   nu_numubarbins = (TAxis*)infile.Get("sk_numode_numub_bins");
@@ -178,22 +178,15 @@ covBANFF::covBANFF(std::string name, std::string file, unsigned seed, bool postf
   fParLow[index] = 0; fParUp[index] = 9999;
   setParName(index++, "CCNUEBAR");
   std::cout<<"there are "<<(size-linex[1])<<" xsec parameters."<<std::endl;
+
   size_xsec = size-linex[1];
-  fParType = new double[size];
-  fParNom = new double[size];
+  fParType = new int[size];
+  fParPrior = new double[size];
   for (int i = 0; i < size; ++i) {
-    nominal.at(i) = (*banff_param_prior)(i);
-    fParNom[i] = (*banff_param_nom)(i);
-    /*
-    if (fParNom[i] != 0) {
-      (*banff_param_prior)(i) /= fParNom[i];
-      (*banff_param_lb)(i) /= fParNom[i];
-      (*banff_param_ub)(i) /= fParNom[i];
-      fParUp[i] /= fParNom[i];
-      fParLow[i] /= fParNom[i];
-      fParNom[i] = 1;
-    }
-    */
+    if (fParName[i].find("DISMPISHP")!=std::string::npos) nominal.at(i) = 0;
+    else nominal.at(i) = 1;
+    fParType[i] = 0;
+    fParPrior[i] = (*banff_param_prior)(i);
   }
   /*  
   std::cout<<"----------- nominal (unscaled) ------------\n";
@@ -208,12 +201,13 @@ covBANFF::covBANFF(std::string name, std::string file, unsigned seed, bool postf
 
 covBANFF::~covBANFF()
 {
+  delete fParType;
 }
 
 void covBANFF::InitPars(float stepScale, unsigned int seed)
 {
   for (int i = 0; i < size; ++i) {
-    fParInit[i] = (*banff_param_prior)(i);
+    fParInit[i] = (*banff_param_nom)(i);
     fParCurr[i] = fParInit[i];
     fParProp[i] = fParCurr[i];
     //fParSigma[i] = stepScale;
@@ -233,7 +227,7 @@ double covBANFF::getLikelihood()
     if (fParProp[i] > fParUp[i] || fParProp[i] < fParLow[i]) return 99999.9;
     for (int j = 0; j < size; ++j) {
       if (fParEvalLikelihood[i] && fParEvalLikelihood[j] && fParType[i]==0 && fParType[j]==0) {
-	LogL += (nominal.at(i)-fParProp[i]) * (nominal.at(i)-fParProp[i]) * (*invCov)(i,j) * 0.5;
+	LogL += (fParPrior[i]-fParProp[i]) * (fParPrior[i]-fParProp[i]) * (*invCov)(i,j) * 0.5;
       }
     }
   }
@@ -302,13 +296,16 @@ void covBANFF::throwNominal(bool nomValues, unsigned int seed)
       }
     }
   } else {
-    for (int i = 0; i < size; ++i) nominal.at(i) = (*banff_param_prior)(i);
+    for (int i = 0; i < size; ++i) {
+      nominal.at(i) = 1;
+      if(fParName[i].find("DISMPISHP")!=std::string::npos) nominal.at(i) = 0;
+    }
   }
 }
 
 double covBANFF::GetWeightFrac(int i)
 {
-  if (i >= 0 && i <= size) return fParProp[i] - 1.;
+  if (i >= 0 && i <= size) return fParProp[i] - nominal.at(i);
   else return 1;
 }
 

@@ -1,0 +1,17 @@
+bk_genWeightsFromSK_NEUTFSI.cxx				# not important
+disable_list.txt					# disabled T2KReWeight dials among BANFF xsec parameters
+fsivar_indiv.txt					# 
+genWeights_2015c.cxx					# for xsec parameter splines
+genweights_BANFF.pl					# batch generate banff reweight
+genWeightsFromSK_BANFF14c.cxx				# T2KReWeight app generating banff reweight
+genWeightsFromSK_NEUTFSI.cxx				# T2KReWeight app generating FSI/SI reweight
+genweights_FSI.pl					# batch generate FSI/SI reweight
+genweights_throws.pl					# batch generate BANFF reweight
+pi_fsi_tbl.txt						# FSI/SI parameter sets
+postfit_data_1p1h_biascorrection_20160310.root		# BANFF postfit file
+Run_genweights_banff.sh					# run genweights_BANFF.pl
+Run_genweights_fsi.sh					# run genweights_FSI.pl 
+Run_genweights_throws.sh				# run genweights_throws.sh 
+WeightOut.cc						# convert T2KReWeight output into a more readable format
+wgtCompare.C						# a temporary macro to compare two versions of BANFF rweight
+wgtcompare.root						# output of wgtCompare.C

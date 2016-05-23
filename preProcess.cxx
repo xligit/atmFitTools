@@ -17,22 +17,19 @@ void preProcess::processAllFiles(TChain* chain){
   return;
 }
 
-void preProcess::processAllFiles(TChain *chain, TChain *banff, TChain *spline)
+void preProcess::processAllFiles(TChain *chain, TChain *spline)
 {
   int nfiles = chain->GetNtrees();
   TObjArray* listOfMCFiles = chain->GetListOfFiles();
-  TObjArray* listOfBANFFFiles = banff->GetListOfFiles();
   TObjArray* listOfSplineFiles = spline->GetListOfFiles();
   TString tag;
   TString fmcname;
-  TString fbanffname;
   TString fsplinename;
   for (int ifile=0;ifile<nfiles;ifile++){
     tag = Form("_%d_",ifile);
     fmcname = listOfMCFiles->At(ifile)->GetTitle();
-    if (existBANFF) fbanffname = listOfBANFFFiles->At(ifile)->GetTitle();
     if (existSpline) fsplinename = listOfSplineFiles->At(ifile)->GetTitle();
-    processFile(fmcname,fbanffname,fsplinename,tag);
+    processFile(fmcname,fsplinename,tag);
   }
   return;
 }
@@ -54,15 +51,9 @@ void preProcess::setTree(TTree* trin){
   return;
 }
 
-void preProcess::setTree(TTree* trin, TTree* banff, TTree *spline){
+void preProcess::setTree(TTree* trin, TTree *spline){
   tr = trin;
-  trbanff = banff;
   trspline = spline;
-  if (existBANFF) {
-    trbanff->SetBranchAddress("fWeight", &fWeight);
-    tr->AddFriend(trbanff);
-    std::cout<<"setup banff tree"<<std::endl;
-  }
   if (existSpline) {
     setupSplineTree(trspline);
     //tr->AddFriend(trspline);
@@ -99,14 +90,17 @@ void preProcess::processFile(const char* fname,const char* outname){
   preProcessIt();
 
   //clean up
-  if (trout->GetEntries()>0) fout->Write();
+  //if (trout->GetEntries()>0) {
+  fout->cd();
+  trout->Write();
+  //}
   fin->Close();
   fout->Close();
   
   return;   
 }
 
-void preProcess::processFile(const char* fname, const char *fbanffname, const char *fsplinename, const char* outname){
+void preProcess::processFile(const char* fname, const char *fsplinename, const char* outname){
 
   //make output file name
   TString outputName = outDir.Data(); //name of directory
@@ -119,22 +113,17 @@ void preProcess::processFile(const char* fname, const char *fbanffname, const ch
   TFile* fin = new TFile(fname);
   TTree* intree = (TTree*)fin->Get("h1");
   cout<<"got tree: "<<intree->GetEntries()<<endl;
-  TTree *banfftree=0, *splinetree=0;
-  TFile *fbanffin=0, *fsplinein=0;
-  if (existBANFF) {
-    fbanffin = new TFile(fbanffname, "read");
-    banfftree = (TTree*)fbanffin->Get("weightsTree");
-    std::cout<<"opening file: "<<fbanffname<<std::endl;
-    std::cout<<"got tree: "<<banfftree->GetEntries()<<std::endl;
-  }
+  TTree *splinetree=0;
+  TFile *fsplinein=0;
   if (existSpline) {
+    std::cout<<"processing spline"<<std::endl;
     fsplinein = new TFile(fsplinename, "read");
     splinetree = (TTree*)fsplinein->Get("SplinesByEvent");
     std::cout<<"opening file: "<<fsplinename<<std::endl;
     std::cout<<"got tree: "<<splinetree->GetEntries()<<std::endl;
   }
 
-  if (splinetree->GetEntries()) setTree(intree, banfftree, splinetree);
+  if (splinetree->GetEntries()) setTree(intree, splinetree);
   else setTree(intree);
   //setTree(intree);
 
@@ -150,7 +139,6 @@ void preProcess::processFile(const char* fname, const char *fbanffname, const ch
   if (trout->GetEntries()>0) fout->Write();
   fin->Close();
   fout->Close();
-  if (fbanffin) fbanffin->Close();
   if (fsplinein) fsplinein->Close();
   return;   
 }
@@ -158,26 +146,28 @@ void preProcess::processFile(const char* fname, const char *fbanffname, const ch
 ///////////////////////////////////
 //Gets a weight for an event
 //Usefull for making fake data sets
-float preProcess::getWeight(){
+float preProcess::getBANFFWeight(){
 //  absmode = TMath::Abs(fq->mode);
 //  float enu   = fq->pmomv[0];
-  if (!existBANFF)  evtweight = 1.0;
-  else if (isData)  evtweight = 1.0;
-  else           evtweight = fWeight;
-  //CCQE norm bin1 
-//  if ((absmode==1)&&(enu<200.)){
-//    evtweight = 1.5;
-//  }
-  //CCQE norm bin2 
-//  if ((absmode==1)&&(enu>200.)&&(enu<400.)) evtweight*=1.2;
-  //CCQE norm bin3 
-//  if ((absmode==1)&&(enu>400.)&&(enu<800.)) evtweight*=0.9;
-  //CCQE norm bin4 
-//  if ((absmode==1)&&(enu>800.)) evtweight*=1.05;
-
-  return evtweight * fq->oscwgt;
+  float weight = 1;
+  if (isData)  weight = 1.0;
+  else  {
+    weight = fq->fWeight;
+    weight *= fq->wgtflx[3] * fq->wgtosc1[3];
+  }
+  return weight;
 }
 
+float preProcess::getFixedWeight()
+{
+  float weight = 1;
+  if (isData)  weight = 1.0;
+  else  {
+    weight = fq->rfgWeight;
+    weight *= fq->wgtflx[3] * fq->wgtosc1[3];
+  }
+  return weight;
+}
 
 ///////////////////////////////////////////////
 //calculates the FV bin for an event
@@ -256,6 +246,8 @@ int preProcess::passCuts(){
  //   if (towall<0.) return 0; 
 //  }
 
+  //std::cout<<fq->nhitac<<" "<<fq->fq1rmom[0][1]<<" "<<wall<<" "<<towall<<" "<<fq->fqnse<<"\n"
+  //	   <<NHITACMax<<" "<<EVisMin<<" "<<WallMin<<" "<<ToWallMin<<" "<<NSEMax<<" "<<NSEMin<<"\n"<<std::endl;
 
   //Fully Contained Cut
   if (fq->nhitac>NHITACMax) return 0;
@@ -274,8 +266,6 @@ int preProcess::passCuts(){
   //In-gate cut
   double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
   if (tdecay<InGateMin) return 0;
-
-
   return 1;
 }
 
@@ -358,10 +348,13 @@ int preProcess::getComponent(){
 //loop over all events and sort into bins, samples and components
 void preProcess::preProcessIt(){
   int nev = tr->GetEntries();
+  //std::cout<<"nev = "<<nev<<std::endl;
   for (int i=0;i<nev;i++){
     //get info for event
     tr->GetEntry(i);
-    if (!isData) {if (nFilesSpline>1) trspline->GetEntry(i);}
+    if (!isData) {
+      if (existSpline) trspline->GetEntry(i);
+    }
     if ((i%1000)==0) cout<<i<<endl;
     nbin=getBin();
     if (!passCuts()) continue;
@@ -370,11 +363,11 @@ void preProcess::preProcessIt(){
     ncomponent=getComponent();
     nsample=getSample();
     nmode=getMode();
-    evtweight=getWeight();
+    evtweight = getBANFFWeight();
+    rfgweight = getFixedWeight();
     trout->Fill();
+    //if(isData) std::cout<<i<<" filling data "<<std::endl;
   }
-
-  return;
 }
 
 ///////////////////////////////////////
@@ -429,7 +422,12 @@ void preProcess::setupNewTree(){
   //tr->SetBranchStatus("cluster*",1);
   tr->SetBranchStatus("mode",1);
   tr->SetBranchStatus("nhitac",1);
-  tr->SetBranchStatus("oscwgt");
+  tr->SetBranchStatus("oscwgt",1);
+  tr->SetBranchStatus("wgtosc1",1);
+  tr->SetBranchStatus("wgtosc2",1);
+  tr->SetBranchStatus("wgtflx",1);
+  tr->SetBranchStatus("fWeight",1);
+  tr->SetBranchStatus("rfgWeight",1);
   trout = tr->CloneTree(0); //clone but don't copy data
   trout->CopyAddresses(tr); //set addresses
   
@@ -452,6 +450,8 @@ void preProcess::setupNewTree(){
   trout->Branch("wall",&wall,"wall/F");
   trout->Branch("towall",&towall,"towall/F");
   trout->Branch("evtweight",&evtweight,"evtweight/F");
+  trout->Branch("rfgweight",&rfgweight,"rfgweight/F");
+
   if (!isData) {
     trout->Branch("byEv_maqe_ccqe_gr", "TGraph", &byEv_maqe_ccqe_gr, 1280000, 0);
     trout->Branch("byEv_pfo_ccqe_gr", "TGraph", &byEv_pfo_ccqe_gr, 1280000, 0);
@@ -470,7 +470,7 @@ void preProcess::setupNewTree(){
     //trout->Branch("byEv_sccvec_ncoth_gr", "TGraph",  &byEv_sccvec_ncoth_gr, 1280000, 0);
     //trout->Branch("byEv_sccaxl_ccqe_gr", "TGraph",  &byEv_sccaxl_ccqe_gr, 1280000, 0);
     //trout->Branch("byEv_sccaxl_ncoth_gr", "TGraph",  &byEv_sccaxl_ncoth_gr, 1280000, 0);
-    trout->Branch("byEv_rpa_ccqe_gr", "TGraph",  &byEv_rpa_ccqe_gr, 1280000, 0);
+    //trout->Branch("byEv_rpa_ccqe_gr", "TGraph",  &byEv_rpa_ccqe_gr, 1280000, 0);
   }
   return;
 }
@@ -490,11 +490,11 @@ void preProcess::setupSplineTree(TTree *h)
   h->SetBranchAddress("byEv_bgscl_ncpiz_gr", &byEv_bgscl_ncpiz_gr, &byEv_bgscl_ncpiz_br);
   h->SetBranchAddress("byEv_bgscl_ncpipm_gr", &byEv_bgscl_ncpipm_gr, &byEv_bgscl_ncpipm_br);
   h->SetBranchAddress("byEv_dismpishp_ccoth_gr", &byEv_dismpishp_ccoth_gr, &byEv_dismpishp_ccoth_br);
-  h->SetBranchAddress("byEv_sccvec_ccqe_gr", &byEv_sccvec_ccqe_gr, &byEv_sccvec_ccqe_br);
-  h->SetBranchAddress("byEv_sccvec_ncoth_gr", &byEv_sccvec_ncoth_gr, &byEv_sccvec_ncoth_br);
-  h->SetBranchAddress("byEv_sccaxl_ccqe_gr", &byEv_sccaxl_ccqe_gr, &byEv_sccaxl_ccqe_br);
-  h->SetBranchAddress("byEv_sccaxl_ncoth_gr", &byEv_sccaxl_ncoth_gr, &byEv_sccaxl_ncoth_br);
-  h->SetBranchAddress("byEv_rpa_ccqe_gr", &byEv_rpa_ccqe_gr, &byEv_rpa_ccqe_br);
+  //h->SetBranchAddress("byEv_sccvec_ccqe_gr", &byEv_sccvec_ccqe_gr, &byEv_sccvec_ccqe_br);
+  //h->SetBranchAddress("byEv_sccvec_ncoth_gr", &byEv_sccvec_ncoth_gr, &byEv_sccvec_ncoth_br);
+  //h->SetBranchAddress("byEv_sccaxl_ccqe_gr", &byEv_sccaxl_ccqe_gr, &byEv_sccaxl_ccqe_br);
+  //h->SetBranchAddress("byEv_sccaxl_ncoth_gr", &byEv_sccaxl_ncoth_gr, &byEv_sccaxl_ncoth_br);
+  //h->SetBranchAddress("byEv_rpa_ccqe_gr", &byEv_rpa_ccqe_gr, &byEv_rpa_ccqe_br);
 }
 
 /////////////////////////////
@@ -545,17 +545,14 @@ preProcess::preProcess(TChain* chin,const char* name){
   return;
 }
 
-preProcess::preProcess(TChain *mc, TChain *banff, TChain *spline, const std::string name)
+preProcess::preProcess(TChain *mc, TChain *spline, const std::string name)
 {
   tr = (TTree*)mc;
-  trbanff = (TTree*)banff;
-  if (trbanff) trbanff->SetBranchAddress("fWeight", &fWeight);
   trspline = (TTree*)spline;
   setupSplineTree(trspline);
   nameTag = name.c_str();
   fq = new fqReader(tr);
   vis = new visRing(fq);
-
   setupNewTree();
 }
 
@@ -582,16 +579,13 @@ void preProcess::runPreProcessing(){
   //create data and mc chains
   chmc = new TChain("h1");
   chdat = new TChain("h1");
-  chbanff = new TChain("weightsTree");
   chspline = new TChain("SplinesByEvent");
   chmc->Add(runpars->preProcessFilesMC.Data());
   chdat->Add(runpars->preProcessFilesData.Data());
-  existBANFF = false; existSpline = false;
-  nFilesBANFF = chbanff->Add(runpars->preProcessFilesBANFF.Data());
-  if (nFilesBANFF) existBANFF = true;
+  existSpline = false;
   nFilesSpline = chspline->Add(runpars->preProcessFilesSpline.Data());
   if (nFilesSpline) existSpline = true;
-  std::cout<<"# banff files = "<<nFilesBANFF<<"; # spline files = "<<nFilesSpline<<std::endl;
+  std::cout<<"# spline files = "<<nFilesSpline<<std::endl;
   if (chmc->GetEntries()<1){
     cout<<"preProcess ERROR: no events in MC chain"<<endl;
     return;
@@ -605,11 +599,12 @@ void preProcess::runPreProcessing(){
   outDir = runpars->preProcessOutDir.Data();
   nameTag.Append("_ppmc");
   isData = false;
-  if (existBANFF || existSpline) processAllFiles(chmc, chbanff, chspline);
+  if (existSpline) processAllFiles(chmc, chspline);
   else processAllFiles(chmc);
   nameTag = runpars->globalRootName.Data();
   nameTag.Append("_ppdata");
   isData = true;
+  std::cout<<"---------- process data -----------"<<std::endl;
   processAllFiles(chdat); 
 
   cout<<"preProcess: Complete!"<<endl;

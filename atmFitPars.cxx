@@ -1,7 +1,6 @@
 #include "atmFitPars.h"
 
-void atmFitPars::resetDefaults(){
-
+void atmFitPars::resetDefaults(){ // wrong. don't use
   //initialize histogram pars
   int index = 0;
   for (int ibin=0;ibin<nBins;ibin++){
@@ -37,8 +36,6 @@ void atmFitPars::resetDefaults(){
     index++;
     sysPar[isyst]=1.0;
   }
-
-  return;
 }
 
 void atmFitPars::proposeStep()
@@ -47,16 +44,16 @@ void atmFitPars::proposeStep()
     if (!fixPar[i]) parsProp[i] = rnd->Gaus(pars[i], parUnc[i]*fScale); // random walk
   }
   for (int i = 0; i < 2; ++i) {
-    if (!fixPar[i+nSysPars-nSysPars]) parsProp[i+nSysPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
-    while (pars[i+nSysPars-nSysPars]<0) parsProp[i+nSysPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
+    if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
+    while (pars[i+nTotPars-nSysPars]<0) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
   }
-  if (!fixPar[3+nSysPars-nSysPars]) {
-    if (rnd->Uniform(0,2)>1) parsProp[3+nSysPars-nSysPars] = 0;
-    else parsProp[3+nSysPars-nSysPars] = 1;
+  if (!fixPar[3+nTotPars-nSysPars]) {
+    if (rnd->Uniform(0,2)>1) parsProp[3+nTotPars-nSysPars] = 0;
+    else parsProp[3+nTotPars-nSysPars] = 1;
   }
   cov->proposeStep();
   for (int i = 3; i < nSysPars; ++i) {
-    if (!fixPar[i+nSysPars-nSysPars]) parsProp[i+nSysPars-nSysPars] = cov->getProposed(i-3);
+    if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = cov->getProposed(i-3);
   }
 }
 
@@ -115,7 +112,6 @@ void atmFitPars::printPars(){
   cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
   return;
 }
-
 
 //read in all parameters from a file made from a call to "savePars"
 void atmFitPars::readPars(const char* filename){

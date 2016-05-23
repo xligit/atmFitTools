@@ -28,9 +28,6 @@ covBase::~covBase()
   delete fParLow;
   delete fParEvalLikelihood;
   delete fStepScale;
-  //for (int i = 0; i < size; ++i) {
-  //if(fPropKernel.at(i)) delete fPropKernel.at(i);
-  //}
   delete[] fPropKernel;
 
 }

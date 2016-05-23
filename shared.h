@@ -20,6 +20,7 @@
 #define NHBINSMAX 300
 #define NPTSMAX 21 // used to be 5                                                         
 #define NMODE 10
+#define scaling 0.1 // 10 years data / 100 years MC
 
 #endif
 

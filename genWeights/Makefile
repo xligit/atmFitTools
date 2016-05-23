@@ -8,7 +8,7 @@ MAKEFILE = Makefile
 #
 include $(T2KREWEIGHT)/make/Make.include
 
-all: genWeightsFromSK_NEUTFSI genWeightsFromSK_BANFF14c genWeights_2015c
+all: genWeightsFromSK_NEUTFSI genWeightsFromSK_BANFF14c genWeights_2015c WeightOut genXsecSpline genWeights_sfrpa_rfg
 
 genWeightsFromSK_NEUTFSI: FORCE
 	@echo -e "\n\n***** Compiling genWeightsFromSK_NEUTFSI\n"
@@ -24,6 +24,20 @@ genWeights_2015c: FORCE
 	@echo -e "\n\n***** Compiling genWeights_2015c\n"
 	$(CXX) $(CXXFLAGS) -c genWeights_2015c.cxx $(INCLUDES)
 	$(LD) $(LDFLAGS) genWeights_2015c.o $(LIBRARIES) -o genWeights_2015c.exe
+
+WeightOut:
+	$(CXX) $(CXXFLAGS) -c WeightOut.cc $(INCLUDES)
+	$(LD) $(LDFLAGS) WeightOut.o $(LIBRARIES) -o WeightOut.exe
+
+genXsecSpline: FORCE
+	@echo -e "\n\n*** Compiling genXsecSpline\n"
+	$(CXX) $(CXXFLAGS) -c genXsecSpline.cxx $(INCLUDES)
+	$(LD) $(LDFLAGS) genXsecSpline.o $(LIBRARIES) -o genXsecSpline.exe
+
+genWeights_sfrpa_rfg: FORCE
+	@echo -e "\n\n*** Compiling genWeights_sfrpa_rfg\n"
+	$(CXX) $(CXXFLAGS) -c genWeights_sfrpa_rfg.cxx $(INCLUDES)
+	$(LD) $(LDFLAGS) genWeights_sfrpa_rfg.o $(LIBRARIES) -o genWeights_sfrpa_rfg.exe
 
 purge: FORCE
 	$(RM) *.o *~ core 

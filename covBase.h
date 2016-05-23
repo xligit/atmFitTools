@@ -25,15 +25,12 @@ class covBase
   covBase(std::string name, std::string file, unsigned int seed);
   virtual ~covBase();
 
-  //void setCovMatrix(TMatrixDSym *covMatrix) { cov = covMatrix; }
   void setName(std::string name) { mName = name; }
   void setParName(int i, std::string name) { fParName[i] = name; }
-  //void setProposed(int i, double val) { fParProp[i] = val; }
   void setEvalLikelihood(int i, bool e) { fParEvalLikelihood[i] = e; }
   void setPar(int i, double val) { fParCurr[i] = val; }
   void setPars(std::vector<double> pars);
   void setThrowPar(int i, double val) { fParSigma[i] = val; } // set sigma of a parameter or decide whether to throw a parameter or not
-  //void setBranches(TTree &tree);
   void setStepScales(float scale);
   void setStepScale(int i, float scale) { fStepScale[i] = scale; }
   void setPropFunc(int i, TF1 *func);
@@ -58,8 +55,6 @@ class covBase
 
   void PrintNominal();
   void PrintPars();
-  //void PrintPosterior(int i);
-  //void PrintPosteriors();
 
   virtual void throwNominal(bool nomValues = true, unsigned int seed = 0);
   virtual double getLikelihood();
@@ -67,7 +62,6 @@ class covBase
   virtual double GetWeightFrac(int i) {return fParCurr[i]-1;}
   virtual double GetWeight(int i) {return fParCurr[i];}
   void acceptStep();
-  //void genPosteriorHists();
 
  protected:
   void init(std::string name, std::string file);

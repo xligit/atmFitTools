@@ -1,17 +1,21 @@
+void runfactory(bool i=true)
 {
   gROOT->ProcessLine(".x /home/xiaoyue/atmFitTools/loadClasses.C");
 
-  bool separateNeutMode = true;
+  bool separateNeutMode = i;
+  std::string card_file = "";
+  if(separateNeutMode) card_file = "/home/xiaoyue/atmFitTools/atmpars_mode.dat";
+  else card_file = "/home/xiaoyue/atmFitTools/atmpars.dat";
 
   //run histo factory from parameter file
-  histoFactory* hfact = new histoFactory("/home/xiaoyue/atmFitTools/atmpars.dat", separateNeutMode);
-  hfact->runHistoFactory();
+  //histoFactory* hfact = new histoFactory(card_file.c_str(), separateNeutMode);
+  //hfact->runHistoFactory();
 
   //covXsec *cov = new covXsec("xsec_cov", "/home/xiaoyue/atmFitTools/rootfiles/xsec_covariance_2015a_q3_1.2_withRPA_v1.root");
-  covBANFF *cov = new covBANFF("postfit_cov", "/home/xiaoyue/atmFitTools/rootfiles/postfit_data_joint_mecnubar_20151102.root", 1, true);
-  atmFitPars *pars = new atmFitPars("/home/xiaoyue/atmFitTools/atmpars.dat", cov);
+  covBANFF *cov = new covBANFF("postfit_cov", "/home/xiaoyue/atmFitTools/rootfiles/postfit_data_1p1h_biascorrection_20160310.root", 1, true);
+  atmFitPars *pars = new atmFitPars(card_file.c_str(), cov);
   //run spline factory form parameter file
-  splineFactory *sfact = new splineFactory("/home/xiaoyue/atmFitTools/atmpars.dat", separateNeutMode); //< atmospheric pars
+  splineFactory *sfact = new splineFactory(card_file.c_str(), separateNeutMode); //< atmospheric pars
   sfact->setAtmFitPars(pars);
   /*
   sfact->makeManagerFromFile("/home/xiaoyue/atmFitTools/rootfiles/atmfit_histograms.root");

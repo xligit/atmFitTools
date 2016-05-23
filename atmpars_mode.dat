@@ -16,7 +16,7 @@ $$ GENERAL PARAMETERS $$$$$$$
 i,nSamples=3;
 i,nFVBins=6;
 i,nComponents=7;
-i,nAttributes=2;
+i,nAttributes=1;
 i,nSysPars=9;
 s,globalRootName=atmfit;
 s,FVBinName0=wall_lt_100_subGeV;
@@ -51,13 +51,13 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ PREPROCESS PARAMETERS $$$$$$
 
 $ DIRECTORY WHERE PREPROCESSED OUTPUT FILES ARE WRITTEN
-s,preProcessOutDir=/home/xiaoyue/atmFitTools/rootfiles/simple_binning/;
+s,preProcessOutDir=/home/xiaoyue/atmFitTools/rootfiles/neut_binning/;
 
 $ FILE NAMES FOR MONTE CARLO FILES
-s,preProcessFilesMC=/disk2/usr5/xiaoyue/skmc/test_fc/root/jan14sk4_skdetsim13p90_neut532.reduc.*_fQv4r0.root;
+s,preProcessFilesMC=/disk2/usr5/xiaoyue/skmc/test_fc/atmfit_mtuple/jan14sk4_skdetsim13p90_neut532.reduc.*_fQv4r0_skimmed.root;
 
 $ FILE NAMES FOR DATA FILES
-s,preProcessFilesData=/disk2/usr5/xiaoyue/skmc/test_fc/root/jan14sk4_skdetsim13p90_neut532.reduc.00*_fQv4r0.root;
+s,preProcessFilesData=/disk2/usr5/xiaoyue/skmc/test_fc/atmfit_mtuple/jan14sk4_skdetsim13p90_neut532.reduc.00*_fQv4r0_skimmed.root;
 $s,preProcessFilesData=/disk2/usr5/xiaoyue/skmc/new_testmc/root/tenYrTest_000.root;
 
 $ FILE NAMES FOR MC SPLINE
@@ -92,10 +92,10 @@ d,PreProcInGateCut=0;
 
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HFACTORY PARAMETERS $$$$$
-s,hFactoryOuputDir=../rootfiles/simple_binning/;
-s,hFactoryOutput=../rootfiles/simple_binning/atmfit_histograms.root;
-s,hFactoryMCFiles=../rootfiles/simple_binning/atmfit*_ppmc*.root;
-s,hFactoryDataFiles=../rootfiles/simple_binning/atmfit*_ppdat*.root;
+s,hFactoryOuputDir=../rootfiles/neut_binning/;
+s,hFactoryOutput=../rootfiles/neut_binning/atmfit_histograms.root;
+s,hFactoryMCFiles=../rootfiles/neut_binning/atmfit*_ppmc*.root;
+s,hFactoryDataFiles=../rootfiles/neut_binning/atmfit*_ppdat*.root;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HISTOGRAM BINNING $$$$$$$
 i,nBinsAtt0=30;
@@ -116,7 +116,7 @@ d,xMaxAtt4=200;
 
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ SPLINE FACTORY PARAMETERS $$
-s,splineFactoryOutput=../rootfiles/simple_binning/atmfit_splines.root;
+s,splineFactoryOutput=../rootfiles/neut_binning/atmfit_splines.root;
 $  CODE FOR THE TYPE OF SYSTEMATIC ERROR PARAMETERIZATION
 $    tn186 -> SIMPLE TN186 PARAMETERIZATION 
 $    t2k -> t2k xsec-only parametrization
@@ -135,7 +135,7 @@ i,useSplinesFlg=1;
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ POSTFIT PARAMETERS $$$$$$$$$
 s,MCMCFile=mcmctree.root;
-i,MCMCBurnIn=10000;
+i,MCMCBurnIn=100;
 i,NMCEvents=50000;
 i,NMCMCPts=9;
 

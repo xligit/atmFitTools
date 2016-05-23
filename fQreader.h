@@ -130,6 +130,7 @@ public :
    Float_t         wall;
    Float_t         towall;
    Float_t         evtweight;
+   Float_t         rfgweight;
    TGraph          *byEv_maqe_ccqe_gr;
    TGraph          *byEv_pfo_ccqe_gr;
    TGraph          *byEv_ebo_ccqe_gr;
@@ -147,7 +148,7 @@ public :
    TGraph          *byEv_sccvec_ncoth_gr;
    TGraph          *byEv_sccaxl_ccqe_gr;
    TGraph          *byEv_sccaxl_ncoth_gr;
-   TGraph          *byEv_rpa_ccqe_gr;
+   //TGraph          *byEv_rpa_ccqe_gr;
 
 
    // List of branches
@@ -248,6 +249,7 @@ public :
    TBranch        *b_wall;   //!
    TBranch        *b_towall;   //!
    TBranch        *b_evtweight;   //!
+   TBranch        *b_rfgweight;
    TBranch        *byEv_maqe_ccqe_br;
    TBranch        *byEv_pfo_ccqe_br;
    TBranch        *byEv_ebo_ccqe_br;
@@ -265,7 +267,7 @@ public :
    TBranch        *byEv_sccvec_ncoth_br;
    TBranch        *byEv_sccaxl_ccqe_br;
    TBranch        *byEv_sccaxl_ncoth_br;
-   TBranch        *byEv_rpa_ccqe_br;
+   //TBranch        *byEv_rpa_ccqe_br;
 
 
    fQreader(TChain *tree=0);
@@ -340,6 +342,19 @@ void fQreader::Init(TChain *tree)
    fChain = tree;
    fCurrent = -1;
    fChain->SetMakeClass(1);
+   byEv_maqe_ccqe_gr = 0;
+   byEv_pfo_ccqe_gr = 0;
+   byEv_ebo_ccqe_gr = 0;
+   byEv_ca5_cc1pi_gr = 0;
+   byEv_ca5_ncpiz_gr = 0;
+   byEv_ca5_ncpipm_gr = 0;
+   byEv_manff_cc1pi_gr = 0;
+   byEv_manff_ncpiz_gr = 0;
+   byEv_manff_ncpipm_gr = 0;
+   byEv_bgscl_cc1pi_gr = 0;
+   byEv_bgscl_ncpiz_gr = 0;
+   byEv_bgscl_ncpipm_gr = 0;
+   byEv_dismpishp_ccoth_gr = 0;
    fChain->SetBranchAddress("nev", &nev, &b_nev);
    fChain->SetBranchAddress("nhitac", &nhitac, &b_nhitac);
    fChain->SetBranchAddress("npar", &npar, &b_npar);
@@ -436,6 +451,7 @@ void fQreader::Init(TChain *tree)
    fChain->SetBranchAddress("wall", &wall, &b_wall);
    fChain->SetBranchAddress("towall", &towall, &b_towall);
    fChain->SetBranchAddress("evtweight", &evtweight, &b_evtweight);
+   fChain->SetBranchAddress("rfgweight", &rfgweight, &b_rfgweight);
    if (fChain->GetListOfBranches()->FindObject("byEv_maqe_ccqe_gr")) fChain->SetBranchAddress("byEv_maqe_ccqe_gr", &byEv_maqe_ccqe_gr, &byEv_maqe_ccqe_br);
    if (fChain->GetListOfBranches()->FindObject("byEv_pfo_ccqe_gr")) fChain->SetBranchAddress("byEv_pfo_ccqe_gr", &byEv_pfo_ccqe_gr, &byEv_pfo_ccqe_br);
    if (fChain->GetListOfBranches()->FindObject("byEv_ebo_ccqe_gr")) fChain->SetBranchAddress("byEv_ebo_ccqe_gr", &byEv_ebo_ccqe_gr, &byEv_ebo_ccqe_br);
@@ -449,7 +465,8 @@ void fQreader::Init(TChain *tree)
    if (fChain->GetListOfBranches()->FindObject("byEv_bgscl_ncpiz_gr")) fChain->SetBranchAddress("byEv_bgscl_ncpiz_gr", &byEv_bgscl_ncpiz_gr, &byEv_bgscl_ncpiz_br);
    if (fChain->GetListOfBranches()->FindObject("byEv_bgscl_ncpipm_gr")) fChain->SetBranchAddress("byEv_bgscl_ncpipm_gr", &byEv_bgscl_ncpipm_gr, &byEv_bgscl_ncpipm_br);
    if (fChain->GetListOfBranches()->FindObject("byEv_dismpishp_ccoth_gr")) fChain->SetBranchAddress("byEv_dismpishp_ccoth_gr", &byEv_dismpishp_ccoth_gr, &byEv_dismpishp_ccoth_br);
-   if (fChain->GetListOfBranches()->FindObject("byEv_rpa_ccqe_gr")) fChain->SetBranchAddress("byEv_rpa_ccqe_gr", &byEv_rpa_ccqe_gr, &byEv_rpa_ccqe_br);
+
+   //if (fChain->GetListOfBranches()->FindObject("byEv_rpa_ccqe_gr")) fChain->SetBranchAddress("byEv_rpa_ccqe_gr", &byEv_rpa_ccqe_gr, &byEv_rpa_ccqe_br);
    Notify();
    //FillMap();
 }

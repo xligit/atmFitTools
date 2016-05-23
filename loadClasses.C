@@ -2,6 +2,7 @@
   const char * comlOption = "+";
   gROOT->ProcessLine(".include /home/xiaoyue/atmFitTools");
   // covariance
+  gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/shared.h%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/ThrowParms.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/covBase.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools/covXsec.cxx%s", comlOption));
