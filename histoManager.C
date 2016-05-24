@@ -240,10 +240,10 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   }
   if (Leg) Leg->Delete();
   Leg = new TLegend(0.7,0.6,0.9,0.9);
-  Leg->AddEntry(hMC[isample][ibin][0][iatt],"CC1e","F");
-  Leg->AddEntry(hMC[isample][ibin][1][iatt],"CC1#mu","F");
-  Leg->AddEntry(hMC[isample][ibin][2][iatt],"CCeOth","F");
-  Leg->AddEntry(hMC[isample][ibin][3][iatt],"CC#muOth","F");
+  Leg->AddEntry(hMC[isample][ibin][0][iatt],"Single e","F");
+  Leg->AddEntry(hMC[isample][ibin][1][iatt],"Single #mu","F");
+  Leg->AddEntry(hMC[isample][ibin][2][iatt],"e + Other","F");
+  Leg->AddEntry(hMC[isample][ibin][3][iatt],"#mu + Other","F");
   Leg->AddEntry(hMC[isample][ibin][4][iatt],"Single #pi^{0}","F");
   Leg->AddEntry(hMC[isample][ibin][5][iatt],"Other","F");
  // Leg->AddEntry(hMC[isample][ibin][6][iatt],"Other","F");

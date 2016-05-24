@@ -1,15 +1,14 @@
-#ifndef fqReader_cxx
-#define fqReader_cxx
-#include "fqReader.h"
+#define fQreader_cxx
+#include "fQreader.h"
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
 
-void fqReader::Loop()
+void fQreader::Loop()
 {
 //   In a ROOT session, you can do:
-//      Root > .L fqReader.C
-//      Root > fqReader t
+//      Root > .L fQreader.C
+//      Root > fQreader t
 //      Root > t.GetEntry(12); // Fill t data members with entry number 12
 //      Root > t.Show();       // Show values of entry 12
 //      Root > t.Show(16);     // Read and show values of entry 16
@@ -42,5 +41,3 @@ void fqReader::Loop()
       // if (Cut(ientry) < 0) continue;
    }
 }
-
-#endif

@@ -6,7 +6,7 @@
  gROOT->ProcessLine(".x ~/style.c");
 
  histoCompare* hc= new histoCompare("atmpars1.dat");
- hc->LnLFit();
+// hc->LnLFit();
 
 }
 

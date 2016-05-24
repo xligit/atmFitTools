@@ -94,18 +94,18 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HFACTORY PARAMETERS $$$$$
 s:hFactoryOuputDir=./rootfiles/;
 s:hFactoryOutput=./rootfiles/atm_all_hFactoryOutput.root;
-s:hFactoryMCFiles=./rootfiles/atm_all*ppmc*.root;
-s:hFactoryDataFiles=./rootfiles/atm_all*ppdat*.root;
+s:hFactoryMCFiles=/Users/andy/t2k/skdata/processed/atm/*ppmc*.root;
+s:hFactoryDataFiles=/Users/andy/t2k/skdata/processed/atm/*ppd*.root;
 
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$ HISTOGRAM BINNING $$$$$$$
-i:nBinsAtt0=25;
-i:nBinsAtt1=25;
-i:nBinsAtt2=25;
-i:nBinsAtt3=25;
-i:nBinsAtt4=25;
-i:nBinsAtt5=25;
-i:nBinsAtt6=25;
+i:nBinsAtt0=45;
+i:nBinsAtt1=45;
+i:nBinsAtt2=45;
+i:nBinsAtt3=45;
+i:nBinsAtt4=45;
+i:nBinsAtt5=45;
+i:nBinsAtt6=45;
 d:xMinAtt0=-2000;
 d:xMaxAtt0=2000.;
 d:xMinAtt1=-100.;

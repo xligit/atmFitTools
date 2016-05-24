@@ -1507,7 +1507,7 @@ double histoCompare::getTotSumSq(){
 //      }
 //    }
 //  }
-//  return totsumsq;
+  return totsumsq;
 }
 
 
