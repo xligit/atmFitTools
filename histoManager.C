@@ -219,7 +219,7 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
     size[i] = hMC[isample][ibin][i][iatt]->Integral();
     hitolo[i]=i;
   }
-  int nswitch;
+  int nswitch=0;
   //slow and easy 
   while (nswitch>0){
     nswitch=0;
@@ -280,7 +280,7 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
     size[i] = hMC[isample][ibin][i][iatt]->Integral();
     hitolo[i]=i;
   }
-  int nswitch;
+  int nswitch=0;
   //slow and easy 
   while (nswitch>0){
     nswitch=0;

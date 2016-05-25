@@ -35,7 +35,7 @@ void visRing::fillVisVarFV(){
       if ((ipid==9)||(ipid==8)) nvpip++;
       if ((ipid==11)||(ipid==12)) nvk++;
       if ((ipid==14)||(ipid==15)) nvp++;
-      if ((ipid==7)) nvpi0++;
+      if (ipid==7) nvpi0++;
       if (ipid==1) nvgam++;
     }
   }
@@ -86,7 +86,7 @@ void visRing::fillVisVar(){
       if ((ipid==9)||(ipid==8)) nvpip++;
       if ((ipid==11)||(ipid==12)) nvk++;
       if ((ipid==14)||(ipid==15)) nvp++;
-      if ((ipid==7)) nvpi0++;
+      if (ipid==7) nvpi0++;
       if (ipid==1) nvgam++;
     }
   }

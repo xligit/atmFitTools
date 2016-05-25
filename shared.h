@@ -1,22 +1,15 @@
-#ifndef SHARED_H
-#define SHARED_H
+#ifndef DEFINE_H
+#define DEFINE_H
 
-#include "TH1F.h"
-#include "TString.h"
+#include "Th1D.h"
 #include "TFile.h"
 #include "TChain.h"
 #include "TTree.h"
-#include <iostream>
-#include "THStack.h"
-#include "TLegend.h"
-//#include "atmFitPars.C"
 
-#define NSAMPMAX 5
-#define NCOMPMAX 20
-#define NATTMAX 20
 #define NBINMAX 10
-#define NSYSPARMAX 10
-
+#define NCOMPMAX 8
+#define NATTMAX 6
+#define NSYSPARMAX 20
+#define NSAMPMAX 5
 
 #endif
-

@@ -6,7 +6,7 @@
 #include "TFile.h"
 #include "TChain.h"
 #include "TTree.h"
-#include "fQreader.C"
+#include "fQreader.h"
 #include <iostream>
 #include "THStack.h"
 #include "TLegend.h"
@@ -14,11 +14,12 @@
 #include "atmFitPars.C"
 #include "histoTransforms.C"
 #include "sharedPars.C"
+#include "shared.h"
 
-#define NSAMPMAX 7
-#define NCOMPMAX 20
-#define NATTMAX 20
-#define NBINMAX 10
+//#define NSAMPMAX 7
+//#define NCOMPMAX 20
+//#define NATTMAX 20
+//#define NBINMAX 10
 
 
 //manages all histograms and splines for the fit

@@ -231,14 +231,11 @@ public :
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
-   virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 };
 
-#endif
 
-#ifdef fQreader_cxx
 fQreader::fQreader(TTree *tree)
 {
 // if parameter tree is not specified (or zero), connect the file
@@ -415,13 +412,16 @@ Bool_t fQreader::Notify()
 
 void fQreader::Show(Long64_t entry)
 {
+  entry++;
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
+
 Int_t fQreader::Cut(Long64_t entry)
 {
+  entry++;
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.

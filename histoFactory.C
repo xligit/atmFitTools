@@ -1,4 +1,9 @@
+#ifndef HISTOFACTORY_C
+#define HISTOFACTORY_C
+
+
 #include "histoFactory.h"
+
 
 
 /////////////////////////////////////////////////
@@ -310,3 +315,4 @@ void histoFactory::saveToFile(){
   return;
 }
 
+#endif

@@ -1,9 +1,10 @@
 #ifndef HISTOFACTORY_H
 #define HISTOFACTORY_H
 
+#include "shared.h"
 #include "sharedPars.C"
+#include "fQreader.h"
 #include "histoManager.C"
-//#include "shared.h"
 
 using namespace std;
 
@@ -53,5 +54,9 @@ class histoFactory{
   sharedPars* runpars;
 };
 
-
 #endif
+
+#ifndef HISTOFACTORY_C
+#include "histoFactory.C"
+#endif
+

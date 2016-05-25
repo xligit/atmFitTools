@@ -11,7 +11,7 @@ class hSplines{
   public:
   //a class for managing splines for a histogram
   hSplines(TH1D* h, int nsyst, const char* name="");
-  hSplines(const char* name=""){}
+  hSplines(){}
  
   //spline creation 
   void buildSpline(int ibin, int isyst,double* X, double*Y, int N);
