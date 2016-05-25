@@ -55,7 +55,6 @@ class histoCompare{
   void setBinName(int ibin, const char* name){binName[ibin]=name;}
   void setCompName(int icomp, const char* name){compName[icomp]=name;}
   void setAttName(int iatt, const char* name){attName[iatt]=name;}
-  void setupPars(int nsyspars=0); //sets up all parameters
   //post-fit toolts
   void profileL(int ibin, int icomp, int iatt, int imod, double range, int npts=100);
   void profileL(int ipar,double range, int npts=100,int sameflg=0);
@@ -89,8 +88,6 @@ class histoCompare{
   TH1D* hParErrLo;
   TH1D* hParErrHi;
   TH1D* hProf[2];
-  TH1D* showSmear(TH1D* h, double smear, double bias);
-  void showMod(int imchist);
   TH1D* hTot;
   TCanvas* cc;
   int nDataHist;
@@ -109,24 +106,16 @@ class histoCompare{
   //likelihood evaluateions
   double getSumSq(TH1D* h1, TH1D* h2);
   double getLnL(TH1D* h1, TH1D* h2);
-  double getNDiff();
   double getTotSumSq();
   double getTotLnL();
   static void sumSqWrapper(int& ndim, double* gout, double& result, double par[], int flg);
   static void lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg);
   void  getTotLnL1D(double& result,int npar, double par[]);
   //for debuggint and play
-  double getTotSumSqDebug();
-  static void sumSqDebugWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  static void nDiffDebugWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  void minSumSqDebug();
-  void minSumSq();
-  void sumSqPrefit();
   void LnLFit();
   void LnLPreFit();
   void singleParFit(int ipar);
   void sysParFit();
-  void drawResult(int ihist);
   void timetest(int ntry);
   void saveFitPars(const char* filename); //< write parameters and outputs to a file
   void readFitPars(const char* filename); //< read parameters from a file

@@ -47,14 +47,11 @@ public :
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
-   virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 };
 
-#endif
 
-#ifdef splineParReader_cxx
 splineParReader::splineParReader(TTree *tree)
 {
 // if parameter tree is not specified (or zero), connect the file
@@ -153,4 +150,4 @@ Int_t splineParReader::Cut(Long64_t entry)
    entry++;
    return 1;
 }
-#endif // #ifdef splineParReader_cxx
+#endif //

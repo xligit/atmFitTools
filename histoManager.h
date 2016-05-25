@@ -11,10 +11,11 @@
 #include "THStack.h"
 #include "TLegend.h"
 #include "hSplines.C"
-#include "atmFitPars.C"
+#include "atmFitPars.h"
 #include "histoTransforms.C"
 #include "sharedPars.C"
 #include "shared.h"
+#include "splineParReader.h"
 
 //#define NSAMPMAX 7
 //#define NCOMPMAX 20
@@ -98,4 +99,8 @@ class histoManager{
   void showSysParVariation(int isamp, int ibin, int icomp, int iatt, int isys,double varscale=1.0);
 };
 
+#endif
+
+#ifndef HISTOMANAGER_C
+#include "histoManager.C"
 #endif

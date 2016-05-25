@@ -2,7 +2,6 @@
 #define HISTOMANAGER_C
 
 #include "histoManager.h"
-#include "splineParReader.C"
 
 //TH1D*  histoManager::calcMCSum(int isample, int ibin, int iatt){
 //  TH1D* hTot = (TH1D*)hMC[isample][ibin][0][iatt]->Clone("htot");

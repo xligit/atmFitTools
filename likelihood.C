@@ -132,52 +132,32 @@ double evalLnLScaled(double ndata, double mcmean, double mcsig,double norm=1.,do
 //Assume scaled Gaussian errors, and mcmean has been normalized
 double evalLnLMyChi2(double ndata, double mcmean, double mcsig, double norm=1.){
     double ss = mcsig;
-  //  double deltasq = ( (ndata/(norm*norm)) + (mcsig*mcsig) );
-  //  double deltasq = ( ((ss*ndata) + (mcmean/norm))/(ss + (1./norm)) );
     double deltasq = (1./(norm*ss))*(mcmean*ss + ndata);
-  //  double diff = (ndata/norm) - deltasq;
     double diff =(ndata/norm) - mcmean;
-  //  deltasq = mcsig*mcsig;
-    cout<<"diff: "<<diff<<endl;
-    cout<<"ss "<<ss<<endl;
-    cout<<"deltasq: "<<deltasq<<endl;
-//    cout<<"log: "<<TMath::Log(deltasq);
- //   return -2*TMath::Log(TMath::Gaus(diff,0.,TMath::Sqrt(deltasq),kTRUE));
- //   return (diff*diff)/(2*(deltasq));
     return (diff*diff)/(2.*deltasq);
 }
 
 ////////////////////////////////////////////////////////////////////////////
-double evalLnLDiff(double ndata, double mcmean, double mcsig, double norm){
+double evalLnLDiff(double ndata, double mcmean,  double norm){
   double diff = TMath::Abs(ndata-(mcmean*norm));
   return diff;
 }
 /////////////////////////////////////////////////////////////////////////
 //Assume scaled Gaussian errors, and mcmean has been normalized
-double evalLnLMyChi2NoWeight(double ndata, double mcmean, double mcsig, double norm){
+double evalLnLMyChi2NoWeight(double ndata, double mcmean, double norm){
     double diff = ndata - (norm*mcmean);
     double deltasq = ( ndata + (norm*mcmean) );
-  //  deltasq = mcsig*mcsig;
-    cout<<"diff: "<<diff<<endl;
-    cout<<"deltasq: "<<deltasq<<endl;
-    cout<<"log: "<<TMath::Log(deltasq);
     return -2*TMath::Log(TMath::Gaus(diff,0.,TMath::Sqrt(deltasq),kTRUE));
- //   return (diff*diff)/(deltasq) + 2.*TMath::Log(deltasq);
 }
 
 
 
 /////////////////////////////////////////////////////////////////////////
 //Assume scaled Gaussian errors, and mcmean has been normalized
-double evalLnLChi2N(double ndata, double mcmean, double mcsig, double norm){
+double evalLnLChi2N(double ndata, double mcmean, double norm){
     double diff = ndata - (mcmean*norm);
     double deltasq = ( ndata );
-  //  deltasq = mcsig*mcsig;
-    cout<<"diff: "<<diff<<endl;
-    cout<<"deltasq: "<<deltasq<<endl;
-    cout<<"log: "<<TMath::Log(deltasq);
     return -2*TMath::Log(TMath::Gaus(diff,0.,TMath::Sqrt(deltasq),kTRUE));
-   // return (diff*diff)/(deltasq) + 2.*TMath::Log(deltasq);
 }
 
 
@@ -212,8 +192,7 @@ void plotLnL(int itype, double nmc = 16, double mcsig = 4., double norm=1, int n
     if (itype==0) lnL=evalLnLRamanujan(xx,nmc,norm); //< tn186
     if (itype==1) lnL=evalLnLNumeric(xx,nmc,mcsig,norm); //< my numerical method
     if (itype==2) lnL=evalLnLMyChi2(xx,nmc,mcsig,norm); //< chi-2 style errors
-    if (itype==3) lnL=evalLnLChi2N(xx,nmc,mcsig,norm); //< standard chi2
-    if (itype==4) lnL=evalLnLChi2Numeric(xx,nmc,mcsig,norm);
+    if (itype==3) lnL=evalLnLChi2Numeric(xx,nmc,mcsig,norm);
     hreal->SetBinContent(i,lnL);
     xx+=dx;
   }
