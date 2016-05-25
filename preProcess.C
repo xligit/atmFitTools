@@ -1,10 +1,7 @@
-#ifndef SIFT_C
-#define SIFT_C
+#ifndef PREPROCESS_C
+#define PREPROCESS_C
 
 #include "preProcess.h"
-#include "TObjArray.h"
-
-
 
 /////////////////////////////////////////////////////////////////
 // Setup the FV bin histogram for getFVBin()
@@ -296,7 +293,7 @@ int preProcess::passCuts(){
 
   /////////////////////
   //Fully Contained Cut
-  if (fq->nhitac>NHITACMax) return 0;
+  if ((int)fq->nhitac>NHITACMax) return 0;
 
   //////////////////////
   //Visible Energy Cut
@@ -609,27 +606,6 @@ preProcess::preProcess(){
   useWeights=0;
 }
 
-/////////////////////////////
-//construct from TTree
-preProcess::preProcess(TTree* trin,const char* name){
-  tr=trin;
-  fq = new fqReader(tr);
-  vis = new visRing(fq);
-  setupNewTree();
-  nameTag=name;
-  return;
-}
-
-/////////////////////////////
-//construct from TChain
-preProcess::preProcess(TChain* chin,const char* name){
-  tr=(TTree*)chin;
-  nameTag=name;
-  fq = new fqReader(tr);
-  vis = new visRing(fq);
-  setupNewTree();
-  return;
-}
 
 //////////////////////////////////////////
 //read in parameters and run preprocessing!

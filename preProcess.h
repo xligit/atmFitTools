@@ -1,5 +1,5 @@
-#ifndef SIFT_H
-#define SIFT_H
+#ifndef PREPROCESS_H
+#define PREPROCESS_H
 
 //#include "/nfs/hepusers/users/amissert/stdROOTinc.h"
 #include <iostream>
@@ -15,33 +15,33 @@
 #include <string>
 #include "TH2FV.C"
 #include "masktools.C"
+#include "TObjArray.h"
+
+#define NFILEMAX 5000
 
 using namespace std;
 
 
-#define NFILEMAX 5000
-
 
 //////////////////////////////////////////////////////////////
-//Class to take care of preprocessing of all data and MC files
-//Usage:
+// Class to take care of preprocessing of all data and MC files
+// Usage:
 //	1) create instance using preProcess()
 //	2) specify parameter file using setParFileName(<name>)
-//      3) run using runPreProcessing()
+//  3) run using runPreProcessing()
+
 class preProcess{
   public:
 
   /////////////////////
-  //constructors
+  // constructors
   preProcess();
-  preProcess(TChain* chin,const char* name="");
-  preProcess(TTree* trin,const char* name="");
 
 
   /////////////////////
-  //internal variables
-  TChain* chmc;
-  TChain* chdat;
+  // internal variables
+  TChain* chmc; //< points to input MC
+  TChain* chdat; //< points to input data
   TTree* tr;
   TTree* trout;
   TFile* fout;
@@ -124,4 +124,8 @@ class preProcess{
   int flgUseSpikeMask;
 };
 
+#endif
+
+#ifndef PREPROCESS_C
+#include "preProcess.C"
 #endif

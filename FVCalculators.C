@@ -56,10 +56,10 @@ double calcToWallCustom(TVector3 *vpos, TVector3 *vdir, double dt){
   double dirx = vdir->X();
   double diry = vdir->Y();
   double dirz = vdir->Z();
-  double r;
-  double z;
-  double x;
-  double y;
+  double r=0;
+  double z=0;
+  double x=0;
+  double y=0;
   double t=0.;
   int    flg =0;
   double tmax = 100000.;
@@ -73,17 +73,6 @@ double calcToWallCustom(TVector3 *vpos, TVector3 *vdir, double dt){
     if (fabs(z)>Z) flg=1;
     if (r>R) flg=1;
     t+=dt;
-    
-
-  //  if (sign>0){
-  //    if (fabs(z)>Z) flg=1;
-  //    if (r>R) flg=1;
-  //  }
-  //  else{
-  //    if (fabs(z)<Z) flg=1;
-  //    if (r<R) flg=1;
-  //  } 
-  //  t+=dt;
   }
   //its the previous iteration that caused exit:
   t-=dt;
@@ -91,7 +80,6 @@ double calcToWallCustom(TVector3 *vpos, TVector3 *vdir, double dt){
   y-=dt*diry;
   z-=dt*dirz;
   vpos->SetXYZ(x,y,z);
-
   return t;
 }
 
@@ -102,12 +90,10 @@ double calcToWallCustom(TVector3 *vpos, TVector3 *vdir, double dt){
 /////////////////////////////////////////////////////
 // estimate the perimeter of the cherenkov ring
 double calcMinCone(TVector3 *vpos, TVector3* vdir, int npts=50){
-  
-  const int NPTSMAX = npts;
 
   //////////////////////////////////////////////////////////////
   // each ray starts at initial point defined from given vertex
-  TVector3 P[NPTSMAX]; // initial position vector for rays
+  TVector3 P[100]; // initial position vector for rays
   for (int i=0;i<npts;i++){
      P[i].SetXYZ(vpos->X(),vpos->Y(),vpos->Z());
   }
@@ -132,7 +118,7 @@ double calcMinCone(TVector3 *vpos, TVector3* vdir, int npts=50){
   TVector3 vperp = vhat.Cross(*vdir); // this vector is perpendicular to particle direction
 
   // now we make initial ray, and then rotate it around particle direction
-  TVector3 D[NPTSMAX]; //direction vector for points
+  TVector3 D[100]; //direction vector for points
   double changle = 0.72245; // Cherenkov angle in water
   double dangle = (2*3.14159)/(double)npts; // angular differnce between rays
   double angle = 0.;  // inital angle
@@ -167,11 +153,10 @@ double calcMinCone(TVector3 *vpos, TVector3* vdir, int npts=50){
 // estimate the perimeter of the cherenkov ring
 double calcPerimeter(TVector3 *vpos, TVector3* vdir, int npts=50, int visflg=0){
   
-  const int NPTSMAX = npts;
 
   //////////////////////////////////////////////////////////////
   // each ray starts at initial point defined from given vertex
-  TVector3 P[NPTSMAX]; // initial position vector for rays
+  TVector3 P[100]; // initial position vector for rays
   for (int i=0;i<npts;i++){
      P[i].SetXYZ(vpos->X(),vpos->Y(),vpos->Z());
   }
@@ -196,7 +181,7 @@ double calcPerimeter(TVector3 *vpos, TVector3* vdir, int npts=50, int visflg=0){
   TVector3 vperp = vhat.Cross(*vdir); // this vector is perpendicular to particle direction
 
   // now we make initial ray, and then rotate it around particle direction
-  TVector3 D[NPTSMAX]; //direction vector for points
+  TVector3 D[100]; //direction vector for points
   double changle = 0.72245; // Cherenkov angle in water
   double dangle = (2*3.14159)/(double)npts; // angular differnce between rays
   double angle = 0.;  // inital angle
@@ -231,7 +216,7 @@ double calcPerimeter(TVector3 *vpos, TVector3* vdir, int npts=50, int visflg=0){
    double x[2];
    double y[2];
    double z[2];
-   TPolyLine3D *rays[NPTSMAX];
+   TPolyLine3D *rays[100];
    for (int i=0; i<npts; i++){
      x[0] = vpos->X();
      y[0] = vpos->Y();
