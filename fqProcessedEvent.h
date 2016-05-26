@@ -1,17 +1,18 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Thu May 19 14:41:44 2016 by ROOT version 5.28/00c
-// from TChain h1/
+// Fri Apr 29 14:46:21 2016 by ROOT version 5.28/00c
+// from TTree h1/DST
+// found on file: t2kmc_numu_ppmc_2_.root
 //////////////////////////////////////////////////////////
 
-#ifndef fQreader_h
-#define fQreader_h
+#ifndef fqProcessedEvent_h
+#define fqProcessedEvent_h
 
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
 
-class fQreader {
+class fqProcessedEvent {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
@@ -224,121 +225,45 @@ public :
    TBranch        *b_fq1rperim;   //!
    TBranch        *b_fq1rmincone;   //!
 
-   fQreader(TTree *tree=0);
-   virtual ~fQreader();
+   fqProcessedEvent(TTree *tree=0);
+   virtual ~fqProcessedEvent();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
-   virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 };
 
-#endif
 
-#ifdef fQreader_cxx
-fQreader::fQreader(TTree *tree)
+fqProcessedEvent::fqProcessedEvent(TTree *tree)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-
-#ifdef SINGLE_TREE
-      // The following code should be used if you want this class to access
-      // a single tree instead of a chain
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("Memory Directory");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("t2kmc_numu_ppmc_2_.root");
       if (!f) {
-         f = new TFile("Memory Directory");
-         f->cd("Rint:/");
+         f = new TFile("t2kmc_numu_ppmc_2_.root");
       }
       tree = (TTree*)gDirectory->Get("h1");
-
-#else // SINGLE_TREE
-
-      // The following code should be used if you want this class to access a chain
-      // of trees.
-      TChain * chain = new TChain("h1","");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_0_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_10_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_11_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_12_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_13_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_14_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_15_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_16_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_17_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_18_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_19_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_1_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_20_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_21_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_22_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_23_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_24_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_25_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_26_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_27_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_28_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_29_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_2_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_3_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_4_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_5_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_6_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_7_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_8_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppdata_9_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_0_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_10_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_11_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_12_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_13_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_14_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_15_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_16_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_17_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_18_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_19_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_1_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_20_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_21_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_22_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_23_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_24_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_25_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_26_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_27_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_28_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_29_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_2_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_3_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_4_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_5_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_6_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_7_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_8_.root/h1");
-      chain->Add("/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/rootfiles/atm_all_ppmc_9_.root/h1");
-      tree = chain;
-#endif // SINGLE_TREE
 
    }
    Init(tree);
 }
 
-fQreader::~fQreader()
+fqProcessedEvent::~fqProcessedEvent()
 {
    if (!fChain) return;
    delete fChain->GetCurrentFile();
 }
 
-Int_t fQreader::GetEntry(Long64_t entry)
+Int_t fqProcessedEvent::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t fQreader::LoadTree(Long64_t entry)
+Long64_t fqProcessedEvent::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
@@ -353,7 +278,7 @@ Long64_t fQreader::LoadTree(Long64_t entry)
    return centry;
 }
 
-void fQreader::Init(TTree *tree)
+void fqProcessedEvent::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -474,7 +399,7 @@ void fQreader::Init(TTree *tree)
    Notify();
 }
 
-Bool_t fQreader::Notify()
+Bool_t fqProcessedEvent::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -485,18 +410,19 @@ Bool_t fQreader::Notify()
    return kTRUE;
 }
 
-void fQreader::Show(Long64_t entry)
+void fqProcessedEvent::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
-Int_t fQreader::Cut(Long64_t entry)
+Int_t fqProcessedEvent::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
+   entry++;
    return 1;
 }
-#endif // #ifdef fQreader_cxx
+#endif // #ifdef fqProcessedEvent_cxx
