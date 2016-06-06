@@ -517,7 +517,8 @@ void preProcess::fillAttributeMap(fqEvent* fqevent){
   // Ring Counting (RC) parameter
   int ibest = getBest2RFitID();
   double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
-  attributeMap["fqrcpar"] = best1Rnglnl-fqevent->fqmrnll[ibest];
+  fqrcpar = best1Rnglnl-fqevent->fqmrnll[ibest];
+  attributeMap["fqrcpar"] = fqrcpar;
 
   // Reconstructed distance from wall
   attributeMap["fqwall"] = wall;
@@ -571,6 +572,7 @@ void preProcess::setupNewTree(){
   
   //add new branches
   trout->Branch("attribute",attribute,"attribute[1000]/F");
+  trout->Branch("fqrcpar",&fqrcpar,"fqrcpar/F");
   trout->Branch("ncomponent",&ncomponent,"ncomponent/I");
   trout->Branch("nsample",&nsample,"nsample/I");
   trout->Branch("nbin",&nbin,"nbin/I");

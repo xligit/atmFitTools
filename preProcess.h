@@ -88,6 +88,7 @@ class preProcess{
   float fq1rperim[10][7];
   float evtweight;
   float attribute[1000];
+  float fqrcpar;
   int ncomponent;
   int nsample;
   int nbin;
