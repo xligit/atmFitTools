@@ -40,7 +40,7 @@ void splineFactory::resetModHistos(){
 //
 void splineFactory::setMCTree(TTree* tr){
   mcTree = tr;
-  mcEvt = new fQreader(mcTree);
+  mcEvt = new fqProcessedEvent(mcTree);
   return;
 }
 
@@ -324,7 +324,7 @@ void splineFactory::fillHistograms(int ipt, int isyst){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Re-weight the event given the value "value" of additional systematic parameter "ipar"
 //Character keys determine the type of systematic error parameters to use
-double splineFactory::getEvtWeight(fQreader* mcevent,int ipar,double value){
+double splineFactory::getEvtWeight(fqProcessedEvent* mcevent,int ipar,double value){;;;
   
   //first get the original weight of this event:
   double ww = mcevent->evtweight;

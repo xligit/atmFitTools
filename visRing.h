@@ -1,8 +1,7 @@
 #ifndef VISRING_H
 #define VISRING_H
 
-#include "fqReader.C"
-#include "fqReaderFV.h"
+#include "fqEvent.h"
 #include "TMath.h"
 #include "iostream"
 #include <map>
@@ -18,18 +17,12 @@ class visRing{
  public:
  //constructor//
  //construct a visring object using a fitqun reader object
- visRing(fqReader* fqin);
- visRing(fqReaderFV* fqin);
- //
- fqReader* fq;
- fqReaderFV* fqfv;
+ visRing(fqEvent* fqin);
+ //;
+ fqEvent* fq;
  void fillVisVar(); //fills the variables relating to number of visible
- //rings
- void fillVisVarFV(); //fills the variables relating to number of visible
 
 
- //flag for using FV tree
- int FVflg;
 
  //useful quantities
  float getbeta(int ipid, float pmom);

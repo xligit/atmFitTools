@@ -799,14 +799,11 @@ public :
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
-   virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 };
 
-#endif
 
-#ifdef fqEvent_cxx
 fqEvent::fqEvent(TTree *tree)
 {
 // if parameter tree is not specified (or zero), connect the file
@@ -1279,4 +1276,5 @@ Int_t fqEvent::Cut(Long64_t entry)
 // returns -1 otherwise.
    return 1;
 }
+
 #endif // #ifdef fqEvent_cxx

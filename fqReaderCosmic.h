@@ -5,14 +5,14 @@
 // found on file: stopmu_mc_1390_for_atmnu_test_064994.001_stmusel_009_141224_fQ.root
 //////////////////////////////////////////////////////////
 
-#ifndef fqReaderCosmic_h
-#define fqReaderCosmic_h
+#ifndef fqEventCosmic_h
+#define fqEventCosmic_h
 
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
 
-class fqReaderCosmic {
+class fqEventCosmic {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
@@ -737,8 +737,8 @@ public :
    TBranch        *b_glat;   //!
    TBranch        *b_glong;   //!
 
-   fqReaderCosmic(TTree *tree=0);
-   virtual ~fqReaderCosmic();
+   fqEventCosmic(TTree *tree=0);
+   virtual ~fqEventCosmic();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
@@ -750,8 +750,8 @@ public :
 
 #endif
 
-#ifdef fqReaderCosmic_cxx
-fqReaderCosmic::fqReaderCosmic(TTree *tree)
+#ifdef fqEventCosmic_cxx
+fqEventCosmic::fqEventCosmic(TTree *tree)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
@@ -766,19 +766,19 @@ fqReaderCosmic::fqReaderCosmic(TTree *tree)
    Init(tree);
 }
 
-fqReaderCosmic::~fqReaderCosmic()
+fqEventCosmic::~fqEventCosmic()
 {
    if (!fChain) return;
    delete fChain->GetCurrentFile();
 }
 
-Int_t fqReaderCosmic::GetEntry(Long64_t entry)
+Int_t fqEventCosmic::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t fqReaderCosmic::LoadTree(Long64_t entry)
+Long64_t fqEventCosmic::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
@@ -793,7 +793,7 @@ Long64_t fqReaderCosmic::LoadTree(Long64_t entry)
    return centry;
 }
 
-void fqReaderCosmic::Init(TTree *tree)
+void fqEventCosmic::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -1170,7 +1170,7 @@ void fqReaderCosmic::Init(TTree *tree)
    Notify();
 }
 
-Bool_t fqReaderCosmic::Notify()
+Bool_t fqEventCosmic::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -1181,18 +1181,18 @@ Bool_t fqReaderCosmic::Notify()
    return kTRUE;
 }
 
-void fqReaderCosmic::Show(Long64_t entry)
+void fqEventCosmic::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
-Int_t fqReaderCosmic::Cut(Long64_t entry)
+Int_t fqEventCosmic::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
 }
-#endif // #ifdef fqReaderCosmic_cxx
+#endif // #ifdef fqEventCosmic_cxx

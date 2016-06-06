@@ -46,7 +46,7 @@ void masktools::makethismask(const char* filename){
   hmask = (TH1D*)hwall->Clone("hmask");
 
   // fill histogram
-  fqReader* fqevent = new fqReader(chdata);
+  fqEvent* fqevent = new fqEvent(chdata);
   int nev = chdata->GetEntries();
   TVector3* vpos = new TVector3();
   for (int iev=0; iev<nev; iev++){

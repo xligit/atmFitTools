@@ -6,7 +6,7 @@
 #include "TFile.h"
 #include "TChain.h"
 #include "TTree.h"
-#include "fQreader.h"
+#include "fqProcessedEvent.h"
 #include <iostream>
 #include "THStack.h"
 #include "TLegend.h"

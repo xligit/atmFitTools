@@ -64,7 +64,7 @@ void preProcess::setTree(TChain* chin){
 //sets up pointers
 void preProcess::setTree(TTree* trin){
   tr = trin;
-  fq = new fqReader(tr);
+  fq = new fqEvent(tr);
   vis = new visRing(fq); 
   return;
 }
@@ -478,7 +478,7 @@ int preProcess::getBest2RFitID(){
 
 ////////////////////////////////////////
 //fills fiTQun attribute array
-void preProcess::fillAttributes(fqReader* fqevent){
+void preProcess::fillAttributes(fqEvent* fqevent){
 
   // Fill the cmap that matches attribute names to values
   fillAttributeMap(fqevent);
@@ -509,7 +509,7 @@ void preProcess::fillAttributes(fqReader* fqevent){
 
 ////////////////////////////////////////
 //fills cmap of possible fitqun attributes
-void preProcess::fillAttributeMap(fqReader* fqevent){
+void preProcess::fillAttributeMap(fqEvent* fqevent){
 
   // PID e vs. mu ratio of first subevent
   attributeMap["fqelike"] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];

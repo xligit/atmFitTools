@@ -7,7 +7,7 @@
 
 #include "atmFitPars.C"
 #include "histoManager.C"
-//#include "fQreader.C"
+//#include "fqProcessedEvent.C"
 #include "splineFactory.C"
 #include "mcmcReader.C"
 #include "THStack.h"
@@ -33,9 +33,9 @@ class postfitCalculator{
   TTree* mcmcpath; //< points to tree containing the mcmc steps
   TTree* mctree;  //< points to the tree containg the mc events
   TTree* datatree; //< for data events
-  fQreader* datareader; //< points t
+  fqProcessedEvent* datareader; //< points t
   mcmcReader* path; //< points to a step in mcmcpath
-  fQreader* mcreader; //< points to an event in mctree
+  fqProcessedEvent* mcreader; //< points to an event in mctree
   atmFitPars* fitpars; //< points to the current fit parameters object
   splineFactory* sfact; //< empty spline factory to call getEvtWeight. 
   histoManager* hManager; //< use this for histogram templates and comparing to data
@@ -1072,7 +1072,7 @@ void postfitCalculator::makeHistos(int iselect, int islot){
 //returns 1 if all cuts are passed, 0 otherwise
 int postfitCalculator::makeSelection(int iselect,int dataflg){
 
-  fQreader* reader;
+  fqProcessedEvent* reader;
   if (dataflg) reader = datareader;
   else{
     reader = mcreader;   
@@ -1138,7 +1138,7 @@ void  postfitCalculator::setParsFromMCMC(int istep){
 
 void postfitCalculator::setDataTree(TTree* tr){
   datatree = tr;
-  datareader = new fQreader(datatree);
+  datareader = new fqProcessedEvent(datatree);
   datatree->GetEntry(0);
   return;
 }
@@ -1147,7 +1147,7 @@ void postfitCalculator::setDataTree(TTree* tr){
 
 void postfitCalculator::setMCTree(TTree* tr){
   mctree = tr;
-  mcreader = new fQreader(mctree);
+  mcreader = new fqProcessedEvent(mctree);
   mctree->GetEntry(0);
   return;
 }

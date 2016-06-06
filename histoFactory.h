@@ -3,7 +3,7 @@
 
 #include "shared.h"
 #include "sharedPars.C"
-#include "fQreader.h"
+#include "fqProcessedEvent.h"
 #include "histoManager.C"
 
 using namespace std;
@@ -17,8 +17,8 @@ class histoFactory{
   histoManager* hManager; 
   TTree* dataTree; //tree containing data events
   TTree* mcTree;  //tree conttaining MC events
-  fQreader* fqData;  //reads data tree
-  fQreader* fqMC; //reads MC tree
+  fqProcessedEvent* fqData;  //reads data tree
+  fqProcessedEvent* fqMC; //reads MC tree
   TString nameTag; //name associated with this instance
   TFile*   fout; //output file for filled histograms
   TH1D*    htmp; //temporary histogram pointer for drawing and comparison

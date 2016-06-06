@@ -282,28 +282,28 @@ void histoFactory::fillHistos(){
 
 void histoFactory::setDataTree(TChain* ch){
   dataTree=(TTree*)ch;
-  fqData = new fQreader(dataTree);
+  fqData = new fqProcessedEvent(dataTree);
   nDataEvents = dataTree->GetEntries();
   return;
 }
 
 void histoFactory::setDataTree(TTree* tr){
   dataTree=tr;
-  fqData = new fQreader(dataTree);
+  fqData = new fqProcessedEvent(dataTree);
   nDataEvents = dataTree->GetEntries();
   return;
 }
 
 void histoFactory::setMCTree(TTree* tr){
   mcTree=tr;
-  fqMC = new fQreader(mcTree);
+  fqMC = new fqProcessedEvent(mcTree);
   nMCEvents = mcTree->GetEntries();
   return;
 }
 
 void histoFactory::setMCTree(TChain* ch){
   mcTree=(TTree*)ch;
-  fqMC = new fQreader(mcTree);
+  fqMC = new fqProcessedEvent(mcTree);
   nMCEvents = mcTree->GetEntries();
   return;
 }

@@ -3,9 +3,9 @@
 
 #include "atmFitPars.C"
 
-#ifndef fQreader_h
-#define fQreader_h
-#include "fQreader.h"
+#ifndef fqProcessedEvent_h
+#define fqProcessedEvent_h
+#include "fqProcessedEvent.h"
 #endif
 
 #include "TString.h"
@@ -15,7 +15,7 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////////
 // A function to calculate the systematic error weight that should be assigned 
 // to this event.
-double getSystWeight(const char* systype, fQreader* mcevent, int ipar, double value){
+double getSystWeight(const char* systype, fqProcessedEvent* mcevent, int ipar, double value){
   
   //initial weight is always one:
   double ww = 1.0;

@@ -49,7 +49,7 @@ class preProcess{
   TString outDir;
   TString fileNames[NFILEMAX];
   TString parFileName;
-  fqReader* fq;
+  fqEvent* fq;
   visRing*  vis;
   int MCComponents;
   int FVBinning;
@@ -104,8 +104,8 @@ class preProcess{
   void setupNewTree();
   int preProcessIt(); //< process a file and return the number of entries in new tree
   int passCuts();
-  void fillAttributes(fqReader* fqevent);
-  void fillAttributeMap(fqReader* fqevent);
+  void fillAttributes(fqEvent* fqevent);
+  void fillAttributeMap(fqEvent* fqevent);
   int absmode;
   int getComponent();
   int getSample();

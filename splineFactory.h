@@ -4,7 +4,7 @@
 #include "hSplines.C"
 
 #include "shared.h"
-//#include "fQreader.C"
+//#include "fqProcessedEvent.C"
 
 #include "histoManager.h"
 #include "sharedPars.C"
@@ -30,7 +30,7 @@ class splineFactory{
   TString parFileName; //< name of parameter file
   TString nameTag; //< set in constructor. this is the prefix for the output file
   TTree* mcTree; 
-  fQreader* mcEvt;
+  fqProcessedEvent* mcEvt;
   histoManager* hManager; //manages all default histograms
   TH1D* hMC[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX][NPTSMAX]; //array for modified histograms for spline creation
   void resetModHistos();
@@ -64,7 +64,7 @@ class splineFactory{
   //methods
   //this needs to be modified for each systematic paramater to add
  // double getEvtWeight(int ipar); //returns event weight after applying syst. par. 
-  double getEvtWeight(fQreader* mcevent,int ipar,double value); //
+  double getEvtWeight(fqProcessedEvent* mcevent,int ipar,double value); //
   void setOutputFileName(const char* name){foutName=name;}
   TString getOutputFileName(){return foutName;}
   //
