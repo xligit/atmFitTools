@@ -3,18 +3,18 @@
 
 //#include "/nfs/hepusers/users/amissert/stdROOTinc.h"
 #include <iostream>
-#include "visRing.C"
+#include "visRing.cxx"
 #include "TTree.h"
 #include "TChain.h"
 #include "TMath.h"
 #include "TString.h"
-#include "FVCalculators.C"
-#include "sharedPars.C"
+#include "FVCalculators.cxx"
+#include "sharedPars.cxx"
 #include "TGraph.h"
 #include <map>
 #include <string>
-#include "TH2FV.C"
-#include "masktools.C"
+#include "TH2FV.cxx"
+#include "masktools.cxx"
 #include "TObjArray.h"
 
 #define NFILEMAX 5000
@@ -127,5 +127,5 @@ class preProcess{
 #endif
 
 #ifndef PREPROCESS_C
-#include "preProcess.C"
+#include "preProcess.cxx"
 #endif

@@ -7,7 +7,7 @@
 void splineParReader::Loop()
 {
 //   In a ROOT session, you can do:
-//      Root > .L splineParReader.C
+//      Root > .L splineParReader.cxx
 //      Root > splineParReader t
 //      Root > t.GetEntry(12); // Fill t data members with entry number 12
 //      Root > t.Show();       // Show values of entry 12

@@ -2,10 +2,10 @@
 
   ///////////////////////////////////////
   //load classes
- // gROOT->ProcessLine(".L histoManager.C++");
-  gROOT->ProcessLine(".L histoFactory.C++");
-  gROOT->ProcessLine(".L splineFactory.C++");
-  gROOT->ProcessLine(".L atmFitPars.C+"):
+ // gROOT->ProcessLine(".L histoManager.cxx++");
+  gROOT->ProcessLine(".L histoFactory.cxx++");
+  gROOT->ProcessLine(".L splineFactory.cxx++");
+  gROOT->ProcessLine(".L atmFitPars.cxx+"):
   gROOT->ProcessLine(".x ~/style.c");
 
   //run histo factory from parameter file

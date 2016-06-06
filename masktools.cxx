@@ -5,7 +5,7 @@
 #include "TFile.h"
 #include "TH1D.h"
 #include <iostream>
-#include "FVCalculators.C"
+#include "FVCalculators.cxx"
 
 using namespace std;
 

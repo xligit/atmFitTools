@@ -1,5 +1,5 @@
 {
- gROOT->ProcessLine(".L histoCompare.C++");
+ gROOT->ProcessLine(".L histoCompare.cxx++");
  gROOT->ProcessLine(".x ~/style.c");
  TChain atmmc("h1");
  atmmc.Add("/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/mc/*stmusel_01*fQ.root");

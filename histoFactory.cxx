@@ -96,7 +96,7 @@ void histoFactory::init(){
 
   //////////////////////////////////////
   //setup name for output file 
-//  if (!outputFileName.CompareTo("")){
+//  if (!outputFileName.cxxompareTo("")){
 //    outputFileName = "histoFactoryOutput.root";
 //  }
 //  outputFileName = runpars->hFactoryOuputDir.Data();

@@ -1,7 +1,7 @@
 #ifndef GETSYSTWEIGHT_C
 #define GETSYSTWEIGHT_C
 
-#include "atmFitPars.C"
+#include "atmFitPars.cxx"
 
 #ifndef fqProcessedEvent_h
 #define fqProcessedEvent_h

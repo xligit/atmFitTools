@@ -1,8 +1,8 @@
 {
-//gROOT->ProcessLine(".L atmFitPars.C++");
-//gROOT->ProcessLine(".L hSplines.C++");
-//gROOT->ProcessLine(".L histoManager.C++");
-//jgROOT->ProcessLine(".L hSplines.C++");
+//gROOT->ProcessLine(".L atmFitPars.cxx++");
+//gROOT->ProcessLine(".L hSplines.cxx++");
+//gROOT->ProcessLine(".L histoManager.cxx++");
+//jgROOT->ProcessLine(".L hSplines.cxx++");
 
 //atmFitPars* fitpars = new atmFitPars("atmpars1.dat");
 

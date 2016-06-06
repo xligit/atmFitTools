@@ -1,9 +1,9 @@
 
 {
- gROOT->ProcessLine(".L histoManager.C++");
- gROOT->ProcessLine(".L hSplines.C++");
- gROOT->ProcessLine(".L histoCompare.C++");
- gROOT->ProcessLine(".L atmFitPars.C++");
+ gROOT->ProcessLine(".L histoManager.cxx++");
+ gROOT->ProcessLine(".L hSplines.cxx++");
+ gROOT->ProcessLine(".L histoCompare.cxx++");
+ gROOT->ProcessLine(".L atmFitPars.cxx++");
  gROOT->ProcessLine(".x ~/style.c");
 
  histoCompare* hc= new histoCompare("atmpars.dat");

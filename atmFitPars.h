@@ -3,7 +3,7 @@
 
 #include "shared.h"
 #include "TRandom2.h"
-#include "sharedPars.C"
+#include "sharedPars.cxx"
 
 using namespace std;
 
@@ -82,7 +82,7 @@ class atmFitPars{
 #endif
 
 #ifndef ATMFITPARS_C
-#include "atmFitPars.C"
+#include "atmFitPars.cxx"
 #endif
 
 

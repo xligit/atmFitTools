@@ -1,6 +1,6 @@
 {
- gROOT->ProcessLine(".L splineFactory.C++");
- gROOT->ProcessLine(".L hSplines.C++");
+ gROOT->ProcessLine(".L splineFactory.cxx++");
+ gROOT->ProcessLine(".L hSplines.cxx++");
  TChain* chmc = new TChain("h1");
  chmc->Add("./rootfiles/fake3_MC*.root");
  TTree* trmc = (TTree*)chmc;

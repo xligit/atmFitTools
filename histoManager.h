@@ -10,10 +10,10 @@
 #include <iostream>
 #include "THStack.h"
 #include "TLegend.h"
-#include "hSplines.C"
+#include "hSplines.cxx"
 #include "atmFitPars.h"
-#include "histoTransforms.C"
-#include "sharedPars.C"
+#include "histoTransforms.cxx"
+#include "sharedPars.cxx"
 #include "shared.h"
 #include "splineParReader.h"
 
@@ -102,5 +102,5 @@ class histoManager{
 #endif
 
 #ifndef HISTOMANAGER_C
-#include "histoManager.C"
+#include "histoManager.cxx"
 #endif

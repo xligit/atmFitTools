@@ -1,8 +1,8 @@
 {
- gROOT->ProcessLine(".L hSplines.C++");
- gROOT->ProcessLine(".L histoManager.C++");
- gROOT->ProcessLine(".L Tool_CompareToEventByEvent.C++");
- gROOT->ProcessLine(".L atmFitPars.C++");
+ gROOT->ProcessLine(".L hSplines.cxx++");
+ gROOT->ProcessLine(".L histoManager.cxx++");
+ gROOT->ProcessLine(".L Tool_CompareToEventByEvent.cxx++");
+ gROOT->ProcessLine(".L atmFitPars.cxx++");
  TChain* chmc = new TChain("h1");
  chmc->Add("./rootfiles/fake4_MC*.root");
  TTree* tr = (TTree*)chmc;

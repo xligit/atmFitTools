@@ -6,7 +6,7 @@
 #include "TTree.h"
 #include <iostream>
 #include "TFile.h"
-#include "atmFitPars.C"
+#include "atmFitPars.cxx"
 
 #define NMCMCPARS 500
 

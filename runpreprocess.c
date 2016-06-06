@@ -2,7 +2,7 @@
 
  ///////////////////////////////////////
  //load class
- gROOT->ProcessLine(".L preProcess.C+");
+ gROOT->ProcessLine(".L preProcess.cxx+");
 
  ///////////////////////////////////////
  //setup and run preprocessing object

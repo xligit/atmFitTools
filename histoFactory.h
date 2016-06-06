@@ -2,9 +2,9 @@
 #define HISTOFACTORY_H
 
 #include "shared.h"
-#include "sharedPars.C"
+#include "sharedPars.cxx"
 #include "fqProcessedEvent.h"
-#include "histoManager.C"
+#include "histoManager.cxx"
 
 using namespace std;
 
@@ -57,6 +57,6 @@ class histoFactory{
 #endif
 
 #ifndef HISTOFACTORY_C
-#include "histoFactory.C"
+#include "histoFactory.cxx"
 #endif
 

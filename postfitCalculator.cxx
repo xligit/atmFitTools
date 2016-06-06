@@ -5,13 +5,13 @@
 
 //#include "shared.h"
 
-#include "atmFitPars.C"
-#include "histoManager.C"
-//#include "fqProcessedEvent.C"
-#include "splineFactory.C"
-#include "mcmcReader.C"
+#include "atmFitPars.cxx"
+#include "histoManager.cxx"
+//#include "fqProcessedEvent.cxx"
+#include "splineFactory.cxx"
+#include "mcmcReader.cxx"
 #include "THStack.h"
-#include "sharedPars.C"
+#include "sharedPars.cxx"
 
 
 #define NCLASSMAX 10

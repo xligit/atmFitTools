@@ -2,7 +2,7 @@
 #define HISTOCOMPARE_C
 
 #include "histoCompare.h"
-#include "markovTools.C"
+#include "markovTools.cxx"
 #include <time.h>
 
 histoCompare* histoCompare::staticthis;

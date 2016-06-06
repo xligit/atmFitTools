@@ -258,12 +258,12 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
 
   //make sure the parameters are reasonable
   if (spread==0){
-    cout<<"histoTransforms.C: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
+    cout<<"histoTransforms.cxx: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
     return;
   }
 
   //make temporary clone of input histogram 
-  TH1D* htmp = (TH1D*)hh.Clone("htmp");
+  TH1D* htmp = (TH1D*)hh.cxxlone("htmp");
 
   //apply custom smooth function if statistics are low
   if (hh.GetEntries()<10000.) mySmooth(htmp);
@@ -338,7 +338,7 @@ void smearThisHisto(TH1D &hh, double spread, double bias=0.){
 
   //make sure the parameters are reasonable
   if (spread==0){
-    cout<<"histoTransforms.C: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
+    cout<<"histoTransforms.cxx: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
     return;
   }
 
@@ -470,7 +470,7 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
 
   //make sure the parameters are reasonable
   if (spread==0){
-    cout<<"histoTransforms.C: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
+    cout<<"histoTransforms.cxx: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
     return;
   }
 
@@ -533,7 +533,7 @@ void smearThisHistoFast(TH1D &hh, double* hcontent, double spread, double bias=0
 
   //make sure the parameters are reasonable
   if (spread==0){
-    cout<<"histoTransforms.C: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
+    cout<<"histoTransforms.cxx: smearThisHisto: cannont smear with 0 spread parameter!"<<endl;
     return;
   }
 

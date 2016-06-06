@@ -7,7 +7,7 @@
 void mcmcReader::Loop()
 {
 //   In a ROOT session, you can do:
-//      Root > .L mcmcReader.C
+//      Root > .L mcmcReader.cxx
 //      Root > mcmcReader t
 //      Root > t.GetEntry(12); // Fill t data members with entry number 12
 //      Root > t.Show();       // Show values of entry 12

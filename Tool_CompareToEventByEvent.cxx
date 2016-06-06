@@ -1,6 +1,6 @@
-#include "histoManager.C"
-#include "hSplines.C"
-#include "atmFitPars.C"
+#include "histoManager.cxx"
+#include "hSplines.cxx"
+#include "atmFitPars.cxx"
 
 using namespace std;
 

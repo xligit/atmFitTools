@@ -199,7 +199,7 @@ void splineFactory::incrementSystPars(int isyspar, double nsig){
 /*
 void splineFactory::setupSystPars(){
 
-  if (!sysParType.CompareTo("tn186")){
+  if (!sysParType.cxxompareTo("tn186")){
     nSyst=0;
     //CCQE xsec norm bin 1//
     sysPar[nSyst] = 1.0;
@@ -344,7 +344,7 @@ double splineFactory::getEvtWeight(fqProcessedEvent* mcevent,int ipar,double val
 /*
   /////////////////////////////// 
   //simple TN186 parameterization
-  if (!sysParType.CompareTo("tn186")){ 
+  if (!sysParType.cxxompareTo("tn186")){ 
     
     //these values are needed to determine the event weight
     int absmode = TMath::Abs(mcevent->mode);
@@ -391,7 +391,7 @@ double splineFactory::getEvtWeight(fqProcessedEvent* mcevent,int ipar,double val
 
   /////////////////////////////// 
   //cosmic muons systematics
-  if (!sysParType.CompareTo("cosmic")){ 
+  if (!sysParType.cxxompareTo("cosmic")){ 
     
     //these values are needed to determine the event weight
     int fvbin = mcevent->nbin; //< fiducial bin of event

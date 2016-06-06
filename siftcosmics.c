@@ -1,5 +1,5 @@
 {
- gROOT->ProcessLine(".L preProcess.C+");
+ gROOT->ProcessLine(".L preProcess.cxx+");
 TChain chdat("h1");
 TChain chmc("h1");
 chdat.Add("/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/data/patmue.run073010.004*");

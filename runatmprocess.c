@@ -2,7 +2,7 @@
 
  ///////////////////////////////////////
  //load classes
- gROOT->ProcessLine(".L preProcess.C++");
+ gROOT->ProcessLine(".L preProcess.cxx++");
  gROOT->ProcessLine(".x ~/style.c");
 
  preProcess* preproc = new preProcess();

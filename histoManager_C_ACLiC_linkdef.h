@@ -6,6 +6,6 @@
 #pragma link C++ nestedtypedefs;
 
 #pragma link C++ defined_in /amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/./histoManager.h;
-#pragma link C++ defined_in "/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/./histoManager.C";
+#pragma link C++ defined_in "/amd/lnxdata311/nfs/data41/t2k/amissert/atmos/sytools/./histoManager.cxx";
 
 #endif

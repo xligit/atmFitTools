@@ -3,7 +3,7 @@
 
 #include "TString.h"
 
-#include "keyread.C"
+#include "keyread.cxx"
 
 #include <iostream>
 

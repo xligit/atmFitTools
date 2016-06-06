@@ -1,14 +1,14 @@
 #ifndef HISTCOMPARE_H
 #define HISTCOMPARE_H
 
-#include "histoManager.C"
+#include "histoManager.cxx"
 #include "TMath.h"
 #include "TRandom2.h"
-#include "histoTransforms.C"
+#include "histoTransforms.cxx"
 #include "TFitter.h"
 #include "TCanvas.h"
 #include "TGraphAsymmErrors.h"
-#include "likelihood.C"
+#include "likelihood.cxx"
 
 using namespace std;
 

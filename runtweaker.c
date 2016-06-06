@@ -1,5 +1,5 @@
 {
- gROOT->ProcessLine(".L tweaker.C++");
+ gROOT->ProcessLine(".L tweaker.cxx++");
  TChain ch("h1");
  ch.Add("/nfs/data40/t2k/amissert/skdata/cosmicsMultiGeV/14a/mc/stopmu_mc_1390_for_atmnu_test_0649*fQ.root");
  tweaker* tw = new tweaker(&ch);

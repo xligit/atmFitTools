@@ -1,5 +1,5 @@
 {
- gROOT->ProcessLine(".L preProcess.C+");
+ gROOT->ProcessLine(".L preProcess.cxx+");
  TChain ch("h1");
  //ch.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.09*.root");
  //ch.Add("/nfs/data40/t2k/amissert/skdata/atmosMC/*.reduc.08*.root");
