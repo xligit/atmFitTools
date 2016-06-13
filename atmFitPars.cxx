@@ -240,13 +240,15 @@ atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst){
 //initialize pars to preset values, the number of bins, components, attributes and systematic parameters must be previously set
 void atmFitPars::initPars(const char* systype){
 
-  //initialize histogram pars
+  //initialize histogram parameterss
   int index = 0;
   for (int ibin=0;ibin<nBins;ibin++){
     for (int icomp=0;icomp<nComponents;icomp++){
       for (int iatt=0;iatt<nAttributes;iatt++){
-        histoPar[ibin][icomp][iatt][0]=1.0;
+        // "smear" parameters
+        histoPar[ibin][icomp][iatt][0]=1.0; 
         pars[index]=1.0;
+        parDefaultValue[index] = 1.0;
         parUnc[index]=0.005; //rough estimate of uncertainty
         binOfPar[index]=ibin;
         compOfPar[index]=icomp;
@@ -255,9 +257,11 @@ void atmFitPars::initPars(const char* systype){
         fixPar[index]=0;
         parIndex[ibin][icomp][iatt][0]=index;  
         index++;
+        // "bias" parameters
         histoPar[ibin][icomp][iatt][1]=0.0;
         parIndex[ibin][icomp][iatt][1]=index;
         pars[index]=0.0;
+        parDefaultValue[index] = 0.0;
         parUnc[index]=1.0;  //rough estimate of uncertainty
         binOfPar[index]=ibin;
         compOfPar[index]=icomp;
@@ -274,6 +278,56 @@ void atmFitPars::initPars(const char* systype){
   TString stype = systype;
   nSysPars=0;
 
+ if (!stype.CompareTo("tn186simple")){
+    //CCQE xsec norm bin 1//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm  bin 2//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.411;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 3//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.216;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 4//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.155;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //SubGeV flux norm//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.25;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //MultiGeV flux norm//
+    sysPar[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.15;
+    nSysPars++;
+    //CCnQE xsec norm//
+    sysPar[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.2;
+    nSysPars++;
+    //NC xsec norm
+    sysPar[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.2;
+    nSysPars++;
+    //mu/e xsec ratio
+    sysPar[nSysPars] = 1.0;
+    sysParDefault[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.05;
+    nSysPars++;
+  }
+
+
+
   if (!stype.CompareTo("tn186")){
     //CCQE xsec norm bin 1//
     sysPar[nSysPars] = 1.0;
@@ -282,17 +336,67 @@ void atmFitPars::initPars(const char* systype){
     nSysPars++;
     //CCQE xsec norm  bin 2//
     sysPar[nSysPars] = 1.0;
-    sysParUnc[nSysPars] = 0.25;
+    sysParUnc[nSysPars] = 0.411;
     sysParDefault[nSysPars] = 1.0;
     nSysPars++;
     //CCQE xsec norm bin 3//
     sysPar[nSysPars] = 1.0;
-    sysParUnc[nSysPars] = 0.1;
+    sysParUnc[nSysPars] = 0.216;
     sysParDefault[nSysPars] = 1.0;
     nSysPars++;
     //CCQE xsec norm bin 4//
     sysPar[nSysPars] = 1.0;
-    sysParUnc[nSysPars] = 0.05;
+    sysParUnc[nSysPars] = 0.155;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 5//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.125;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 6//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.105;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 7//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.0805;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 8//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.066;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 9//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.0542;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 10//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.0398;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 11//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.0344;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 12//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.0226;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 13//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.0165;
+    sysParDefault[nSysPars] = 1.0;
+    nSysPars++;
+    //CCQE xsec norm bin 14//
+    sysPar[nSysPars] = 1.0;
+    sysParUnc[nSysPars] = 0.00903;
     sysParDefault[nSysPars] = 1.0;
     nSysPars++;
     //SubGeV flux norm//
@@ -350,18 +454,21 @@ void atmFitPars::initPars(const char* systype){
   //add systematics to 1D parameter arrays
   for (int isys=0;isys<nSysPars;isys++){
     pars[index]=sysPar[isys];
+    parDefaultValue[index] = sysParDefault[isys];
     parUnc[index]=sysParUnc[isys];
     sysParIndex[isys] = index;
     index++;
   }
 
   // initialize normalization parameters
+  // and add to 1D array
   int normindex = index;
   int normpars  = 0;
   for (int ibin=0; ibin<nBins; ibin++){
     for (int isamp=0; isamp<nSamples; isamp++){
        histoNorm[isamp][ibin] = 1.; //< default histo norm is one
        pars[normindex] = 1.0;
+       parDefaultValue[normindex] = 1.0;
        parUnc[normindex] = 0.1;
        sysParUnc[nSysPars] = 0.1;
        sysParDefault[nSysPars] = 1.0;
@@ -370,11 +477,10 @@ void atmFitPars::initPars(const char* systype){
        //count these as systematic parameters if using in fit
        if (flgUseNormPars){
          nSysPars++;
-	 index++;
+	       index++;
        }
     }
   }
-
   // end systemaitc parmeter initializations
   /////////////////////////////////////////////////
 
@@ -386,6 +492,7 @@ void atmFitPars::initPars(const char* systype){
   for (int kpar=0;kpar<nTotPars;kpar++){
     cout<<"par "<<kpar<<" value: "<<pars[kpar]<<endl;
   }
+
   return;
 }
 

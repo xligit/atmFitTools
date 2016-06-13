@@ -2,6 +2,7 @@
 #define PREPROCESS_C
 
 #include "preProcess.h"
+#include "TObjArray.h"
 
 /////////////////////////////////////////////////////////////////
 // Setup the FV bin histogram for getFVBin()
@@ -52,6 +53,23 @@ void preProcess::processAllFiles(TChain* chain){
   return;
 }
 
+void preProcess::processAllFiles(TChain *chain, TChain *spline)
+{
+  int nfiles = chain->GetNtrees();
+  TObjArray* listOfMCFiles = chain->GetListOfFiles();
+  TObjArray* listOfSplineFiles = spline->GetListOfFiles();
+  TString tag;
+  TString fmcname;
+  TString fsplinename;
+  for (int ifile=0;ifile<nfiles;ifile++){
+    tag = Form("_%d_",ifile);
+    fmcname = listOfMCFiles->At(ifile)->GetTitle();
+    if (existSpline) fsplinename = listOfSplineFiles->At(ifile)->GetTitle();
+    processFile(fmcname,fsplinename,tag);
+  }
+  return;
+}
+
 ////////////////////////////////////////
 //sets up pointers given a TChain
 void preProcess::setTree(TChain* chin){
@@ -69,6 +87,19 @@ void preProcess::setTree(TTree* trin){
   return;
 }
 
+void preProcess::setTree(TTree* trin, TTree *spline){
+  tr = trin;
+  trspline = spline;
+  if (existSpline) {
+    setupSplineTree(trspline);
+    //tr->AddFriend(trspline);
+    std::cout<<"setup spline tree "<<trspline->GetEntries()<<std::endl;
+  }
+  fq = new fqReader(tr);
+  vis = new visRing(fq); 
+  return;
+}
+
 ///////////////////////////////////////////////////
 // reads in a file and processes the h1 tree inside
 void preProcess::processFile(const char* fname,const char* outname){
@@ -80,54 +111,88 @@ void preProcess::processFile(const char* fname,const char* outname){
   outputName.Append(".root");
 
   //get existing h1 tree
-  cout<<"  opening file: "<<fname<<endl;
+  cout<<"opening file: "<<fname<<endl;
   TFile* fin = new TFile(fname);
   TTree* intree = (TTree*)fin->Get("h1");
-  cout<<"  got tree: "<<intree->GetEntries()<<endl;
-  setTree(intree); //< set pointers to current tree
+  cout<<"got tree: "<<intree->GetEntries()<<endl;
+  setTree(intree);
 
   //make new tree
-  cout<<"  create file: "<<outputName.Data()<<endl;
+  cout<<"create file: "<<outputName.Data()<<endl;
   fout = new TFile(outputName.Data(),"recreate");
   setupNewTree(); 
-
+  std::cout<<"setup new tree"<<std::endl;
   //fill new tree
   int neventsnew = preProcessIt();
   cout<<"  filled it with "<<neventsnew<<" events!" <<endl;
 
-
   //clean up
-  if (trout->GetEntries()>0) fout->Write();
+  //if (trout->GetEntries()>0) {
+  fout->cd();
+  trout->Write();
+  //}
   fin->Close();
   fout->Close();
   
   return;   
 }
 
+void preProcess::processFile(const char* fname, const char *fsplinename, const char* outname){
+
+  //make output file name
+  TString outputName = outDir.Data(); //name of directory
+  outputName.Append(nameTag.Data()); //global name
+  outputName.Append(outname); //number of this file
+  outputName.Append(".root");
+
+  //get existing h1 tree
+  cout<<"opening file: "<<fname<<endl;
+  TFile* fin = new TFile(fname);
+  TTree* intree = (TTree*)fin->Get("h1");
+  cout<<"got tree: "<<intree->GetEntries()<<endl;
+  TTree *splinetree=0;
+  TFile *fsplinein=0;
+  if (existSpline) {
+    std::cout<<"processing spline"<<std::endl;
+    fsplinein = new TFile(fsplinename, "read");
+    splinetree = (TTree*)fsplinein->Get("SplinesByEvent");
+    std::cout<<"opening file: "<<fsplinename<<std::endl;
+    std::cout<<"got tree: "<<splinetree->GetEntries()<<std::endl;
+  }
+
+  if (splinetree->GetEntries()) setTree(intree, splinetree);
+  else setTree(intree);
+  //setTree(intree);
+
+  //make new tree
+  cout<<"create file: "<<outputName.Data()<<endl;
+  fout = new TFile(outputName.Data(),"recreate");
+  setupNewTree(); 
+
+  //fill new tree
+  preProcessIt();
+
+  //clean up
+  if (trout->GetEntries()>0) fout->Write();
+  fin->Close();
+  fout->Close();
+  if (fsplinein) fsplinein->Close();
+  return;   
+}
+
 ///////////////////////////////////
 //Gets a weight for an event
 //Usefull for making fake data sets
-float preProcess::getWeight(){
+float preProcess::getBANFFWeight(){
 //  absmode = TMath::Abs(fq->mode);
 //  float enu   = fq->pmomv[0];
-  evtweight = 1.0;
-  //CCQE norm bin1 
-//  if ((absmode==1)&&(enu<200.)){
-//    evtweight = 1.5;
-//  }
-  //CCQE norm bin2 
-//  if ((absmode==1)&&(enu>200.)&&(enu<400.)) evtweight*=1.2;
-  //CCQE norm bin3 
-//  if ((absmode==1)&&(enu>400.)&&(enu<800.)) evtweight*=0.9;
-  //CCQE norm bin4 
-//  if ((absmode==1)&&(enu>800.)) evtweight*=1.05;
-
-
-  if (useWeights){
-    evtweight = gWeight->Eval(fq->fq1rmom[0][2],0,"s");
+  float weight = 1;
+  if (isData)  weight = 1.0;
+  else  {
+    weight = fq->fWeight;
+    weight *= fq->wgtflx[3] * fq->wgtosc1[3];
   }
-
-  return evtweight;
+  return weight;
 }
 
 
@@ -168,22 +233,28 @@ void preProcess::setParFileName(const char* fname){
   attributeList[7] = runpars->fQAttName7;
 
 
+float preProcess::getFixedWeight()
+{
+  float weight = 1;
+  if (isData)  weight = 1.0;
+  else  {
+    weight = fq->rfgWeight;
+    weight *= fq->wgtflx[3] * fq->wgtosc1[3];
+  }
+  return weight;
 }
-
-
 
 ///////////////////////////////////////////////
 //calculates the FV bin for an event
 int preProcess::getBin(){
 
-  ////////////////////////////////////////////////////////////
   //calculate fiducial volume variables
   //use electron hypothesis
   TVector3 vpos;
-  vpos.SetXYZ(fq->fq1rpos[0][2][0],fq->fq1rpos[0][2][1],fq->fq1rpos[0][2][2]);
+  vpos.SetXYZ(fq->fq1rpos[0][1][0],fq->fq1rpos[0][1][1],fq->fq1rpos[0][1][2]);
   TVector3 vdir;
-  vdir.SetXYZ(fq->fq1rdir[0][2][0],fq->fq1rdir[0][2][1],fq->fq1rdir[0][2][2]);
-  wall = calcWall2(&vpos);
+  vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][1][1],fq->fq1rdir[0][1][2]);
+  wall = calcWall(&vpos);
   towall = calcToWall(&vpos,&vdir);
   // calculate additional fv variables as well
   for (int isubev=0; isubev<fq->fqnse; isubev++){
@@ -233,9 +304,12 @@ int preProcess::getBin(){
   //////////////////////////////////////////
   //"simple" FV Binning for atm
   if (FVBinning==0){
-    if ((wall<200.)&&(wall>80.)) return 1;
-    if (wall<80.) return 0;
-    return 2;
+    if (wall<80 && fq->fq1rmom[0][1]<1000) return 0;
+    if (wall>80 && wall<200 && fq->fq1rmom[0][1]<1000) return 1;
+    if (wall>200 && fq->fq1rmom[0][1]<1000) return 2;
+    if (wall<80 && fq->fq1rmom[0][1]>1000) return 3;
+    if (wall>80 && wall<200 && fq->fq1rmom[0][1]>1000) return 4;
+    if (wall>200 && fq->fq1rmom[0][1]>1000) return 5;
   }
 
   ////////////////////////////////////////
@@ -286,44 +360,49 @@ int preProcess::getBin(){
 /////////////////////////////////
 //Simple initial cuts
 int preProcess::passCuts(){
+ 
+  //OD cut for atmospheric evetns
+//  if (MCComponents==0){
+//    if ((fq->nhitac)>16) return 0;
+//  }
 
-  /////////////////////
-  //tmp cuts
- // if (towallv[0]<80.) return 0;
+  //minimum energy cut
+//  if ((fq->fqtotq[0]<80)) return 0;
 
-  /////////////////////
+  //cosmic cuts
+//  if (MCComponents==1){
+//    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
+//    double ingatethresh = 1000.;
+//    if ((fq->fqnse)!=2) return 0;
+//    if (tdecay<ingatethresh) return 0;
+//    if (fq->fq1rmom[0][1]<100.) return 0;
+//    if (fq->fq1rmom[1][1]>100.) return 0;
+//    if (fq->fq1rmom[1][1]<15.)  return 0;
+
+    //towall cuts
+ //   if (towall<0.) return 0; 
+//  }
+
+  //std::cout<<fq->nhitac<<" "<<fq->fq1rmom[0][1]<<" "<<wall<<" "<<towall<<" "<<fq->fqnse<<"\n"
+  //	   <<NHITACMax<<" "<<EVisMin<<" "<<WallMin<<" "<<ToWallMin<<" "<<NSEMax<<" "<<NSEMin<<"\n"<<std::endl;
+
   //Fully Contained Cut
   if ((int)fq->nhitac>NHITACMax) return 0;
 
-  //////////////////////
   //Visible Energy Cut
   if (fq->fq1rmom[0][1]<EVisMin) return 0;
 
-  ////////////////
   //FV Basic Cuts
   if (wall<WallMin) return 0; 
-  if (towall<ToWallMin) return 0;  
+  if (towall<ToWallMin) return 0;
 
-  /////////////////////////
   //Number of subevent cuts
   if (fq->fqnse>NSEMax) return 0;
   if (fq->fqnse<NSEMin) return 0;
  
-  /////////////
   //In-gate cut
-  if (InGateMin>0){
-    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
-    if (tdecay<InGateMin) return 0;
-  }
-
-  ////////////////////////
-  // optional masking cut
-  if (flgUseSpikeMask>0){
-     if (!passMask(hmask,fq1rwall[0][2])) return 0;
-  }
-
-  ////////////////////
-  //all cuts passed!!
+  double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
+  if (tdecay<InGateMin) return 0;
   return 1;
 }
 
@@ -332,7 +411,7 @@ int preProcess::passCuts(){
 int preProcess::getSample(){
 
   //atmospheric selections
-  if (MCSamples==0){
+  if (MCComponents==0){
     if (fq->fqnse==1) return 0;
     if (fq->fqnse==2) return 1;
     if (fq->fqnse>2)  return 2;
@@ -340,14 +419,7 @@ int preProcess::getSample(){
   
   
   //cosmic selection
-  if (MCSamples==1){
-//    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
-//    double Zrec = fq->fq1rpos[0][2][2];
-//    double Zcut = 1410;
-//    double Rcut = 1290;
-//    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
-//    if ((Zrec<Zcut)) return 1; //< side entering
-//    if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
+  if (MCComponents==1){
     return 0;
   }
 
@@ -363,7 +435,6 @@ int preProcess::getSample(){
     return 0;
   }
 
-  cout<<"preProcess:  Error sample not defined!"<<endl;
   return -1;
 }
 
@@ -371,13 +442,12 @@ int preProcess::getSample(){
 //get code for MC true component type
 int preProcess::getComponent(){
 
-  ////////////////////////////
-  // useful for cuts
+  //useful for cuts
   absmode = TMath::Abs(fq->mode);
   int absnu   = TMath::Abs(fq->ipnu[0]);
  
-  /////////////////////////////////////////
-  // visible + NEUT event selection for atm
+  //visible event selection
+  //charged current
   if (MCComponents==0){
     if ((absmode>0)&&(absmode<30)){
       if ((vis->nve==1)&&((vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 0; //CC single e
@@ -392,64 +462,37 @@ int preProcess::getComponent(){
     }
   }
 
-  /////////////////////////////////////////
-  // visible only components for atm
-  if (MCComponents==2){
 
-    // single electron
-    if ((vis->nve==1)&&(vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 0;
-    // single muon
-    if ((vis->nve==0)&&(vis->nvp==0)&&(vis->nvmu==1)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 1;
-    // electron + other
-    if (vis->nve==1) return 2;
-    // muon + other
-    if (vis->nvmu==1) return 3;
-    // pi0 with no other
-    if ((vis->nvpi0==1)&&(vis->nvpip==0)) return 4;
-    // other
-    return 5;
-  }
- 
-  //////////////////////////////////////////
-  // cosmic selectoin
+  //cosmic selectoin
   if (MCComponents==1){
     return 0;
   }
-  
 
-  //////////////////////////////////////////
-  // hybrid pi0 selectoin
-  if (MCComponents==3){
-    return 0;
-  }
-
-  cout<<"preProcess: ERROR MC component not defined!";
-  return -1;
 }
 
 //loop over all events and sort into bins, samples and components
-int preProcess::preProcessIt(){
+void preProcess::preProcessIt(){
   int nev = tr->GetEntries();
-  int naccepted = 0;
+  //std::cout<<"nev = "<<nev<<std::endl;
   for (int i=0;i<nev;i++){
     //get info for event
-    if ((i%1000)==0) cout<<"event:  "<<i<<endl;
     tr->GetEntry(i);
-    //calc FV bin and fill FV variables
+    if (!isData) {
+      if (existSpline) trspline->GetEntry(i);
+    }
+    if ((i%1000)==0) cout<<i<<endl;
     nbin=getBin();
-    if (nbin<0.) continue;
-    //apply cuts
     if (!passCuts()) continue;
-    naccepted++;
     vis->fillVisVar(); //get visible ring information
-    fillAttributes(fq);
+    fillAttributes();
     ncomponent=getComponent();
     nsample=getSample();
-    evtweight=getWeight();
+    nmode=getMode();
+    evtweight = getBANFFWeight();
+    rfgweight = getFixedWeight();
     trout->Fill();
+    //if(isData) std::cout<<i<<" filling data "<<std::endl;
   }
-
-  return naccepted;
 }
 
 ///////////////////////////////////////
@@ -458,104 +501,41 @@ int preProcess::getBest2RFitID(){
   
   int nfits = fq->fqnmrfit;
 
-  double ngLnLBest = 10000000.;
+  double ngLnLBest = 1000000.;
   int bestindex = 0;
 
   for (int ifit=0;ifit<nfits;ifit++){
-    int fitID = TMath::Abs(fq->fqmrifit[ifit]); //< fit fit ID code
-//    int diff = (TMath::Abs(fitID-20000000));
-//    cout<<"diff: "<<diff<<endl;
-//    cout<<"ifit: "<<ifit<<endl;
-    if ((TMath::Abs(fitID-20000000))>100) continue; //< we want best 2R fits
-    if (fq->fqmrnll[ifit]<ngLnLBest){
-      bestindex = ifit;
-      ngLnLBest=fq->fqmrnll[ifit];
-    }
+    int fitID = fq->fqmrifit[ifit]; //< fit fit ID code
+    if ((fitID-320000000)<0) continue; //< we want best 2R fits
+    if (fq->fqmrnll[ifit]<ngLnLBest) bestindex = ifit;
   }
-  best2RID = fq->fqmrifit[bestindex];
   return bestindex;
 }
 
 ////////////////////////////////////////
 //fills fiTQun attribute array
-void preProcess::fillAttributes(fqEvent* fqevent){
-
-  // Fill the cmap that matches attribute names to values
-  fillAttributeMap(fqevent);
-
-  // fill the attribute[] array with the values you want to use for this analysis
-  for (int i=0; i<nAttributes; i++){
-    double value = attributeMap[attributeList[i].Data()];
-    attribute[i] = value;
-  }
-
-
-/*  attribute[0] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
+void preProcess::fillAttributes(){
+  attribute[0] = fq->fq1rnll[0][2]-fq->fq1rnll[0][1];
+//  if (fq->fqnse>1) attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
+//  else{
+//    attribute[1] = 0.;
+//  }
   int ibest = getBest2RFitID();
-  double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
-  attribute[1] = best1Rnglnl-fqevent->fqmrnll[ibest];
-  attribute[2] = wall;
-  attribute[5] = fqevent->fq1rnll[1][2]-fqevent->fq1rnll[1][1];
-//  attribute[2] = fqevent->fq1rmom[0][2];
-  attribute[3] = fqevent->fq1rpos[0][2][2];
-  double xx = fqevent->fq1rpos[0][2][0];
-  double yy = fqevent->fq1rpos[0][2][1];
-  attribute[4] = TMath::Sqrt(xx*xx + yy*yy);
-  */
+  double best1Rnglnl = fmin(fq->fq1rnll[0][1],fq->fq1rnll[0][2]);
+  attribute[1] = best1Rnglnl-fq->fqmrnll[ibest];
 
-  return;
-}
-
-
-////////////////////////////////////////
-//fills cmap of possible fitqun attributes
-void preProcess::fillAttributeMap(fqEvent* fqevent){
-
-  // PID e vs. mu ratio of first subevent
-  attributeMap["fqelike"] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
-
-  // Ring Counting (RC) parameter
-  int ibest = getBest2RFitID();
-  double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
-  fqrcpar = best1Rnglnl-fqevent->fqmrnll[ibest];
-  attributeMap["fqrcpar"] = fqrcpar;
-
-  // Reconstructed distance from wall
-  attributeMap["fqwall"] = wall;
-
-  // Reconstructed momentum (muon)
-  attributeMap["fq1rmumom"] = fqevent->fq1rmom[0][2];
-
-  // Reconstructed momentum (electron)
-  attributeMap["fq1remom"] = fqevent->fq1rmom[0][1];
-
-  // pi0 likelihood
-  attributeMap["fqpi0like"] = fqevent->fq1rnll[0][1] - fqevent->fqpi0nll[0];
-
-  // pi0 mass
-  attributeMap["fqpi0mass"] = fqevent->fqpi0mass[0];
-
-  // pi0 photon angle
-  attributeMap["fqpi0photangle"] = fqevent->fqpi0photangle[0];
-
-  // pi0 wall min
-  TVector3 vpos;
-  vpos.SetXYZ(fqevent->fqpi0pos[0][0],fqevent->fqpi0pos[0][1],fqevent->fqpi0pos[0][2]);
-  TVector3 vdir1;
-  vdir1.SetXYZ(fqevent->fqpi0dir1[0][0],fqevent->fqpi0dir1[0][1],fqevent->fqpi0dir1[0][2]);
-  TVector3 vdir2;
-  vdir2.SetXYZ(fqevent->fqpi0dir2[0][0],fqevent->fqpi0dir2[0][1],fqevent->fqpi0dir2[0][2]);
-  double pi0wall= calcWall2(&vpos);
-  double pi0towall1 = calcToWall(&vpos,&vdir1);
-  double pi0towall2 = calcToWall(&vpos,&vdir2);
-  attributeMap["fqpi0wall"] = pi0wall;
-
-  // pi0 towall min
-  attributeMap["fqpi0towallmin"] = fmin(pi0towall1,pi0towall2);
-
-  // pi0 total momentum
-  attributeMap["fqpi0momtot"] = fqevent->fqpi0momtot[0];
-
+//  attribute[3] = -fq->fqmrnll[ibest];
+//  attribute[2] = fq->fq1rmom[0][1];
+//  attribute[3] = fq->fq1rmom[0][2];
+//  attribute[4] = fq->fq1rmom[1][1];
+//  if (fq->fqnse>1){
+//    attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
+//    attribute[4] = fq->fq1rmom[1][1];
+//  }
+//  else{
+//    attribute[1] = 0.;
+//    attribute[4] = 0.;
+//  }
   return;
 }
 
@@ -567,14 +547,20 @@ void preProcess::setupNewTree(){
   //tr->SetBranchStatus("cluster*",1);
   tr->SetBranchStatus("mode",1);
   tr->SetBranchStatus("nhitac",1);
+  tr->SetBranchStatus("oscwgt",1);
+  tr->SetBranchStatus("wgtosc1",1);
+  tr->SetBranchStatus("wgtosc2",1);
+  tr->SetBranchStatus("wgtflx",1);
+  tr->SetBranchStatus("fWeight",1);
+  tr->SetBranchStatus("rfgWeight",1);
   trout = tr->CloneTree(0); //clone but don't copy data
   trout->CopyAddresses(tr); //set addresses
   
   //add new branches
   trout->Branch("attribute",attribute,"attribute[1000]/F");
-  trout->Branch("fqrcpar",&fqrcpar,"fqrcpar/F");
   trout->Branch("ncomponent",&ncomponent,"ncomponent/I");
   trout->Branch("nsample",&nsample,"nsample/I");
+  trout->Branch("nmode",&nmode,"nmode/I");
   trout->Branch("nbin",&nbin,"nbin/I");
   trout->Branch("nvis",&vis->nvis,"nvis/I");
   trout->Branch("nvmu",&vis->nvmu,"nvmu/I");
@@ -586,28 +572,114 @@ void preProcess::setupNewTree(){
   trout->Branch("nvk",&vis->nvk,"nvk/I");
   trout->Branch("nvoth",&vis->nvoth,"nvoth/I");
   trout->Branch("vispid",vis->vispid,"vispid[100]/I");
-  trout->Branch("fqwall",&wall,"fqwall/F");
-  trout->Branch("fqtowall",&towall,"fqtowall/F");
-  trout->Branch("fq1rwall",fq1rwall,"fq1rwall[10][7]/F");
-  trout->Branch("fq1rtowall",fq1rtowall,"fq1rtowall[10][7]/F");
-  trout->Branch("towallv",towallv,"towallv[50]");
-  trout->Branch("wallv2",&wallv2,"wallv2");
+  trout->Branch("wall",&wall,"wall/F");
+  trout->Branch("towall",&towall,"towall/F");
   trout->Branch("evtweight",&evtweight,"evtweight/F");
-  trout->Branch("best2RID",&best2RID,"best2RID/I");
-  trout->Branch("fq1rperim",fq1rperim,"fq1rperim[10][7]/F");
-  trout->Branch("fq1rmincone",fq1rmincone,"fq1rmincone[10][7]/F");
+  trout->Branch("rfgweight",&rfgweight,"rfgweight/F");
 
+  if (!isData) {
+    trout->Branch("byEv_maqe_ccqe_gr", "TGraph", &byEv_maqe_ccqe_gr, 1280000, 0);
+    trout->Branch("byEv_pfo_ccqe_gr", "TGraph", &byEv_pfo_ccqe_gr, 1280000, 0);
+    trout->Branch("byEv_ebo_ccqe_gr", "TGraph", &byEv_ebo_ccqe_gr, 1280000, 0);
+    trout->Branch("byEv_ca5_cc1pi_gr", "TGraph", &byEv_ca5_cc1pi_gr, 1280000, 0);
+    trout->Branch("byEv_ca5_ncpiz_gr", "TGraph", &byEv_ca5_ncpiz_gr, 1280000, 0);
+    trout->Branch("byEv_ca5_ncpipm_gr", "TGraph", &byEv_ca5_ncpipm_gr, 1280000, 0);
+    trout->Branch("byEv_manff_cc1pi_gr", "TGraph", &byEv_manff_cc1pi_gr, 1280000, 0);
+    trout->Branch("byEv_manff_ncpiz_gr", "TGraph", &byEv_manff_ncpiz_gr, 1280000, 0);
+    trout->Branch("byEv_manff_ncpipm_gr", "TGraph", &byEv_manff_ncpipm_gr, 1280000, 0);
+    trout->Branch("byEv_bgscl_cc1pi_gr", "TGraph", &byEv_bgscl_cc1pi_gr, 1280000, 0);
+    trout->Branch("byEv_bgscl_ncpiz_gr", "TGraph", &byEv_bgscl_ncpiz_gr, 1280000, 0);
+    trout->Branch("byEv_bgscl_ncpipm_gr", "TGraph", &byEv_bgscl_ncpipm_gr, 1280000, 0);
+    trout->Branch("byEv_dismpishp_ccoth_gr", "TGraph", &byEv_dismpishp_ccoth_gr, 1280000, 0);
+    //trout->Branch("byEv_sccvec_ccqe_gr", "TGraph",  &byEv_sccvec_ccqe_gr, 1280000, 0);
+    //trout->Branch("byEv_sccvec_ncoth_gr", "TGraph",  &byEv_sccvec_ncoth_gr, 1280000, 0);
+    //trout->Branch("byEv_sccaxl_ccqe_gr", "TGraph",  &byEv_sccaxl_ccqe_gr, 1280000, 0);
+    //trout->Branch("byEv_sccaxl_ncoth_gr", "TGraph",  &byEv_sccaxl_ncoth_gr, 1280000, 0);
+    //trout->Branch("byEv_rpa_ccqe_gr", "TGraph",  &byEv_rpa_ccqe_gr, 1280000, 0);
+  }
   return;
 }
 
+void preProcess::setupSplineTree(TTree *h)
+{
+  h->SetBranchAddress("byEv_maqe_ccqe_gr", &byEv_maqe_ccqe_gr, &byEv_maqe_ccqe_br);
+  h->SetBranchAddress("byEv_pfo_ccqe_gr", &byEv_pfo_ccqe_gr, &byEv_pfo_ccqe_br);
+  h->SetBranchAddress("byEv_ebo_ccqe_gr", &byEv_ebo_ccqe_gr, &byEv_ebo_ccqe_br);
+  h->SetBranchAddress("byEv_ca5_cc1pi_gr", &byEv_ca5_cc1pi_gr, &byEv_ca5_cc1pi_br);
+  h->SetBranchAddress("byEv_ca5_ncpiz_gr", &byEv_ca5_ncpiz_gr, &byEv_ca5_ncpiz_br);
+  h->SetBranchAddress("byEv_ca5_ncpipm_gr", &byEv_ca5_ncpipm_gr, &byEv_ca5_ncpipm_br);
+  h->SetBranchAddress("byEv_manff_cc1pi_gr", &byEv_manff_cc1pi_gr, &byEv_manff_cc1pi_br);
+  h->SetBranchAddress("byEv_manff_ncpiz_gr", &byEv_manff_ncpiz_gr, &byEv_manff_ncpiz_br);
+  h->SetBranchAddress("byEv_manff_ncpipm_gr", &byEv_manff_ncpipm_gr, &byEv_manff_ncpipm_br);
+  h->SetBranchAddress("byEv_bgscl_cc1pi_gr", &byEv_bgscl_cc1pi_gr, &byEv_bgscl_cc1pi_br);
+  h->SetBranchAddress("byEv_bgscl_ncpiz_gr", &byEv_bgscl_ncpiz_gr, &byEv_bgscl_ncpiz_br);
+  h->SetBranchAddress("byEv_bgscl_ncpipm_gr", &byEv_bgscl_ncpipm_gr, &byEv_bgscl_ncpipm_br);
+  h->SetBranchAddress("byEv_dismpishp_ccoth_gr", &byEv_dismpishp_ccoth_gr, &byEv_dismpishp_ccoth_br);
+  //h->SetBranchAddress("byEv_sccvec_ccqe_gr", &byEv_sccvec_ccqe_gr, &byEv_sccvec_ccqe_br);
+  //h->SetBranchAddress("byEv_sccvec_ncoth_gr", &byEv_sccvec_ncoth_gr, &byEv_sccvec_ncoth_br);
+  //h->SetBranchAddress("byEv_sccaxl_ccqe_gr", &byEv_sccaxl_ccqe_gr, &byEv_sccaxl_ccqe_br);
+  //h->SetBranchAddress("byEv_sccaxl_ncoth_gr", &byEv_sccaxl_ncoth_gr, &byEv_sccaxl_ncoth_br);
+  //h->SetBranchAddress("byEv_rpa_ccqe_gr", &byEv_rpa_ccqe_gr, &byEv_rpa_ccqe_br);
+}
 
 /////////////////////////////
 //empty constructor
 preProcess::preProcess(){
   nFiles=0;
-  useWeights=0;
+  
+  byEv_maqe_ccqe_gr = 0;
+  byEv_pfo_ccqe_gr = 0;
+  byEv_ebo_ccqe_gr = 0;
+  byEv_ca5_cc1pi_gr = 0;
+  byEv_ca5_ncpiz_gr = 0;
+  byEv_ca5_ncpipm_gr = 0;
+  byEv_manff_cc1pi_gr = 0;
+  byEv_manff_ncpiz_gr = 0;
+  byEv_manff_ncpipm_gr = 0;
+  byEv_bgscl_cc1pi_gr = 0;
+  byEv_bgscl_ncpiz_gr = 0;
+  byEv_bgscl_ncpipm_gr = 0;
+  byEv_dismpishp_ccoth_gr = 0;
+  byEv_sccvec_ccqe_gr = 0;
+  byEv_sccvec_ncoth_gr = 0;
+  byEv_sccaxl_ccqe_gr = 0;
+  byEv_sccaxl_ncoth_gr = 0;
+  byEv_rpa_ccqe_gr = 0;
+
 }
 
+/////////////////////////////
+//construct from TTree
+preProcess::preProcess(TTree* trin,const char* name){
+  tr=trin;
+  fq = new fqReader(tr);
+  vis = new visRing(fq);
+  setupNewTree();
+  nameTag=name;
+  return;
+}
+
+/////////////////////////////
+//construct from TChain
+preProcess::preProcess(TChain* chin,const char* name){
+  tr=(TTree*)chin;
+  nameTag=name;
+  fq = new fqReader(tr);
+  vis = new visRing(fq);
+  setupNewTree();
+  return;
+}
+
+preProcess::preProcess(TChain *mc, TChain *spline, const std::string name)
+{
+  tr = (TTree*)mc;
+  trspline = (TTree*)spline;
+  setupSplineTree(trspline);
+  nameTag = name.c_str();
+  fq = new fqReader(tr);
+  vis = new visRing(fq);
+  setupNewTree();
+}
 
 //////////////////////////////////////////
 //read in parameters and run preprocessing!
@@ -620,57 +692,44 @@ void preProcess::runPreProcessing(){
   nameTag = runpars->globalRootName;
   cout<<"nametag: "<<nameTag.Data()<<endl;
   FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
-  if (FVBinning==4) setFVBinHisto();
   MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
-  MCSamples = runpars->preProcessMCSamples; //< flag for MC sample definitions in getSample()
-  NHITACMax = runpars->preProcFCCut;
-  EVisMin = runpars->preProcEVisCut;
-  WallMin = runpars->preProcWallMinCut;
-  ToWallMin = runpars->preProcToWallMinCut;
-  NSEMax = runpars->preProcNseMax0;
-  NSEMin = runpars->preProcNseMin;
-  InGateMin = runpars->preProcInGateCut; 
-  flgAddMoreVars = runpars->preProcAddMoreVars;
-  flgUseSpikeMask = runpars->preProcMaskFlg;
-  if (flgUseSpikeMask>0){
-     TString fname = runpars->preProcMaskFile.Data();
-     TFile* maskfile = new TFile(fname.Data());
-     cout<<"preProc: Getting spike mask from file: "<<fname.Data()<<endl;     
-     hmask = (TH1D*)maskfile->Get("hmask");
-  }
-
-  // list of attributes to use
-  nAttributes = runpars->nAttributes;
-  attributeList[0] = runpars->fQAttName0;
-  attributeList[1] = runpars->fQAttName1;
-  attributeList[2] = runpars->fQAttName2;
-  attributeList[3] = runpars->fQAttName3;
-  attributeList[4] = runpars->fQAttName4;
-  attributeList[5] = runpars->fQAttName5;
-  attributeList[6] = runpars->fQAttName6;
-  attributeList[7] = runpars->fQAttName7;
-
+  NHITACMax = runpars->PreProcFCCut;
+  EVisMin = runpars->PreProcEVisCut;
+  WallMin = runpars->PreProcWallMinCut;
+  ToWallMin = runpars->PreProcToWallMinCut;
+  NSEMax = runpars->PreProcNseMax0;
+  NSEMin = runpars->PreProcNseMin;
+  InGateMin = runpars->PreProcInGateCut; 
 
   //create data and mc chains
   chmc = new TChain("h1");
   chdat = new TChain("h1");
-  cout<<"preProc: adding MC files: "<<runpars->preProcessFilesMC.Data()<<endl;
-  cout<<"preProc: adding Data files: "<<runpars->preProcessFilesData.Data()<<endl;
+  chspline = new TChain("SplinesByEvent");
   chmc->Add(runpars->preProcessFilesMC.Data());
   chdat->Add(runpars->preProcessFilesData.Data());
+  existSpline = false;
+  nFilesSpline = chspline->Add(runpars->preProcessFilesSpline.Data());
+  if (nFilesSpline) existSpline = true;
+  std::cout<<"# spline files = "<<nFilesSpline<<std::endl;
   if (chmc->GetEntries()<1){
-    cout<<"preProcess WARNING: no events in MC chain"<<endl;
+    cout<<"preProcess ERROR: no events in MC chain"<<endl;
+    return;
   }
   if (chdat->GetEntries()<1){
-    cout<<"preProcess WARNING: no events in Data chain"<<endl;
+    cout<<"preProcess ERROR: no events in Data chain"<<endl;
+    return;
   }
 
   //process the files
   outDir = runpars->preProcessOutDir.Data();
   nameTag.Append("_ppmc");
-  processAllFiles(chmc);
+  isData = false;
+  if (existSpline) processAllFiles(chmc, chspline);
+  else processAllFiles(chmc);
   nameTag = runpars->globalRootName.Data();
   nameTag.Append("_ppdata");
+  isData = true;
+  std::cout<<"---------- process data -----------"<<std::endl;
   processAllFiles(chdat); 
 
   cout<<"preProcess: Complete!"<<endl;
@@ -679,4 +738,4 @@ void preProcess::runPreProcessing(){
   return;
 }
 
-#endif
+

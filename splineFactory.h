@@ -49,6 +49,7 @@ class splineFactory{
   double attribute[NATTMAX];
   double eventWeight;
   sharedPars* runpars; //< runtime parameters
+  double sigmaValues[NPTSMAX];
 
   //for output tree
   TTree* splineTree;
@@ -61,6 +62,8 @@ class splineFactory{
   int nhistobins;
   double systParValues[NPTSMAX];
   double binWeight[NPTSMAX][NHBINSMAX];
+  TH2D* h2DWeights;
+
   //methods
   //this needs to be modified for each systematic paramater to add
  // double getEvtWeight(int ipar); //returns event weight after applying syst. par. 

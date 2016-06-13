@@ -68,11 +68,25 @@ void splineFactory::fillBranches(int isamp,int ibin,int icomp,int iatt,int isyst
    nattribute=iatt;
    nsystpar = isyst;
 
+   // set up the 2D histogram that shows how the bin contents of this histogram
+   // change with respect to this systematic parameter (indexed by "isyst")
+   if (h2DWeights!=NULL){
+     h2DWeights->Delete();
+   }
+   int nbinsx = hMC[isamp][ibin][icomp][iatt][0]->GetNbinsX();
+   int nbinsy = NPTSMAX;
+   double xmin =  hMC[isamp][ibin][icomp][iatt][0]->GetBinLowEdge(1);
+   double xmax =  hMC[isamp][ibin][icomp][iatt][0]->GetBinWidth(nbinsx) +
+                  hMC[isamp][ibin][icomp][iatt][0]->GetBinLowEdge(nbinsx);
+   double ymin = sigmaValues[0];
+   double ymax = sigmaValues[NPTSMAX-1];
+   h2DWeights = new TH2D("h2D","h2D",nbinsx,xmin,xmax,nbinsy,ymin,ymax);
+
    // loop over the evaluation points for this bin to create array of bin weights
    nhistobins = hMC[isamp][ibin][icomp][iatt][0]->GetNbinsX();
    npoints = NPTSMAX;
    for (int ipt=0;ipt<NPTSMAX;ipt++){
-     for (int jhistobin=0;jhistobin<=nhistobins;jhistobin++){
+     for (int jhistobin=1;jhistobin<=nhistobins;jhistobin++){
        if (hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin)==0){
          binWeight[ipt][jhistobin] = 1.;
        }
@@ -81,13 +95,14 @@ void splineFactory::fillBranches(int isamp,int ibin,int icomp,int iatt,int isyst
            ((double)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
            (double)hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin);
        }
+       h2DWeights->SetBinContent(jhistobin,ipt+1,binWeight[ipt][jhistobin]);
      }
    }
 
    // fill array of all systematic parameter points used to fill histograms
-   double sigvals[5] = {-5.,-2.,0.,2.,5.};
+  // double sigvals[5] = {-4.,-2.,0.,2.,4.};
    for (int jpt=0;jpt<NPTSMAX;jpt++){
-     incrementSystPars(isyst,sigvals[jpt]);
+     incrementSystPars(isyst,sigmaValues[jpt]);
      systParValues[jpt]=fitPars->sysPar[isyst];
    }
 
@@ -119,10 +134,10 @@ void splineFactory::buildTheSplines(){
   splineTree->Branch("npoints",&npoints,"npoints/I");
   splineTree->Branch("systParValues",systParValues,Form("systParValues[%d]/D",NPTSMAX));
   splineTree->Branch("binWeight",binWeight,Form("binWeight[%d][%d]/D",NPTSMAX,NHBINSMAX));
-  
+  splineTree->Branch("h2DWeights","TH2D",&h2DWeights,320000,0);
 
   //setup systematic deviations (in sigma)
-  double sigvals[5] = {-4.,-2.,0.,2.,4.};
+ // double sigvals[5] = {-4.,-2.,0.,2.,4.};
 
   cout<<"creating spines"<<endl; 
 
@@ -133,11 +148,9 @@ void splineFactory::buildTheSplines(){
     //loop over the MC events
     for (int iev=0;iev<mcTree->GetEntries();iev++){
       mcTree->GetEvent(iev);  //< read event
-      //fillAttributes();  //fill all attributes of this event
       //loop over the values of this parameter
       for (int ipt=0;ipt<NPTSMAX;ipt++){
-        incrementSystPars(isyst,sigvals[ipt]); //< set parameter value
-      //  getEvtWeight(isyst); //< get new new weight for this event 
+        incrementSystPars(isyst,sigmaValues[ipt]); //< set parameter value
         getEvtWeight(mcEvt,isyst,fitPars->sysPar[isyst]);
         //loop over fiTQun attributes and fill histograms
         for (int iatt=0;iatt<nAtt;iatt++){
@@ -180,8 +193,8 @@ void splineFactory::incrementSystPars(int isyspar, double nsig){
   //adjust systematic parameter in question
   double adjustment = nsig*fitPars->sysParUnc[isyspar];
   double value = fitPars->sysPar[isyspar];
-  fitPars->setSysParameter(isyspar,(value+adjustment));
-
+//  fitPars->setSysParameter(isyspar,(value+adjustment));
+  fitPars->sysPar[isyspar] = (value + adjustment);
   //reset initial parameters
 //  setupSystPars();
 
@@ -324,7 +337,7 @@ void splineFactory::fillHistograms(int ipt, int isyst){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Re-weight the event given the value "value" of additional systematic parameter "ipar"
 //Character keys determine the type of systematic error parameters to use
-double splineFactory::getEvtWeight(fqProcessedEvent* mcevent,int ipar,double value){;;;
+double splineFactory::getEvtWeight(fqProcessedEvent* mcevent,int ipar,double value){
   
   //first get the original weight of this event:
   double ww = mcevent->evtweight;
@@ -518,6 +531,14 @@ splineFactory::splineFactory(const char*  parfile){
   TChain *chmc = new TChain("h1");
   chmc->Add(runpars->hFactoryMCFiles.Data());
   setMCTree((TTree*)chmc);
+
+  //define sigma values
+  sigmaValues[0] = -4.;
+  sigmaValues[1] = -2.;
+  sigmaValues[2] = 0.;
+  sigmaValues[3] = 2.;
+  sigmaValues[4] = 4.;
+
 
   return;
 

@@ -454,16 +454,13 @@ void histoCompare::profileL(int ipar, double range, int npts, int sameflg){
   double xx = bestpoint - (range/2.);
   double ll;
   double lbest = getTotLnL();
-  if (hProf[iprofile]) hProf[iprofile]->Delete();
+  if (hProf[iprofile]!=NULL) hProf[iprofile]->Delete();
   hProf[iprofile] = new TH1D("hprof","hprof",npts,xx,(xx+range));
+  cout<<"histoCompare: profiling parameter "<<ipar<<endl;
   for (int ipoint=0;ipoint<npts;ipoint++){
-   // cout<<"filling point" <<ipoint<<endl;
-    //Par[ibin][icomp][iatt][imod] = xx;
     thePars->setParameter(ipar,xx);
     ll = getTotLnL();
     hProf[iprofile]->SetBinContent(ipoint+1,ll-lbest);
-//    hProf[0]->SetBinContent(ipoint+1,ll);
-
     xx+=dx;
   } 
   //set parameter back to initial value

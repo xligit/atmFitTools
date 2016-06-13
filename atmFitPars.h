@@ -39,6 +39,7 @@ class atmFitPars{
   double sysParDefault[NSYSPARMAX];
   double sysParUnc[NSYSPARMAX];
   double pars[4000];
+  double parDefaultValue[4000];
   double parUnc[4000];
   int   fixPar[4000]; //< array of fix flags for parameters
   double bestpars[4000];

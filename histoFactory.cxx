@@ -40,6 +40,9 @@ void histoFactory::runHistoFactory(){
   setMCTree((TTree*)&chmc);
   chdata.Add(runpars->hFactoryDataFiles.Data());  
   setDataTree((TTree*)&chdata);
+  cout<<"histoFactory: Number of data events: "<<dataTree->GetEntries()<<endl;
+  cout<<"histoFactory: Number of MC events: "<<mcTree->GetEntries()<<endl;
+
 
   cout<<"histoFactory: Initializing histograms..."<<endl;  
   //initialize histograms
