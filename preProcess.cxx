@@ -97,7 +97,7 @@ void preProcess::processFile(const char* fname,const char* outname){
 
 
   //clean up
-  if (trout->GetEntries()>0) fout->Write();
+  if (neventsnew>0) fout->Write();
   fin->Close();
   fout->Close();
   
