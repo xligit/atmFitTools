@@ -49,6 +49,7 @@ class preProcess{
   TString outDir;
   TString fileNames[NFILEMAX];
   TString parFileName;
+  TString ntupleType;
   fqEvent* fq;
   visRing*  vis;
   int MCComponents;

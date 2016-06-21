@@ -64,7 +64,7 @@ void preProcess::setTree(TChain* chin){
 //sets up pointers
 void preProcess::setTree(TTree* trin){
   tr = trin;
-  fq = new fqEvent(tr);
+  fq = new fqEvent(tr, ntupleType.Data());
   vis = new visRing(fq); 
   return;
 }
@@ -136,7 +136,70 @@ void preProcess::setParFileName(const char* fname){
   
   // set file name
   parFileName=fname;
+   
+  //read in parameters!
+  cout<<"preProcess: Reading parameters from file "<<parFileName.Data()<<endl;
+  sharedPars* runpars = new sharedPars(parFileName.Data());
+  runpars->readParsFromFile();
+  nameTag = runpars->globalRootName;
+  cout<<"nametag: "<<nameTag.Data()<<endl;
+  FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
+  if (FVBinning==4) setFVBinHisto();
+  MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
+  MCSamples = runpars->preProcessMCSamples; //< flag for MC sample definitions in getSample()
+  NHITACMax = runpars->preProcFCCut;
+  EVisMin = runpars->preProcEVisCut;
+  WallMin = runpars->preProcWallMinCut;
+  ToWallMin = runpars->preProcToWallMinCut;
+  NSEMax = runpars->preProcNseMax0;
+  NSEMin = runpars->preProcNseMin;
+  InGateMin = runpars->preProcInGateCut; 
+  flgAddMoreVars = runpars->preProcAddMoreVars;
+  flgUseSpikeMask = runpars->preProcMaskFlg;
+  if (flgUseSpikeMask>0){
+     TString fname = runpars->preProcMaskFile.Data();
+     TFile* maskfile = new TFile(fname.Data());
+     cout<<"preProc: Getting spike mask from file: "<<fname.Data()<<endl;     
+     hmask = (TH1D*)maskfile->Get("hmask");
+  }
+
+  // type of ntuple structure in input files
+  // used to avoid printed errors in "SetBranchAddress"
+  ntupleType = runpars->ntupleType;
+  cout<<"ntuple type: "<<ntupleType.Data()<<endl;
+
+  // list of attributes to use
+  nAttributes = runpars->nAttributes;
+  attributeList[0] = runpars->fQAttName0;
+  attributeList[1] = runpars->fQAttName1;
+  attributeList[2] = runpars->fQAttName2;
+  attributeList[3] = runpars->fQAttName3;
+  attributeList[4] = runpars->fQAttName4;
+  attributeList[5] = runpars->fQAttName5;
+  attributeList[6] = runpars->fQAttName6;
+  attributeList[7] = runpars->fQAttName7;
+
+
+  //create data and mc chains
+  chmc = new TChain("h1");
+  chdat = new TChain("h1");
+  cout<<"preProc: adding MC files: "<<runpars->preProcessFilesMC.Data()<<endl;
+  cout<<"preProc: adding Data files: "<<runpars->preProcessFilesData.Data()<<endl;
+  chmc->Add(runpars->preProcessFilesMC.Data());
+  chdat->Add(runpars->preProcessFilesData.Data());
+  if (chmc->GetEntries()<1){
+    cout<<"preProcess WARNING: no events in MC chain"<<endl;
+  }
+  if (chdat->GetEntries()<1){
+    cout<<"preProcess WARNING: no events in Data chain"<<endl;
+  }
+
+  outDir = runpars->preProcessOutDir.Data();
   
+
+
+  return;
+  /*
   //read in parameters!
   cout<<"preProcess: Reading parameters from file "<<parFileName.Data()<<endl;
   sharedPars* runpars = new sharedPars(parFileName.Data());
@@ -166,7 +229,7 @@ void preProcess::setParFileName(const char* fname){
   attributeList[5] = runpars->fQAttName5;
   attributeList[6] = runpars->fQAttName6;
   attributeList[7] = runpars->fQAttName7;
-
+  */
 
 }
 
@@ -612,65 +675,14 @@ preProcess::preProcess(){
 //////////////////////////////////////////
 //read in parameters and run preprocessing!
 void preProcess::runPreProcessing(){
-  
-  //read in parameters!
-  cout<<"preProcess: Reading parameters from file "<<parFileName.Data()<<endl;
-  sharedPars* runpars = new sharedPars(parFileName.Data());
-  runpars->readParsFromFile();
-  nameTag = runpars->globalRootName;
-  cout<<"nametag: "<<nameTag.Data()<<endl;
-  FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
-  if (FVBinning==4) setFVBinHisto();
-  MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
-  MCSamples = runpars->preProcessMCSamples; //< flag for MC sample definitions in getSample()
-  NHITACMax = runpars->preProcFCCut;
-  EVisMin = runpars->preProcEVisCut;
-  WallMin = runpars->preProcWallMinCut;
-  ToWallMin = runpars->preProcToWallMinCut;
-  NSEMax = runpars->preProcNseMax0;
-  NSEMin = runpars->preProcNseMin;
-  InGateMin = runpars->preProcInGateCut; 
-  flgAddMoreVars = runpars->preProcAddMoreVars;
-  flgUseSpikeMask = runpars->preProcMaskFlg;
-  if (flgUseSpikeMask>0){
-     TString fname = runpars->preProcMaskFile.Data();
-     TFile* maskfile = new TFile(fname.Data());
-     cout<<"preProc: Getting spike mask from file: "<<fname.Data()<<endl;     
-     hmask = (TH1D*)maskfile->Get("hmask");
-  }
-
-  // list of attributes to use
-  nAttributes = runpars->nAttributes;
-  attributeList[0] = runpars->fQAttName0;
-  attributeList[1] = runpars->fQAttName1;
-  attributeList[2] = runpars->fQAttName2;
-  attributeList[3] = runpars->fQAttName3;
-  attributeList[4] = runpars->fQAttName4;
-  attributeList[5] = runpars->fQAttName5;
-  attributeList[6] = runpars->fQAttName6;
-  attributeList[7] = runpars->fQAttName7;
-
-
-  //create data and mc chains
-  chmc = new TChain("h1");
-  chdat = new TChain("h1");
-  cout<<"preProc: adding MC files: "<<runpars->preProcessFilesMC.Data()<<endl;
-  cout<<"preProc: adding Data files: "<<runpars->preProcessFilesData.Data()<<endl;
-  chmc->Add(runpars->preProcessFilesMC.Data());
-  chdat->Add(runpars->preProcessFilesData.Data());
-  if (chmc->GetEntries()<1){
-    cout<<"preProcess WARNING: no events in MC chain"<<endl;
-  }
-  if (chdat->GetEntries()<1){
-    cout<<"preProcess WARNING: no events in Data chain"<<endl;
-  }
-
-  //process the files
-  outDir = runpars->preProcessOutDir.Data();
-  nameTag.Append("_ppmc");
+   //process the files
+  TString datatag = nameTag.Data();
+  datatag.Append("_ppdata");
+  TString mctag = nameTag.Data();
+  mctag.Append("_ppmc");
+  nameTag = mctag.Data();
   processAllFiles(chmc);
-  nameTag = runpars->globalRootName.Data();
-  nameTag.Append("_ppdata");
+  nameTag = datatag.Data();
   processAllFiles(chdat); 
 
   cout<<"preProcess: Complete!"<<endl;
