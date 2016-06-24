@@ -1,0 +1,8 @@
+void test_covXsec()
+{
+  gROOT->Reset();
+  gROOT->ProcessLine(".x loadClasses.C" );
+  covXsec *cov = new covXsec("xsec_cov", "/home/xiaoyue/atmFitTools/rootfiles/xsec_covariance_2015a_q3_1.2_withRPA_v1.root");
+  cov->PrintPars();
+  cov->PrintNominal();
+}
