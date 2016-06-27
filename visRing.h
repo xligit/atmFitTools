@@ -2,6 +2,9 @@
 #define VISRING_H
 
 #include "fqEvent.h"
+#ifdef T2K
+#include "t2kfqEvent.h"
+#endif
 #include "TMath.h"
 #include "iostream"
 #include <map>
@@ -10,19 +13,24 @@
 
 using namespace std;
 
-
 //a class for counting the number of visible rings in an event
 
 class visRing{
  public:
  //constructor//
  //construct a visring object using a fitqun reader object
- visRing(fqEvent* fqin);
- //;
+#ifdef T2K
+  visRing(t2kfqEvent *fqin);
+#else
+  visRing(fqEvent* fqin);
+#endif
+
+#ifdef T2K
+  t2kfqEvent *fq;
+#else
  fqEvent* fq;
+#endif
  void fillVisVar(); //fills the variables relating to number of visible
-
-
 
  //useful quantities
  float getbeta(int ipid, float pmom);

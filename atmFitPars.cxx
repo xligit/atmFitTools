@@ -65,8 +65,7 @@ void atmFitPars::resetDefaults(){
     pars[index]=sysParDefault[isyst];
     index++;
     sysPar[isyst]=sysParDefault[isyst];
-  }
-  
+  }  
 
   return;
 }
@@ -86,6 +85,55 @@ void atmFitPars::fixAllSmearPars(int isfixed){
   }
   return;
 }
+
+#ifdef T2K
+void atmFitPars::proposeStep()
+{
+  for (int i = 0; i < nTotPars - nSysPars; ++i) {
+    if (!fixPar[i]) parsProp[i] = rnd->Gaus(pars[i], parUnc[i]*fScale); // random walk
+  }
+  for (int i = 0; i < 2; ++i) {
+    if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
+    while (pars[i+nTotPars-nSysPars]<0) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
+  }
+  if (!fixPar[3+nTotPars-nSysPars]) {
+    if (rnd->Uniform(0,2)>1) parsProp[3+nTotPars-nSysPars] = 0;
+    else parsProp[3+nTotPars-nSysPars] = 1;
+  }
+  cov->proposeStep();
+  for (int i = 3; i < nSysPars; ++i) {
+    if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = cov->getProposed(i-3);
+  }
+}
+
+void atmFitPars::acceptStep()
+{
+  cov->acceptStep();
+  for (int i = 0; i < nTotPars; ++i) pars[i] = parsProp[i];
+}
+
+atmFitPars::atmFitPars(const std::string parfilename, covBase *covm){
+  /////////////////////////////////////
+  //fill shared parameters from file
+  cout<<"atmFitPars: reading parameter file: "<<parfilename<<endl;
+  runpars = new sharedPars(parfilename.c_str());
+  runpars->readParsFromFile();
+  nSamples = runpars->nSamples;
+  nModes = NMODE;
+  cout<<"  nSamples: "<<nSamples<<endl;
+  nComponents = runpars->nComponents;
+  cout<<"  nComponents: "<<nComponents<<endl;
+  nBins = runpars->nFVBins;
+  cout<<"  nBins: "<<nBins<<endl;
+  nAttributes = runpars->nAttributes;
+  cout<<"  nAttributes: "<<nAttributes<<endl;
+  rnd = new TRandom3();
+  fScale = 1;
+  TString systype = runpars->sysParType;
+  initPars(systype.Data());
+  if (covm) setCov(covm);
+}
+#endif
 
 /////////////////////////////////////////////////////
 //construct from parameter file
@@ -108,10 +156,8 @@ atmFitPars::atmFitPars(const char* parfilename){
   flgUseNormPars = runpars->flgUseNormPars;
   if (flgUseNormPars) cout<<"atmFitPars: Using normalization pars"<<endl;
   TString sysType = runpars->sysParType;
-
   //fill all initial parameter values and count number of pars
   initPars(sysType.Data());
-
 }
 
 void atmFitPars::printPars(){
@@ -163,13 +209,27 @@ TRandom2* randy2 = new TRandom2();
 void atmFitPars::setRandSysPar(){
  // TRandom2* randy = new TRandom2();
   double parval;
+#ifndef T2K
   for (int i=0;i<nSysPars;i++){
      parval = randy2->Gaus(sysPar[i],(sysParUnc[i]/2.));
      if (parval<0) parval=0.;
      cout<<"par "<<i<<" is "<<parval<<endl;
      setSysParameter(i,parval);
   }
-  return;
+#else
+  if (sysType=="t2k" || sysType=="banff") {
+    parval = rnd->Gaus(sysPar[0],sysParUnc[0]/2.);
+    if (parval < 0) parval = 0;
+    setSysParameter(0, parval);
+    parval = rnd->Gaus(sysPar[1],sysParUnc[1]/2.);
+    if (parval < 0) parval = 0;
+    setSysParameter(1, parval);
+    parval = rnd->Uniform(0,1);
+    if (parval > 0.5) setSysParameter(2, 0);
+    else setSysParameter(2, 1);
+    cov->proposeStep();
+  }
+#endif
 }
 
 void atmFitPars::printParValues(){
@@ -222,6 +282,10 @@ atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, const char* sys
   nComponents    = icomp;
   nAttributes   = iatt;;
   initPars(systype);
+#ifdef T2K
+  rnd = new TRandom3();
+  fScale = 1;
+#endif
 }
 
 atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst){
@@ -234,6 +298,10 @@ atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst){
     sysPar[isys]=1.;
   }
   initPars();
+#ifdef T2K
+  rnd = new TRandom3();
+  fScale = 1;
+#endif
 }
 
 
@@ -277,8 +345,8 @@ void atmFitPars::initPars(const char* systype){
   // initialize systematic error parameters
   TString stype = systype;
   nSysPars=0;
-
- if (!stype.CompareTo("tn186simple")){
+  
+  if (!stype.CompareTo("tn186simple")){
     //CCQE xsec norm bin 1//
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 1.0;
@@ -326,9 +394,7 @@ void atmFitPars::initPars(const char* systype){
     nSysPars++;
   }
 
-
-
-  if (!stype.CompareTo("tn186")){
+  else if (!stype.CompareTo("tn186")){
     //CCQE xsec norm bin 1//
     sysPar[nSysPars] = 1.0;
     sysParUnc[nSysPars] = 1.0;
@@ -450,6 +516,23 @@ void atmFitPars::initPars(const char* systype){
     nSysPars++;
   }
 
+  if (!stype.CompareTo("t2k") || !stype.CompareTo("banff")) {
+    nSysPars = 3; // two flux errors + hadron multiplicity
+    // flux
+    sysParNom[0] = 1.0; sysPar[0] = 1.0;    sysParUnc[0] = 0.25; // sub-GeV flux norm
+    sysParNom[1] = 1.0; sysPar[1] = 1.0;    sysParUnc[1] = 0.15; // multi-GeV flux norm
+    sysParUp[0] = 9999.; sysParLow[0] = 0.;
+    sysParUp[1] = 9999.; sysParLow[1] = 0.;
+    sysParDefault[0] = 1.0; sysParDefault[1] = 1.0;
+    // hadron multiplicity
+    sysParNom[2] = 0; sysPar[2] = 0; sysParDefault[2] = 0;
+    sysParName[0] = "FLUX_SUB";
+    sysParName[1] = "FLUX_MUL";
+    sysParName[2] = "HAD_MULT";
+    // xsec errors
+    std::cout<<"Please set covariance matrix by calling atmFitPars::setCov(covBase *)\n"
+	     <<"stype corresponds to "<<stype.Data()<<std::endl;
+  }
 
   //add systematics to 1D parameter arrays
   for (int isys=0;isys<nSysPars;isys++){
@@ -460,6 +543,7 @@ void atmFitPars::initPars(const char* systype){
     index++;
   }
 
+#ifndef T2K
   // initialize normalization parameters
   // and add to 1D array
   int normindex = index;
@@ -492,11 +576,73 @@ void atmFitPars::initPars(const char* systype){
   for (int kpar=0;kpar<nTotPars;kpar++){
     cout<<"par "<<kpar<<" value: "<<pars[kpar]<<endl;
   }
-
+#endif
   return;
 }
 
+#ifdef T2K
+void atmFitPars::setCov(covBase *covariance)
+{
+  std::cout<<"setting covariance matrix"<<std::endl;
+  cov = covariance;
+  int index = nTotPars + 3;
+  nSysPars += cov->getNPar();
+  for (int i = 3; i < nSysPars; ++i) {
+    //std::cout<<i<<std::endl;
+    sysPar[i] = cov->getNominal(i-3);
+    sysParNom[i] = cov->getNominal(i-3);
+    sysParUnc[i] = cov->getUncertainty(i-3);
+    sysParUp[i] = cov->getUp(i-3);
+    sysParLow[i] = cov->getLow(i-3);
+    sysParName[i] = cov->getParName(i-3);
+    pars[nTotPars+i-3] = sysPar[i];
+    parUnc[nTotPars+i-3] = sysParUnc[i];
+    parDefaultValue[nTotPars+i-3] = cov->getInit(i-3);
+    sysParIndex[i] = index;
+    index++;
+  }
+  nTotPars = index;
 
+  // initialize normalization parameters
+  // and add to 1D array
+  // this should be changed when performing a T2K-SK joint analysis
+  // to account for the higher energy portion of SK events 
+  // whose xsec systematics are not properly constrained by T2K ND280 measurements
+  // i.e. different energy range should have different systematic parameter
+  int normindex = index;
+  int normpars  = 0;
+  for (int ibin=0; ibin<nBins; ibin++){
+    for (int isamp=0; isamp<nSamples; isamp++){
+       histoNorm[isamp][ibin] = 1.; //< default histo norm is one
+       pars[normindex] = 1.0;
+       parDefaultValue[normindex] = 1.0;
+       parUnc[normindex] = 0.1;
+       sysParUnc[nSysPars] = 0.1;
+       sysParDefault[nSysPars] = 1.0;
+       normParIndex[isamp][ibin] = normindex;
+       normindex++;
+       //count these as systematic parameters if using in fit
+       if (flgUseNormPars){
+         nSysPars++;
+	       index++;
+       }
+    }
+  }
+  // end systemaitc parmeter initializations
+  /////////////////////////////////////////////////
 
+  ////////////////////////////////////////////
+  // fix total number of parameters and print values
+  nTotPars = index;
+  cout<<"Total number of fit parameters: "<<nTotPars<<endl;
+  for (int kpar=0;kpar<nTotPars;kpar++){
+    cout<<"par "<<kpar<<" value: "<<pars[kpar]<<endl;
+  }
+
+  cout<<"    - Total number of fit parameters now is: "<<nTotPars<<endl;
+  cout<<"    - Total number of systematic parameters: "<<nSysPars<<endl;
+
+}
+#endif
           
 #endif
