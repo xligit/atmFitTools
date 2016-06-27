@@ -16,12 +16,13 @@
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/t2kfqEvent.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/visRing.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/TH2FV.cxx%s", comlOption));
-  /*
+  gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/masktools.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/t2kPreProcess.cxx%s", comlOption));
 
   // create histograms
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/histoTransforms.cxx%s", comlOption));
-  gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/fQreader.cxx%s", comlOption));
+  gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/t2kfqReader.cxx%s", comlOption));
+  /*
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/hSplines.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/splineParReader.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/histoManager.cxx%s", comlOption));

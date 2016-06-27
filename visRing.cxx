@@ -65,6 +65,7 @@ float visRing::getbeta(int ipid, float pmom){
   return (pmom/E);
 }
 
+#ifndef T2K
 visRing::visRing(fqEvent* fqin){
   fq = fqin;
   massof[1] = 0;  //gamma
@@ -86,10 +87,10 @@ visRing::visRing(fqEvent* fqin){
   massof[15] = 0.9383e3; //p-
   massof[17] = 0.5475e3; //eta
 }
-
+#endif
 #ifdef T2K
 visRing::visRing(t2kfqEvent* fqin){
-  t2kfq = fqin;
+  fq = fqin;
   massof[1] = 0;  //gamma
   massof[2] = 0.511e1; //positron
   massof[3] = 0.511e1; //electron 

@@ -41,6 +41,8 @@ class sharedPars{
   int nSysPars;
   int nModes;
   TString preProcessFilesMC;
+  TString preProcessFilesSpline;
+  TString preProcessFilesBANFF;
   TString preProcessFilesData;
   TString preProcessOutDir;
   int preProcessMCComponents;
@@ -181,6 +183,8 @@ void sharedPars::readParsFromFile(const char* filename){
   preProcessFilesMC = kr->getKeyS("preProcessFilesMC"); 
   preProcessOutDir = kr->getKeyS("preProcessOutDir"); 
   preProcessFilesData = kr->getKeyS("preProcessFilesData"); 
+  preProcessFilesSpline = kr->getKeyS("preProcessFilesSpline");
+  preProcessFilesBANFF = kr->getKeyS("preProcessFilesBANFF");
   preProcessMCComponents = kr->getKeyI("preProcessMCComponents");
   preProcessFVBinning = kr->getKeyI("preProcessFVBinning");
   preProcessMCSamples = kr->getKeyI("preProcessMCSamples");
