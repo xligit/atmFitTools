@@ -5,6 +5,12 @@
 #include "TRandom2.h"
 #include "sharedPars.cxx"
 
+#ifdef T2K
+#include "covXsec.h"
+#include "covBANFF.h"
+#include "covBase.h"
+#endif
+
 using namespace std;
 
 //class containing all atmospheric fit pars
@@ -17,17 +23,25 @@ class atmFitPars{
   atmFitPars(int isamp, int ibin, int icomp, int iatt, const char* systype); 
   // use this constructor
   atmFitPars(const char* parfile); //constructs from parameter file
+#ifdef T2K
+  atmFitPars(const std::string parfile, covBase *covm = 0);
+#endif
 
   ///////////////////////////////////////////////////////////////
   //numbers of various parametrs
-  int nSamples;
-  int nBins;
-  int nComponents;
-  int nAttributes;
+  int nSamples; // # of sub-events
+  int nBins; // fiducial volume (and evis) bin 
+  int nComponents; // 1Re, 1Rmu, MR1e, MR1mu, 1Rpi0, other 
+  int nAttributes; // pid, ring-counting, etc
   int nSysPars;
+  int nModes;
   int nTotPars;
   int flgUseNormPars;
   sharedPars* runpars;
+#ifdef T2K
+  covBase *cov;
+  TRandom3 *rnd;
+#endif
 
   ///////////////////////////////////////////////////////////////////
   //parameter values
@@ -46,8 +60,15 @@ class atmFitPars{
   int   parIndex[NBINMAX][NCOMPMAX][NATTMAX][2]; //< stores 1D array position for bias/smear pars
   int   sysParIndex[NSYSPARMAX]; //< stores 1D array position for systematic pars
   int   normParIndex[NSAMPMAX][NBINMAX]; //< stores 1D array position for normalization pars
-
   double norm;  
+#ifdef T2K
+  float fScale;
+  double sysParNom[NSYSPARMAX]; // NEUT "nominal" xsec parameter value
+  double sysParUp[NSYSPARMAX];
+  double sysParLow[NSYSPARMAX];
+  std::string sysParName[NSYSPARMAX];
+  double parsProp[4000];
+#endif
 
   //////////////////////////////////////////////////////////////
   //methods
@@ -73,7 +94,15 @@ class atmFitPars{
   int compOfPar[4000];
   int attOfPar[4000];
   int typeOfPar[4000];
-
+#ifdef T2K
+  void proposeStep();
+  void acceptStep();
+  void setStepSize(float f) {fScale = f; cov->setStepScales(f);}
+  void setSeed(int i) {rnd->SetSeed(i);}
+  double getPropParameter(int ipar) { return pars[ipar];}
+  void setCov(covBase *covariance);
+  std::string sysType;
+#endif
   //saving and reading pars
   void savePars(const char* filename);
   void readPars(const char* filename);

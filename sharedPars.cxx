@@ -39,6 +39,7 @@ class sharedPars{
   int nComponents;
   int nAttributes;
   int nSysPars;
+  int nModes;
   TString preProcessFilesMC;
   TString preProcessFilesData;
   TString preProcessOutDir;
@@ -174,6 +175,9 @@ void sharedPars::readParsFromFile(const char* filename){
   nComponents = kr->getKeyI("nComponents");
   nAttributes  = kr->getKeyI("nAttributes"); 
   nSysPars    = kr->getKeyI("nSysPars");
+#ifdef NMODE
+  nModes = NMODE;
+#endif
   preProcessFilesMC = kr->getKeyS("preProcessFilesMC"); 
   preProcessOutDir = kr->getKeyS("preProcessOutDir"); 
   preProcessFilesData = kr->getKeyS("preProcessFilesData"); 

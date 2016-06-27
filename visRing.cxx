@@ -87,5 +87,28 @@ visRing::visRing(fqEvent* fqin){
   massof[17] = 0.5475e3; //eta
 }
 
+#ifdef T2K
+visRing::visRing(t2kfqEvent* fqin){
+  t2kfq = fqin;
+  massof[1] = 0;  //gamma
+  massof[2] = 0.511e1; //positron
+  massof[3] = 0.511e1; //electron 
+  massof[4] = 1e10; //neutrino
+  massof[5] = 0.1057e3; //mu+
+  massof[6] = 0.1057e3; //mu-
+  massof[7] = 0.1350e3; //pi0
+  massof[8] = 0.1396e3; //pi+
+  massof[9] = 0.1396e3; //pi-
+//  massof[10] = 0.4977e3; //K long
+  massof[10] = 1e10; //K long
+  massof[11] = 0.4937e3; //K+
+  massof[12] = 0.4937e3; //K-
+//  massof[13] = 0.9396e3; //n
+  massof[13] = 1e10; //n
+  massof[14] = 0.9383e3; //p
+  massof[15] = 0.9383e3; //p-
+  massof[17] = 0.5475e3; //eta
+}
+#endif
 
 #endif
