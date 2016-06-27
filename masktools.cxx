@@ -6,6 +6,11 @@
 #include "TH1D.h"
 #include <iostream>
 #include "FVCalculators.cxx"
+#ifndef T2K
+#include "fqEvent.h"
+#else
+#include "t2kfqEvent.h"
+#endif
 
 using namespace std;
 
@@ -46,7 +51,11 @@ void masktools::makethismask(const char* filename){
   hmask = (TH1D*)hwall->Clone("hmask");
 
   // fill histogram
+#ifndef T2K
   fqEvent* fqevent = new fqEvent(chdata);
+#else
+  t2kfqEvent *fqevent = new t2kfqEvent(chdata);
+#endif
   int nev = chdata->GetEntries();
   TVector3* vpos = new TVector3();
   for (int iev=0; iev<nev; iev++){

@@ -1,9 +1,11 @@
+#include "shared.h"
 #include "TH2Poly.h"
 #include "TVector2.h"
 #include "TMath.h"
 
-
+#ifndef NHBINSMAX
 #define NHBINSMAX 9999
+#endif
 
 using namespace std;
 

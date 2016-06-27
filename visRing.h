@@ -1,6 +1,7 @@
 #ifndef VISRING_H
 #define VISRING_H
 
+#include "shared.h"
 #include "fqEvent.h"
 #ifdef T2K
 #include "t2kfqEvent.h"
@@ -28,9 +29,9 @@ class visRing{
 #ifdef T2K
   t2kfqEvent *fq;
 #else
- fqEvent* fq;
+  fqEvent* fq;
 #endif
- void fillVisVar(); //fills the variables relating to number of visible
+  void fillVisVar(); //fills the variables relating to number of visible
 
  //useful quantities
  float getbeta(int ipid, float pmom);
