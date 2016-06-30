@@ -14,7 +14,11 @@ using namespace std;
 
 #ifndef GLOBAL_RANDOM
 #define GLOBAL_RANDOM
+#ifdef T2K
+TRandom3 *randy = new TRandom3();
+#else
 TRandom2* randy = new TRandom2();
+#endif
 #endif
 
 //class to manage a Markov Chain Monte Carlo
@@ -58,7 +62,7 @@ class markovTools{
    /////////////////////////
    //I/O
    void savePath();
-   void setTuneParameter(double value){tuneParameter=value;}
+   void setTuneParameter(double value);
 
    /////////////////////////
    //debugging
@@ -171,16 +175,20 @@ int markovTools::acceptStepLnL(double newL){
     for (int i=0;i<nPars;i++){
       oldPars[i]=atmPars->getParameter(i);
     }
+#ifdef T2K
+    atmPars->acceptStep();
+#endif
     pathTree->Fill();
     iaccept = 1;
   } 
+  /*
   else{
     for (int i=0;i<nPars;i++){
       //rejected, reset to old parameters
       atmPars->setParameter(i,oldPars[i]);
     }
   }
-
+  */
 
   iStep++; //< increment global step  count
   if ((iStep%100)==0) cout<<"step: "<<iStep<<endl;
@@ -201,6 +209,9 @@ int markovTools::acceptStepLnL(double newL,double* par){
     for (int i=0;i<nPars;i++){
       oldPars[i]=par[i];
     }
+#ifdef T2K
+    atmPars->acceptStep();
+#endif
     pathTree->Fill();
     iaccept = 1;
   } 
@@ -249,9 +260,16 @@ int markovTools::acceptStep(double newL,double* par){
 //takes a poiter to a parameter array and returns
 //a new array of proposed parameters
 void markovTools::proposeStep(double* par){  
+#ifdef T2K
+  atmPars->proposeStep();
+#endif
   for (int i=0;i<nPars;i++){
+#ifndef T2K
     oldPars[i] = par[i];
     if (fixPar[i]!=1) par[i] = randy->Gaus(par[i],varPar[i]*tuneParameter);
+#else
+    if (fixPar[i]!=1) par[i] = atmPars->getPropParameter(i);
+#endif
   }
   return;
 }
@@ -261,6 +279,7 @@ void markovTools::proposeStep(double* par){
 //takes a poiter to atmFitPars and suggests new parameters
 //
 void markovTools::proposeStep(){  
+#ifndef T2K
   for (int i=0;i<nPars;i++){
     oldPars[i] = atmPars->getParameter(i);
     if (atmPars->fixPar[i]!=1){
@@ -271,6 +290,12 @@ void markovTools::proposeStep(){
    //   cout<<"new par: "<<atmPars->getParameter(i);
     }
   }
+#else
+  atmPars->proposeStep();
+  for (int i = 0; i < nPars; ++i) {
+    oldPars[i] = atmPars->getParameter(i);
+  }
+#endif
   return;
 }
 
@@ -320,5 +345,10 @@ markovTools::markovTools(atmFitPars* fitpars){
   return;
 }
 
-
-
+void markovTools::setTuneParameter(double value)
+{
+  tuneParameter=value;
+#ifdef T2K
+  atmPars->setStepSize(tuneParameter);
+#endif
+}

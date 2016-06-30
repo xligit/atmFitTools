@@ -1,10 +1,13 @@
 #ifndef HSPLINES_C
 #define HSPLINES_C
+
 #include "TH1D.h"
 #include "TH2F.h"
 #include "TSpline.h"
 #include "TString.h"
 #include <iostream>
+#include "shared.h"
+
 using namespace std;
 
 class hSplines{
@@ -37,7 +40,7 @@ class hSplines{
   TH1D* baseHisto; //the default histogram from which all modified histograms are obtained
   TH1D* modHisto;  //pointer to the histogram that has been modified by splines
   TH2F* drawHisto;  //pointer to the histogram that is used in the draw functions
-  TSpline3 *theSpline[500][10]; //number of bins* number of sys pars
+  TSpline3 *theSpline[NHBINSMAX][NSYSPARMAX]; //number of bins* number of sys pars
   double evaluateSpline(int ibin, int ipar, double parvalue);
   TString nameTag;
   int nSyst; //number of systematic pars
@@ -45,7 +48,10 @@ class hSplines{
 };
 
 double hSplines::evaluateSpline(int ibin, int ipar, double parvalue){
+#ifndef T2K
   if (parvalue<0.) parvalue = 0.;
+#endif
+  if (theSpline[ibin][ipar]==NULL) return 1.0;
   return (double)theSpline[ibin][ipar]->Eval(parvalue);
 }
 
@@ -63,12 +69,13 @@ void  hSplines::draw2D(int npts,int isyst){
   double parmax= theSpline[1][isyst]->GetXmax(); 
   double xx;
   double parval;
+  double increment = (parmax - parmin) / npts;
   cout<<"delete prev histo"<<endl;
 //  if (drawHisto!=NULL) drawHisto->Delete();
   cout<<"make new histo histo"<<endl;
   drawHisto= new TH2F("hdraw","hdraw",nHistoBins,baseHisto->GetBinLowEdge(1),
                       (baseHisto->GetBinLowEdge(baseHisto->GetNbinsX()) + baseHisto->GetBinWidth(baseHisto->GetNbinsX())),
-                      npts,parmin,parmax);
+                      npts,parmin-increment/2.,parmax+increment/2.);
   cout<<"fill xy histogram"<<endl;
   cout<<"nbins"<<nHistoBins<<endl;
   for (int xbin=1;xbin<=drawHisto->GetNbinsX();xbin++){
@@ -186,15 +193,22 @@ void hSplines::buildSpline(int ibin, int isyst,double* X, double*Y, int N){
   //ignore x values less than zero:
   int index=0;
   for (int ipt=0;ipt<npts;ipt++){
+#ifdef T2K
+    if (Y[ipt]<0) std::cout<<"!!!!! WEIGHT < 0 !!!!!"<<std::endl;
+    xvals[index]=X[ipt];
+    yvals[index]=Y[ipt];
+    index++;
+#else
     if (X[ipt]>=0.){
       xvals[index]=X[ipt];
       yvals[index]=Y[ipt];
       index++;
     }
+#endif
   }
   TString splineName = nameTag.Data();
   splineName.Append(Form("_spline_bin%d_par%d",ibin,isyst));
-  theSpline[ibin][isyst] = new TSpline3(splineName.Data(),xvals,yvals,index); 
+  if (!theSpline[ibin][isyst])  theSpline[ibin][isyst] = new TSpline3(splineName.Data(),xvals,yvals,index); 
   cout<<"hSplines: Built spline: "<<splineName.Data()<<endl;
   checkSum--;
   return;

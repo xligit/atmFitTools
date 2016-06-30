@@ -149,10 +149,12 @@ class t2kPreProcess{
   void setupSplineTree(TTree *h);
   void setParFileName(const char* filename){parFileName=filename;}
   void runPreProcessing();
+  void setFVBinHisto();
   void setupNewTree();
   void preProcessIt();
   int passCuts();
-  void fillAttributes();
+  void fillAttributes(t2kfqEvent *fqevent);
+  void fillAttributeMap(t2kfqEvent *fqevent);
   int absmode;
   int getComponent();
   int getSample();
@@ -165,6 +167,10 @@ class t2kPreProcess{
   void processFile(const char* f1, const char* f2, const char* outname);
   void processAllFiles(TChain* chain);
   void processAllFiles(TChain*, TChain*);
+
+ private:
+  int flgAddMoreVars;
+  int flgUseSpikeMask;
 
 };
 

@@ -665,6 +665,15 @@ void histoCompare::showFitHisto(int isamp,int ibin,int icomp,int iatt){
   return;
 }
 
+void histoCompare::lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg){
+
+  for (int ipar=0;ipar<staticthis->thePars->nTotPars;ipar++){
+    staticthis->thePars->setParameter(ipar,par[ipar]);
+  }
+
+  result = (double)staticthis->getTotLnL();
+}
+
 void histoCompare::LnLPreFit(){
 
   //setup static this so wrapper doesn't segfault
@@ -1083,42 +1092,31 @@ void histoCompare::getTotLnL1D(double& result,int npar, double par[]){
   result = getTotLnL();
 }
 
-
-void histoCompare::lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg){
-
-  for (int ipar=0;ipar<staticthis->thePars->nTotPars;ipar++){
-    staticthis->thePars->setParameter(ipar,par[ipar]);
-  }
-
-  result = (double)staticthis->getTotLnL();
-}
-
 ////////////////////////////////////////////////
 //Compute the total log liklihood by comparing all histograms
 double histoCompare::getTotLnL(){
 
   double totL = 0.;
-
   ////////////////////////////////////////
   //contribution from histogram comparison  
   for (int isamp=0;isamp<nSamp;isamp++){
     for (int ibin=0;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
-     //    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
-     //    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
-         TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
-      //   TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
-         TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.
-
-   //      double hnorm = hDataTmp->Integral()/hPrediction->Integral();
-
-   //      double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
-   //      cout<<"partialL :"<<partialL<<endl;     
-         double partialLnL = getLnL(hPrediction,hDataTmp);
-       //  cout<<"adding: "<<partialLnL<<" to total. ";
-      //   cout<<"samp: "<<isamp<<" bin: "<<ibin<<" att: "<<iatt<<endl;
-         totL+=partialLnL;
-       //  totL+=getLnL(hPrediction,hDataTmp);
+	//    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
+	//    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
+	TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
+	//   TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
+	TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.
+	
+	//      double hnorm = hDataTmp->Integral()/hPrediction->Integral();
+	
+	//      double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
+	//      cout<<"partialL :"<<partialL<<endl;     
+	double partialLnL = getLnL(hPrediction,hDataTmp);
+	//  cout<<"adding: "<<partialLnL<<" to total. ";
+	//   cout<<"samp: "<<isamp<<" bin: "<<ibin<<" att: "<<iatt<<endl;
+	totL+=partialLnL;
+	//  totL+=getLnL(hPrediction,hDataTmp);
       }
     }
   }
@@ -1126,19 +1124,27 @@ double histoCompare::getTotLnL(){
   //////////////////////////////////////////////
   //contribution from flux/xsec priors
   double pull;
+#ifndef T2K
   for (int isys=0;isys<thePars->nSysPars;isys++){
-   // pull = thePars->sysPar[isys]-1.;
-   // pull/=thePars->sysParUnc[isys];
-
+    // pull = thePars->sysPar[isys]-1.;
+    // pull/=thePars->sysParUnc[isys];
+    
     pull = thePars->getSysParameter(isys)-1.;
     pull/=thePars->sysParUnc[isys];
-
+    
     totL+=(0.5)*(pull*pull);
   }
+#else
+  for (int isys=0;isys < 2;isys++){
+    pull = thePars->sysPar[isys]-1.;
+    pull/=thePars->sysParUnc[isys];
+    totL+=(0.5)*(pull*pull);
+  }
+  totL += thePars->cov->getLikelihood();
+#endif
   return totL;
+  
 }
-
-
 
 double histoCompare::getTotSumSq(){
   double totsumsq = 0.;
@@ -1245,6 +1251,18 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
 }
 
 
+void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, int ncomp, int nmode, int natt){
+  nSamp = nsamp;
+  nBin  = nbin;
+  nComp = ncomp; 
+  nAtt  = natt;
+  nMode = nmode;
+  hManager = new histoManager(filerootname,nsamp,nbin,ncomp,natt,nmode,true);
+  double ndataevents=0;
+  double nmcevents=0;
+  double events;
+}
+
 /////////////////////////////////////////////////////////////////////
 //initializes all necessary compoents
 void  histoCompare::initialize(histoManager* hm, atmFitPars* apars){
@@ -1262,6 +1280,18 @@ void  histoCompare::initialize(histoManager* hm, atmFitPars* apars){
   return; 
 }
 
+void histoCompare::setupPars(int nsyspars){
+  thePars = new atmFitPars(nSamp,nBin,nComp,nAtt,"tn186");
+ // thePars->setNorm(Norm);
+  hManager->setFitPars(thePars);
+  return;
+}
+
+void histoCompare::setupPars(atmFitPars *a)
+{
+  thePars = a;
+  hManager->setFitPars(thePars);
+}
 
 histoCompare::histoCompare(){
   nameTag = "manualSetup";
@@ -1280,7 +1310,9 @@ histoCompare::histoCompare(){
   return;
 }
 
-histoCompare::histoCompare(const char* parfile){
+histoCompare::histoCompare(const char* parfile, bool sep)
+  : separateNeutMode(sep)
+{
 
   //read in parameter file
   runPars = new sharedPars(parfile);
