@@ -1,5 +1,0 @@
-i: testint = 1;
-s: teststring = astring;
-f: testfloat = 3.14;
-d: testdouble = 6.28;
-
