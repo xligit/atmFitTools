@@ -9,28 +9,34 @@
 #include "TCanvas.h"
 #include "TGraphAsymmErrors.h"
 #include "likelihood.cxx"
+#include "TRandom3.h"
+#include "shared.h"
 
 using namespace std;
-
 
 //class to compare histograms and evaluate likelihoods
 class histoCompare{
   public:
 
   //constructors//
-  histoCompare(const char* parfile);  //construct from parameter file
+  histoCompare(const char* parfile, bool separateneutmode = false);  //construct from parameter file
   histoCompare();  //standard constructor
 
   //internal variables
+  bool separateNeutMode;
   TString nameTag;  //name associated with this instance
   int nSamp;  //number of samples
   int nBin;  //number of bins
   int nComp;  //number of  components
   int nAtt;  //nummboer of attributes
+  int nMode;
   double tunePar; //tuning parameter for MCMC
   //tools for histogram manager management
   //created histo manager from file
   void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int natt);
+#ifdef T2K
+  void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int imode, int natt);
+#endif
   histoManager* hManager;
   //atmospheric pars
   atmFitPars* thePars;
@@ -55,6 +61,10 @@ class histoCompare{
   void setBinName(int ibin, const char* name){binName[ibin]=name;}
   void setCompName(int icomp, const char* name){compName[icomp]=name;}
   void setAttName(int iatt, const char* name){attName[iatt]=name;}
+#ifdef T2K
+  void setupPars(int nsyspars=0); //sets up all parameters  
+  void setupPars(atmFitPars *a);
+#endif
   //post-fit toolts
   void profileL(int ibin, int icomp, int iatt, int imod, double range, int npts=100);
   void profileL(int ipar,double range, int npts=100,int sameflg=0);
@@ -108,12 +118,12 @@ class histoCompare{
   double getLnL(TH1D* h1, TH1D* h2);
   double getTotSumSq();
   double getTotLnL();
-  static void sumSqWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  static void lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg);
   void  getTotLnL1D(double& result,int npar, double par[]);
   //for debuggint and play
   void LnLFit();
   void LnLPreFit();
+  static void lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg);
+  //static void sumSqWrapper(int& ndim, double* gout, double& result, double par[], int flg);
   void singleParFit(int ipar);
   void sysParFit();
   void timetest(int ntry);

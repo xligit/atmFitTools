@@ -11,6 +11,7 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+#include "shared.h"
 
 class splineParReader {
 public :
@@ -23,11 +24,18 @@ public :
    Int_t           ncomponent;
    Int_t           nattribute;
    Int_t           nsample;
+   Int_t           nmode;
    Int_t           nsystpar;
    Int_t           nsyspartot;
    Int_t           npoints;
+#ifndef T2K
    Double_t        systParValues[5];
    Double_t        binWeight[5][300];
+#else
+   Double_t        systParValues[NPTSMAX];
+   Double_t        binWeight[NPTSMAX][NHBINSMAX];
+#endif
+
 
    // List of branches
    TBranch        *b_nbin;   //!
@@ -35,6 +43,7 @@ public :
    TBranch        *b_ncomponent;   //!
    TBranch        *b_nattribute;   //!
    TBranch        *b_nsample;   //!
+   TBranch        *b_nmode;
    TBranch        *b_nsystpar;   //!
    TBranch        *b_nsyspartot;   //!
    TBranch        *b_npoints;   //!
@@ -49,6 +58,7 @@ public :
    virtual void     Init(TTree *tree);
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
+   virtual void     Loop();
 };
 
 
@@ -115,6 +125,8 @@ void splineParReader::Init(TTree *tree)
    fChain->SetBranchAddress("ncomponent", &ncomponent, &b_ncomponent);
    fChain->SetBranchAddress("nattribute", &nattribute, &b_nattribute);
    fChain->SetBranchAddress("nsample", &nsample, &b_nsample);
+   if (fChain->GetListOfBranches()->FindObject("nmode"))
+     fChain->SetBranchAddress("nmode", &nmode, &b_nmode);
    fChain->SetBranchAddress("nsystpar", &nsystpar, &b_nsystpar);
    fChain->SetBranchAddress("nsyspartot", &nsyspartot, &b_nsyspartot);
    fChain->SetBranchAddress("npoints", &npoints, &b_npoints);

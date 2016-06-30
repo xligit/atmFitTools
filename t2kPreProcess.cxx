@@ -1,6 +1,11 @@
 #include "t2kPreProcess.h"
 #include "TObjArray.h"
 
+// setup the FV bin histogram for getFVBin()
+void t2kPreProcess::setFVBinHisto(){
+  hFVBins = new TH2FV("hfvbins",1);
+}
+
 ////////////////////////////////////////////////////////////
 //Takes in a chain and loops over all files in the chain
 //For each file, a new file with a modified TTree is created
@@ -179,8 +184,48 @@ int t2kPreProcess::getBin(){
   vpos.SetXYZ(fq->fq1rpos[0][1][0],fq->fq1rpos[0][1][1],fq->fq1rpos[0][1][2]);
   TVector3 vdir;
   vdir.SetXYZ(fq->fq1rdir[0][1][0],fq->fq1rdir[0][1][1],fq->fq1rdir[0][1][2]);
-  wall = calcWall(&vpos);
+  wall = calcWall2(&vpos);
   towall = calcToWall(&vpos,&vdir);
+  for (int isubev=0; isubev<fq->fqnse; isubev++){
+    vpos.SetXYZ(fq->fq1rpos[isubev][2][0],fq->fq1rpos[isubev][2][1],fq->fq1rpos[isubev][2][2]);
+    vdir.SetXYZ(fq->fq1rdir[isubev][2][0],fq->fq1rdir[isubev][2][1],fq->fq1rdir[isubev][2][2]);
+    fq1rwall[isubev][2] = calcWall2(&vpos);
+    fq1rtowall[isubev][2] = calcToWall(&vpos,&vdir);
+    vpos.SetXYZ(fq->fq1rpos[isubev][1][0],fq->fq1rpos[isubev][1][1],fq->fq1rpos[isubev][1][2]);
+    vdir.SetXYZ(fq->fq1rdir[isubev][1][0],fq->fq1rdir[isubev][1][1],fq->fq1rdir[isubev][1][2]);
+    fq1rwall[isubev][1] = calcWall2(&vpos);
+    fq1rtowall[isubev][1] = calcToWall(&vpos,&vdir);
+  }
+  //true towall
+  for (int ipart=0; ipart<fq->npar; ipart++){
+    vpos.SetXYZ(fq->posv[0],fq->posv[1],fq->posv[2]);
+    vdir.SetXYZ(fq->dirv[ipart][0],fq->dirv[ipart][1],fq->dirv[ipart][2]);
+    towallv[ipart]=calcToWall(&vpos,&vdir);
+    wallv2=calcWall2(&vpos);
+  }
+  // even more FV related variables
+  if (flgAddMoreVars>0){
+     // add 1r perimiter and mincone	  
+     for (int isubev=0; isubev<fq->fqnse; isubev++){
+       vpos.SetXYZ(fq->fq1rpos[isubev][2][0],fq->fq1rpos[isubev][2][1],fq->fq1rpos[isubev][2][2]);
+       vdir.SetXYZ(fq->fq1rdir[isubev][2][0],fq->fq1rdir[isubev][2][1],fq->fq1rdir[isubev][2][2]);
+       fq1rperim[isubev][2] = calcPerimeter(&vpos,&vdir);
+       fq1rmincone[isubev][2] = calcMinCone(&vpos,&vdir);
+       vpos.SetXYZ(fq->fq1rpos[isubev][1][0],fq->fq1rpos[isubev][1][1],fq->fq1rpos[isubev][1][2]);
+       vdir.SetXYZ(fq->fq1rdir[isubev][1][0],fq->fq1rdir[isubev][1][1],fq->fq1rdir[isubev][1][2]);
+       fq1rperim[isubev][1] = calcPerimeter(&vpos,&vdir);
+       fq1rmincone[isubev][1] = calcMinCone(&vpos,&vdir);
+    }
+    //true perimeter and mincone
+    if (flgAddMoreVars>1){
+      for (int ipart=0; ipart<fq->npar; ipart++){
+        vpos.SetXYZ(fq->posv[0],fq->posv[1],fq->posv[2]);
+        vdir.SetXYZ(fq->dirv[ipart][0],fq->dirv[ipart][1],fq->dirv[ipart][2]);
+        perimv[ipart]=calcPerimeter(&vpos,&vdir);
+        minconev[ipart]=calcMinCone(&vpos,&vdir);
+      }
+    }
+  }
 
   //separate into bins
   //"simple" FV Binning
@@ -214,6 +259,12 @@ int t2kPreProcess::getBin(){
     if (towall<500.) return 0;
     if ((towall>-500)&&(towall<1000)) return 1;
     if (towall>=1000) return 2;
+  }
+
+  if (FVBinning == 4) {
+    int fvbin = hFVBins->FindBin(towall, wall) - 1;
+    if (fq->fq1rmom[0][1]<1330) return fvbin;
+    else return (hFVBins->GetNcells() + fvbin);
   }
 
   return -1;
@@ -263,9 +314,17 @@ int t2kPreProcess::passCuts(){
   if (fq->fqnse>NSEMax) return 0;
   if (fq->fqnse<NSEMin) return 0;
  
-  //In-gate cut
-  double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
-  if (tdecay<InGateMin) return 0;
+  // in-gate cut
+  if (InGateMin>0){
+    double tdecay = fq->fq1rt0[1][1]-fq->fq1rt0[0][2];
+    if (tdecay<InGateMin) return 0;
+  }
+  ///////////////////
+  // optional masking cut
+  if (flgUseSpikeMask>0){
+     if (!passMask(hmask,fq1rwall[0][2])) return 0;
+  }
+
   return 1;
 }
 
@@ -282,12 +341,72 @@ int t2kPreProcess::getSample(){
   
   
   //cosmic selection
-  if (MCComponents==1){
+  if (MCComponents==1 || MCComponents==2 ){
     return 0;
   }
 
   return -1;
 }
+
+// code for MC true component type
+int t2kPreProcess::getComponent(){
+
+  ////////////////////////////
+  // useful for cuts
+  absmode = TMath::Abs(fq->mode);
+  int absnu   = TMath::Abs(fq->ipnu[0]);
+ 
+  /////////////////////////////////////////
+  // visible + NEUT event selection for atm
+  if (MCComponents==0){
+    if ((absmode>0)&&(absmode<30)){
+      if ((vis->nve==1)&&((vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 0; //CC single e
+      if ((vis->nvmu==1)&&((vis->nvp==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 1; //CC single mu
+      if ((vis->nve==1)&&(vis->nvmu==0)) return 2; //CC e + other
+      if ((vis->nve==0)&&(vis->nvmu==1)) return 3; //CC mu + other
+      return 4; //CC Other
+    }
+    else{
+      if ((vis->nvpi0>0)) return 5;  //single pi0
+      return 6;  //NC other
+    }
+  }
+
+  /////////////////////////////////////////
+  // visible only components for atm
+  if (MCComponents==2){
+
+    // single electron
+    if ((vis->nve==1)&&(vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 0;
+    // single muon
+    if ((vis->nve==0)&&(vis->nvp==0)&&(vis->nvmu==1)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 1;
+    // electron + other
+    if (vis->nve==1) return 2;
+    // muon + other
+    if (vis->nvmu==1) return 3;
+    // pi0 with no other
+    if ((vis->nvpi0==1)&&(vis->nvpip==0)) return 4;
+    // other
+    return 5;
+  }
+ 
+  //////////////////////////////////////////
+  // cosmic selectoin
+  if (MCComponents==1){
+    return 0;
+  }
+  
+
+  //////////////////////////////////////////
+  // hybrid pi0 selectoin
+  if (MCComponents==3){
+    return 0;
+  }
+
+  cout<<"preProcess: ERROR MC component not defined!";
+  return -1;
+}
+
 
 int t2kPreProcess::getMode()
 {
@@ -313,38 +432,6 @@ int t2kPreProcess::getMode()
   return -1;
 }
 
-//////////////////////////////////////
-//get code for MC true component type
-int t2kPreProcess::getComponent(){
-
-  //useful for cuts
-  absmode = TMath::Abs(fq->mode);
-  int absnu   = TMath::Abs(fq->ipnu[0]);
- 
-  //visible event selection
-  //charged current
-  if (MCComponents==0){
-    if ((absmode>0)&&(absmode<30)){
-      if ((vis->nve==1)&&((vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 0; //CC single e
-      if ((vis->nvmu==1)&&((vis->nvp==0)&&(vis->nvpi0==0)&&(vis->nvpip==0))) return 1; //CC single mu
-      if ((vis->nve==1)&&(vis->nvmu==0)) return 2; //CC e + other
-      if ((vis->nve==0)&&(vis->nvmu==1)) return 3; //CC mu + other
-      return 4; //CC Other
-    }
-    else{
-      if ((vis->nvpi0>0)) return 5;  //single pi0
-      return 6;  //NC other
-    }
-  }
-
-
-  //cosmic selectoin
-  if (MCComponents==1){
-    return 0;
-  }
-
-}
-
 //loop over all events and sort into bins, samples and components
 void t2kPreProcess::preProcessIt(){
   int nev = tr->GetEntries();
@@ -359,7 +446,7 @@ void t2kPreProcess::preProcessIt(){
     nbin=getBin();
     if (!passCuts()) continue;
     vis->fillVisVar(); //get visible ring information
-    fillAttributes();
+    fillAttributes(fq);
     ncomponent=getComponent();
     nsample=getSample();
     nmode=getMode();
@@ -380,39 +467,82 @@ int t2kPreProcess::getBest2RFitID(){
   int bestindex = 0;
 
   for (int ifit=0;ifit<nfits;ifit++){
-    int fitID = fq->fqmrifit[ifit]; //< fit fit ID code
-    if ((fitID-320000000)<0) continue; //< we want best 2R fits
-    if (fq->fqmrnll[ifit]<ngLnLBest) bestindex = ifit;
+    int fitID = TMath::Abs(fq->fqmrifit[ifit]); //< fit fit ID code
+    if ((TMath::Abs(fitID-20000000))>100) continue; //< we want best 2R fits  
+    if (fq->fqmrnll[ifit]<ngLnLBest){ 
+      bestindex = ifit; 
+      ngLnLBest=fq->fqmrnll[ifit]; 
+    }
+    //if ((fitID-320000000)<0) continue; //< we want best 2R fits
   }
+  best2RID = fq->fqmrifit[bestindex];    
   return bestindex;
 }
 
 ////////////////////////////////////////
 //fills fiTQun attribute array
-void t2kPreProcess::fillAttributes(){
-  attribute[0] = fq->fq1rnll[0][2]-fq->fq1rnll[0][1];
-//  if (fq->fqnse>1) attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
-//  else{
-//    attribute[1] = 0.;
-//  }
-  int ibest = getBest2RFitID();
-  double best1Rnglnl = fmin(fq->fq1rnll[0][1],fq->fq1rnll[0][2]);
-  attribute[1] = best1Rnglnl-fq->fqmrnll[ibest];
-
-//  attribute[3] = -fq->fqmrnll[ibest];
-//  attribute[2] = fq->fq1rmom[0][1];
-//  attribute[3] = fq->fq1rmom[0][2];
-//  attribute[4] = fq->fq1rmom[1][1];
-//  if (fq->fqnse>1){
-//    attribute[1] = fq->fq1rnll[1][2]-fq->fq1rnll[1][1];
-//    attribute[4] = fq->fq1rmom[1][1];
-//  }
-//  else{
-//    attribute[1] = 0.;
-//    attribute[4] = 0.;
-//  }
+void t2kPreProcess::fillAttributes(t2kfqEvent *fqevent){
+  fillAttributeMap(fqevent);
+  // Fill the attribute[] array with the values you want to use for this analysis
+  for (int i=0; i<nAttributes; i++){
+    double value = attributeMap[attributeList[i].c_str()];
+    attribute[i] = value;
+  }
   return;
 }
+
+//////////////////////////////
+// Fill cmap of possible fitqun attributes
+void t2kPreProcess::fillAttributeMap(t2kfqEvent* fqevent){
+
+  // PID e vs. mu ratio of first subevent
+  attributeMap["fqelike"] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
+
+  // Ring Counting (RC) parameter
+  int ibest = getBest2RFitID();
+  double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
+  fqrcpar = best1Rnglnl-fqevent->fqmrnll[ibest];
+  attributeMap["fqrcpar"] = fqrcpar;
+
+  // Reconstructed distance from wall
+  attributeMap["fqwall"] = wall;
+
+  // Reconstructed momentum (muon)
+  attributeMap["fq1rmumom"] = fqevent->fq1rmom[0][2];
+
+  // Reconstructed momentum (electron)
+  attributeMap["fq1remom"] = fqevent->fq1rmom[0][1];
+
+  // pi0 likelihood
+  attributeMap["fqpi0like"] = fqevent->fq1rnll[0][1] - fqevent->fqpi0nll[0];
+
+  // pi0 mass
+  attributeMap["fqpi0mass"] = fqevent->fqpi0mass[0];
+
+  // pi0 photon angle
+  attributeMap["fqpi0photangle"] = fqevent->fqpi0photangle[0];
+
+  // pi0 wall min
+  TVector3 vpos;
+  vpos.SetXYZ(fqevent->fqpi0pos[0][0],fqevent->fqpi0pos[0][1],fqevent->fqpi0pos[0][2]);
+  TVector3 vdir1;
+  vdir1.SetXYZ(fqevent->fqpi0dir1[0][0],fqevent->fqpi0dir1[0][1],fqevent->fqpi0dir1[0][2]);
+  TVector3 vdir2;
+  vdir2.SetXYZ(fqevent->fqpi0dir2[0][0],fqevent->fqpi0dir2[0][1],fqevent->fqpi0dir2[0][2]);
+  double pi0wall= calcWall2(&vpos);
+  double pi0towall1 = calcToWall(&vpos,&vdir1);
+  double pi0towall2 = calcToWall(&vpos,&vdir2);
+  attributeMap["fqpi0wall"] = pi0wall;
+
+  // pi0 towall min
+  attributeMap["fqpi0towallmin"] = fmin(pi0towall1,pi0towall2);
+
+  // pi0 total momentum
+  attributeMap["fqpi0momtot"] = fqevent->fqpi0momtot[0];
+
+  return;
+}
+
 
 void t2kPreProcess::setupNewTree(){
   tr->SetBranchStatus("*",0);
@@ -568,6 +698,7 @@ void t2kPreProcess::runPreProcessing(){
   cout<<"nametag: "<<nameTag.Data()<<endl;
   FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
   MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
+  MCSamples = runpars->preProcessMCSamples;
   NHITACMax = runpars->preProcFCCut;
   EVisMin = runpars->preProcEVisCut;
   WallMin = runpars->preProcWallMinCut;
@@ -575,6 +706,23 @@ void t2kPreProcess::runPreProcessing(){
   NSEMax = runpars->preProcNseMax0;
   NSEMin = runpars->preProcNseMin;
   InGateMin = runpars->preProcInGateCut; 
+  flgAddMoreVars = runpars->preProcAddMoreVars;
+  flgUseSpikeMask = runpars->preProcMaskFlg;
+  if (flgUseSpikeMask>0){
+     TString fname = runpars->preProcMaskFile.Data();
+     TFile* maskfile = new TFile(fname.Data());
+     cout<<"preProc: Getting spike mask from file: "<<fname.Data()<<endl;     
+     hmask = (TH1D*)maskfile->Get("hmask");
+  }
+  nAttributes = runpars->nAttributes;
+  attributeList[0] = runpars->fQAttName0;
+  attributeList[1] = runpars->fQAttName1;
+  attributeList[2] = runpars->fQAttName2;
+  attributeList[3] = runpars->fQAttName3;
+  attributeList[4] = runpars->fQAttName4;
+  attributeList[5] = runpars->fQAttName5;
+  attributeList[6] = runpars->fQAttName6;
+  attributeList[7] = runpars->fQAttName7;
 
   //create data and mc chains
   chmc = new TChain("h1");

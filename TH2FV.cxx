@@ -35,6 +35,7 @@ class TH2FV:public TH2Poly{
   double fYMin;
   double fYMax;
   double fCenter[NHBINSMAX][2];
+  int fNCells;
 
   //initialize
   void Init();
@@ -52,7 +53,7 @@ class TH2FV:public TH2Poly{
   double GetBinCenterY(int nbin);
   double GetBinCenterY(int binx, int biny);
   double GetMaxWall();
-
+  int GetNcells() { return fNCells; }
   // draw standard view
   void DrawStdView(const char* opts);
  
@@ -92,7 +93,7 @@ void TH2FV::InitStdBins(double wall1, double wall2, double towall1,
                    double towall2, double towall3, double towall4){
 
 
-
+  fNCells = 0;
 
 // double wall1 = 80.;
 // double wall2 = 200.;
@@ -151,7 +152,7 @@ void TH2FV::InitStdBins(double wall1, double wall2, double towall1,
 // double yy[]={2000,2000,3000,3000};
 // AddBinWithCenter(4,xx,yy);
  
-
+ fNCells += 7;
 
  return;
 

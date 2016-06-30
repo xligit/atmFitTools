@@ -269,7 +269,12 @@ void atmFitPars::setParameter(int ipar, double value){
   pars[ipar]=value; //< set 1D parameter array
   // update systematic and histogram modification parameters as well
   // these parameters should be kept in sync
-  if (ipar>=(nTotPars-nSysPars)) sysPar[ipar-nTotPars+nSysPars] = value;
+  if (ipar>=(nTotPars-nSysPars)) {
+    sysPar[ipar-nTotPars+nSysPars] = value;
+#ifdef T2K
+    if (ipar-nTotPars+nSysPars>2) cov->setPar(ipar-nTotPars+nSysPars-3, value);
+#endif
+  }
   else{
     histoPar[binOfPar[ipar]][compOfPar[ipar]][attOfPar[ipar]][typeOfPar[ipar]]=value;
   }
