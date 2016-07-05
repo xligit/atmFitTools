@@ -1,3 +1,5 @@
+#ifndef  TH2FV_CXX
+#define  TH2FV_CXX
 #include "shared.h"
 #include "TH2Poly.h"
 #include "TVector2.h"
@@ -79,11 +81,11 @@ class TH2FV:public TH2Poly{
   void InitStdBins(double wall1, double wall2, double towall1,
                    double towall2, double towall3, double towall4);
 
-  ClassDef(TH2FV,1);
+//  ClassDef(TH2FV,1);
   
 };
 
-ClassImp(TH2FV);
+//ClassImp(TH2FV);
 
 double TH2FV::GetMaxWall(){
   return fMaxWall;
@@ -763,4 +765,4 @@ TH2FV::TH2FV(const char* name, int bintype, int nbinsx , double xmin, double xma
   Init(); 
 }
 
-
+#endif

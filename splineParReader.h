@@ -28,13 +28,13 @@ public :
    Int_t           nsystpar;
    Int_t           nsyspartot;
    Int_t           npoints;
-#ifndef T2K
-   Double_t        systParValues[5];
-   Double_t        binWeight[5][300];
-#else
+//#ifndef T2K
+//   Double_t        systParValues[5];
+//   Double_t        binWeight[5][300];
+//#else
    Double_t        systParValues[NPTSMAX];
    Double_t        binWeight[NPTSMAX][NHBINSMAX];
-#endif
+//#endif
 
 
    // List of branches
@@ -61,6 +61,7 @@ public :
    virtual void     Loop();
 };
 
+#include "splineParReader.cxx"
 
 splineParReader::splineParReader(TTree *tree)
 {

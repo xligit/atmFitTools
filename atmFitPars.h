@@ -61,14 +61,14 @@ class atmFitPars{
   int   sysParIndex[NSYSPARMAX]; //< stores 1D array position for systematic pars
   int   normParIndex[NSAMPMAX][NBINMAX]; //< stores 1D array position for normalization pars
   double norm;  
-#ifdef T2K
+  // for T2K parameterization///////////////////////////////////
   float fScale;
   double sysParNom[NSYSPARMAX]; // NEUT "nominal" xsec parameter value
   double sysParUp[NSYSPARMAX];
   double sysParLow[NSYSPARMAX];
   std::string sysParName[NSYSPARMAX];
   double parsProp[4000];
-#endif
+  //////////////////////////////////////////////////////////////
 
   //////////////////////////////////////////////////////////////
   //methods

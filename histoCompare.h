@@ -34,9 +34,9 @@ class histoCompare{
   //tools for histogram manager management
   //created histo manager from file
   void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int natt);
-#ifdef T2K
+  // For T2K parameterization //
   void readFromFile(const char* rootname,int isamp,int ibin, int icomp, int imode, int natt);
-#endif
+  //
   histoManager* hManager;
   //atmospheric pars
   atmFitPars* thePars;
@@ -61,10 +61,10 @@ class histoCompare{
   void setBinName(int ibin, const char* name){binName[ibin]=name;}
   void setCompName(int icomp, const char* name){compName[icomp]=name;}
   void setAttName(int iatt, const char* name){attName[iatt]=name;}
-#ifdef T2K
+  // For T2K parameterization
   void setupPars(int nsyspars=0); //sets up all parameters  
   void setupPars(atmFitPars *a);
-#endif
+  //
   //post-fit toolts
   void profileL(int ibin, int icomp, int iatt, int imod, double range, int npts=100);
   void profileL(int ipar,double range, int npts=100,int sameflg=0);

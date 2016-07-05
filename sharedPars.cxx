@@ -56,6 +56,7 @@ class sharedPars{
   int    preProcNseMin;
   int    preProcMaskFlg;
   TString preProcMaskFile;
+  TString ntupleType;
   double  preProcInGateCut;
   int     preProcAddMoreVars;
   TString FVBinName0;
@@ -191,6 +192,7 @@ void sharedPars::readParsFromFile(const char* filename){
   preProcAddMoreVars = kr->getKeyI("preProcAddMoreVars");
   preProcMaskFile = kr->getKeyS("preProcMaskFile");
   preProcMaskFlg = kr->getKeyI("preProcMaskFlg");
+  ntupleType=kr->getKeyS("ntupleType");
   globalRootName = kr->getKeyS("globalRootName");
   splineFactoryOutput = kr->getKeyS("splineFactoryOutput");
   sysParType = kr->getKeyS("sysParType");

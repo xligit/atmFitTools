@@ -157,9 +157,9 @@ void preProcess::setParFileName(const char* fname){
   flgAddMoreVars = runpars->preProcAddMoreVars;
   flgUseSpikeMask = runpars->preProcMaskFlg;
   if (flgUseSpikeMask>0){
-     TString fname = runpars->preProcMaskFile.Data();
-     TFile* maskfile = new TFile(fname.Data());
-     cout<<"preProc: Getting spike mask from file: "<<fname.Data()<<endl;     
+     TString fmaskname = runpars->preProcMaskFile.Data();
+     TFile* maskfile = new TFile(fmaskname.Data());
+     cout<<"preProc: Getting spike mask from file: "<<fmaskname.Data()<<endl;     
      hmask = (TH1D*)maskfile->Get("hmask");
   }
 

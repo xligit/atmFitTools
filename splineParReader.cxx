@@ -1,4 +1,7 @@
+#ifndef splineParReader_cxx
 #define splineParReader_cxx
+
+
 #include "splineParReader.h"
 #include <TH2.h>
 #include <TStyle.h>
@@ -41,3 +44,5 @@ void splineParReader::Loop()
       // if (Cut(ientry) < 0) continue;
    }
 }
+
+#endif

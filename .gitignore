@@ -11,5 +11,6 @@ rootfiles
 *.png
 *.txt
 *.exe
+*.swp
 WeightOut.cc
 wgtCompare.C
