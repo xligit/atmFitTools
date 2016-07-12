@@ -1076,6 +1076,30 @@ void fqEvent::Init(TTree *tree, const char* ntuple_type)
    fChain->SetBranchAddress("t2knueflag", &t2knueflag, &b_t2knueflag);
    fChain->SetBranchAddress("totwgt", &totwgt, &b_totwgt);
    }
+   // for all
+   fChain->SetBranchAddress("nscndprt", &nscndprt, &b_nscndprt);
+   fChain->SetBranchAddress("itrkscnd", itrkscnd, &b_itrkscnd);
+   fChain->SetBranchAddress("istakscnd", istakscnd, &b_istakscnd);
+   fChain->SetBranchAddress("vtxscnd", vtxscnd, &b_vtxscnd);
+   fChain->SetBranchAddress("pscnd", pscnd, &b_pscnd);
+   fChain->SetBranchAddress("iprtscnd", iprtscnd, &b_iprtscnd);
+   fChain->SetBranchAddress("tscnd", tscnd, &b_tscnd);
+   fChain->SetBranchAddress("iprntprt", iprntprt, &b_iprntprt);
+   fChain->SetBranchAddress("lmecscnd", lmecscnd, &b_lmecscnd);
+   fChain->SetBranchAddress("iprnttrk", iprnttrk, &b_iprnttrk);
+   fChain->SetBranchAddress("iorgprt", iorgprt, &b_iorgprt);
+   fChain->SetBranchAddress("pprnt", pprnt, &b_pprnt);
+   fChain->SetBranchAddress("iflgscnd", iflgscnd, &b_iflgscnd);
+   fChain->SetBranchAddress("pprntinit", pprntinit, &b_pprntinit);
+   fChain->SetBranchAddress("vtxprnt", vtxprnt, &b_vtxprnt);
+   fChain->SetBranchAddress("iprntidx", iprntidx, &b_iprntidx);
+   fChain->SetBranchAddress("nchilds", nchilds, &b_nchilds);
+   fChain->SetBranchAddress("ichildidx", ichildidx, &b_ichildidx);
+   fChain->SetBranchAddress("Npvcscnd", &Npvcscnd, &b_Npvcscnd);
+   fChain->SetBranchAddress("Nchildsvc", Nchildsvc, &b_Nchildsvc);
+   fChain->SetBranchAddress("Ichildidxvc", Ichildidxvc, &b_Ichildidxvc);
+   fChain->SetBranchAddress("Neutmode", &Neutmode, &b_Neutmode);
+
 
    Notify();
 }

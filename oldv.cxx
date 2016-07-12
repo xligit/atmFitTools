@@ -3,83 +3,30 @@
 
 #include "visRing.h"
 
-void visRing::countdecaypi0(){
-  return;
-}
-
 void visRing::countsecondary(){
-
-  // rings to find in secondaries:
-  // - gamma from pi0 decay
-  // - photonuke or other non-brem gamma
-  // - decay in pions
 
   // fqEvent has already been filled with current event info
   int ipid;
   double beta;
+  //double Cthresh = 0.7505; //Cherenkov threshold in c
+//  double Tthresh = 50.; //cutoff time in ns to be counted in this event
+//  double gamthresh = 10.; // min energy of gamma
   nvisscnd = 0;
-  
-  for (int i=0; i<fq->nscndprt; i++){
-
-     // decays near vertex
-     if (fq->tscnd[i] > Tthresh) continue;
-
-     // is decay and not scatter, etc
-     if (fq->lmecscnd[i]!=5) continue;
-
-     // convert to geant code :(
-     ipid=(int)TMath::Abs(fq->iprtscnd[i]); //< get ID code of particle
-     if (ipid==11) ipid=3;
-     else if (ipid==13) ipid=5;
-     else if (ipid==22) ipid=1;
-     else if (ipid==211) ipid=9;
-     else if (ipid==111) ipid=7;
-     else{
-       continue;
-     }        
-    
-     // calc momentum
-     double pmom = TMath::Sqrt(fq->pscnd[i][0]*fq->pscnd[i][0]+
-                               fq->pscnd[i][1]*fq->pscnd[i][1]+
-                               fq->pscnd[i][2]*fq->pscnd[i][2]);
-
-     // see if above threshold
-     if (ipid==1){
-       // reject gamma from pi0 decay (just count pi0)
-       if (pmom > gamthresh){
-         addvisiblesecondary(ipid, i, pmom);
-       }
-     }
-     else{
-       beta = getbeta(ipid, pmom);
-       if (beta<Cthresh) continue;
-       else{
-         addvisiblesecondary(ipid, i, pmom);
-       }
-     }
-
-  }
-
-  /*
-  // loop over secondary particle stack
   for (int i=0; i<fq->nscndprt; i++){
       
     // make sure time is close to initial event
     if (fq->tscnd[i] > Tthresh) continue;
-
+    if (fq->iprntidx[i]>0) continue;
     ipid=(int)TMath::Abs(fq->iprtscnd[i]); //< get ID code of particle
     // convert to Geant code :(
     if (ipid==11) ipid=3;
     else if (ipid==13) ipid=5;
     else if (ipid==22) ipid=1;
     else if (ipid==211) ipid=7;
-    else if (ipid==221) ipid=8;
     else if (ipid==2212) ipid=14;
     else{
       continue;
     }
-
-    // for gamma
     if (ipid==1){ //< if particle is gamma, see if it will shower
       if ((fq->pmomv[i]>gamthresh)
       &&(fq->lmecscnd[i]<6)
@@ -88,13 +35,20 @@ void visRing::countsecondary(){
                                   fq->pscnd[i][1]*fq->pscnd[i][1]+
                                   fq->pscnd[i][2]*fq->pscnd[i][2]);
         addvisible(ipid, i, pmom);
+/*        visindx[nvis]=i;
+        vispid[nvis]=ipid;
+        visstr[nvis] = (pmom/gamthresh);
+        vismom[nvis] = pmom;
+        nvis++;
+        nvisscnd++;
+        nvgam++;
+        */
       }
       else{
         continue; //< do nothing
       }
     }
-    // for non-gaamma
-    else{ 
+    else{ //count non-shower rings
     double pmom = TMath::Sqrt(fq->pscnd[i][0]*fq->pscnd[i][0]+
                               fq->pscnd[i][1]*fq->pscnd[i][1]+
                               fq->pscnd[i][2]*fq->pscnd[i][2]);
@@ -113,32 +67,36 @@ void visRing::countsecondary(){
         if (fq->lmecscnd[i]==20) continue; //< no hadron inelast. 
         if (fq->lmecscnd[i]==21) continue; //< no muon capture 
         if (fq->lmecscnd[i]==30) continue; //< no below thresh 
+
         addvisible(ipid, i, pmom);
+
+        /*
+        int countflg = 0; //< flag to count as visible particle
+        // visible muon
+        if ((ipid==5)||(ipid==6)){ nvmu++; countflg=1;  }
+        // visible electron
+        if ((ipid==2)||(ipid==3)){ nve++; countflg=1;  }
+        // visible charged pion
+        if ((ipid==9)||(ipid==8)){ nvpip++; countflg=1;  }
+        // visible proton
+        if ((ipid==14)||(ipid==15)){ nvp++; countflg=1;  }
+        // contains pi0
+        if (ipid==7) nvpi0++;
+        // count particles
+        if (countflg){
+          double mass = massof[ipid];
+          double pcrit = TMath::Sqrt((Cthresh*Cthresh*mass*mass)/(1.-(Cthresh*Cthresh)));
+          visindx[nvis]=i;
+          vispid[nvis]=ipid;
+          visstr[nvis] = pmom/pcrit;
+          vismom[nvis] = pmom;
+          nvis++;
+          nvisscnd++;
+        }
+        */
       }
     }
   }
-  */
-  return;
-}
-
-double visRing::getpcrit(int ipid){
- double pcrit = 1e9;
- // use gamma threshold for gammas or neutral pions
- if ((ipid==1)||(ipid==7)){
-   pcrit = gamthresh;
- }
- else{
-   double mass = massof[ipid];
-   pcrit =  TMath::Sqrt((Cthresh*Cthresh*mass*mass)/(1.-(Cthresh*Cthresh)));
- }
- return pcrit;
-}
-
-void visRing::addvisiblesecondary(int ipid, int index, double momentum){
-  visscndpid[nvisscnd]=ipid;
-  visscndparentid[nvisscnd] = fq->iorgprt[index];
-  nvisscnd++;
-  addvisible(ipid, index, momentum);
   return;
 }
 
@@ -147,7 +105,14 @@ void visRing::addvisible(int ipid, int index, double momentum){
  
   // get critical momentum
   double mass = massof[ipid];
-  double pcrit = getpcrit(ipid);
+  double pcrit;
+  if (ipid==1){
+    // for gamma
+    pcrit = gammathresh;
+  }
+  else{
+    pcrit = TMath::Sqrt((Cthresh*Cthresh*mass*mass)/(1.-(Cthresh*Cthresh)));
+  }
 
   // fill arrays for individual particle types
   int visflg = 0;
@@ -176,22 +141,13 @@ void visRing::addvisible(int ipid, int index, double momentum){
     nvp++;
     visflg = 1;
   }
-  if (ipid==7){
-    pi0mom[nvpi0] = momentum;
-    nvpi0++; //< pi0
-   // visflg = 1;
-  }
+  if (ipid==7) nvpi0++; //< pi0
 
   if (visflg){
     // fill total arrays
     visindx[nvis]=index;
     vispid[nvis]=ipid;
-    // for neutral pions, look at energy bound of the gamma
-    if (ipid==7){
-      double Epi0 = TMath::Sqrt(momentum*momentum + mass*mass);
-      visstr[nvis] = ((Epi0/2.)-pcrit);
-    }
-    visstr[nvis] = momentum-pcrit;
+    visstr[nvis] = (momentum/pcrit);
     vismom[nvis] = momentum;
     nvis++;
   }
@@ -218,11 +174,19 @@ void visRing::countprimary(){
   nvk=0;
   
   // loop over primary particles
-  for (int i=2;i<fq->npar;i++){ //< outgoing particle index starts at 2
+  for (int i=0;i<fq->npar;i++){
     ipid=(int)fq->ipv[i]; //< get ID code of particle
     if (ipid==1){ //< if particle is gamma, see if it will shower
+      double gamthresh = 10.0;
       if ((fq->pmomv[i]>gamthresh)){
         addvisible(ipid, i, fq->pmomv[i]);
+        // count as visible gamma 
+    //    visindx[nvis]=i;
+    //    vispid[nvis]=ipid;
+    //    visstr[nvis] = (fq->pmomv[i]/gamthresh);
+    //    vismom[nvis] = fq->pmomv[i];
+    //    nvis++;
+    //    nvgam++;
       }
       else{
         continue; //< do nothing
@@ -235,9 +199,37 @@ void visRing::countprimary(){
       }
       else{
         addvisible(ipid, i, fq->pmomv[i]);
+        /*
+        int countflg = 0; //< flag to count as visible particle
+        // visible muon
+        if ((ipid==5)||(ipid==6)){ nvmu++; countflg=1;  }
+        // visible electron
+        if ((ipid==2)||(ipid==3)){ nve++; countflg=1;  }
+        // visible charged pion
+        if ((ipid==9)||(ipid==8)){ nvpip++; countflg=1;  }
+        // visible kaon
+        //if ((ipid==11)||(ipid==12)){ nvk++; countflg=1;  }
+        // visible proton
+        if ((ipid==14)||(ipid==15)){ nvp++; countflg=1;  }
+        // contains pi0
+        if (ipid==7) nvpi0++;
+        // count particles
+        if (countflg){
+          double mass = massof[ipid];
+          double pcrit = TMath::Sqrt((Cthresh*Cthresh*mass*mass)/(1.-(Cthresh*Cthresh)));
+          visindx[nvis]=i;
+          vispid[nvis]=ipid;
+          visstr[nvis] = fq->pmomv[i]/pcrit;
+          if (visstr[nvis] > 10000.) cout<<"!!!" <<fq->pmomv[i]<<endl;
+          vismom[nvis] = fq->pmomv[i];
+          nvis++;
+        }
+        */
       }
     }
   }
+  
+  //
   return;
 }
 
@@ -249,8 +241,6 @@ void visRing::calcderived(){
   for (int i=0; i<nvis; i++){
     if (visstr[i]>maxstrength){ maxstrength = visstr[i]; imax = i; }   
   }
-  vismrpid1 = vispid[imax];
-
   // find second max visible strength
   double diff = 100000.;
   int iscnd = 0;
@@ -259,31 +249,14 @@ void visRing::calcderived(){
     double jdiff = TMath::Abs(visstr[j]-maxstrength);
     if (jdiff<diff) {iscnd = j; diff = jdiff; }
   }
-  if (nvis==1) { vismrpar = 0.; vismrpid1=0; vismrpid2=0; }
-  else if (nvis==0) { vismrpar = 0.; vismrpid1=0; vismrpid2=0;}
+  if (nvis==1) vismrstr = 1.;
+  else if (nvis==0) vismrstr = 0.;
   else{
-    vismrpar = visstr[iscnd];
-    vismrpid2 = vispid[iscnd];
+    vismrstr = 1. + visstr[iscnd]/maxstrength;
   }
   
   //
   return;
-}
-
-void visRing::testevent(int iev){
-  cout<<"-----------------------------"<<endl;
-  cout<<"--Primary--"<<endl;
-  cout<<"N particles: "<<endl;
-  for (int i=2; i<fq->npar; i++){
-    double ipid = TMath::Abs((int)fq->ipv[i]);
-    cout<<"  "<<ipid<<endl;
-  }
-
-  cout<<"--Visible--"<<endl;
-  for (int i=0; i<nvis; i++){
-    cout<<"  "<<vispid[i]<<endl;
-  }
-
 }
 
 void visRing::fillVisVar(){
@@ -291,14 +264,7 @@ void visRing::fillVisVar(){
   // count rings in primary stack
   countprimary();
 
-
-
-  // count rings in secondary stack
-  countsecondary();
-
-
-    // debuggin
-   /*
+  // debuggin
   if (nvis==0) {
     for (int i=0; i<fq->npar; i++){
       int ipid = (int)fq->ipv[i];
@@ -316,7 +282,9 @@ void visRing::fillVisVar(){
       }
     }
   }
-  */
+
+  // count rings in secondary stack
+  countsecondary();
 
   // calculate derived quantities
   calcderived();
@@ -325,18 +293,16 @@ void visRing::fillVisVar(){
 }
 
 double visRing::getbeta(int ipid, double pmom){
-  int pidcode = ipid;
-  if (pidcode==0) return 0; //other thing?
-  if (pidcode==4) return 0; //neutrino 
-  if (pidcode==14) return 0; //neutron 
-  if (pidcode==7) return 1; //pi0 always visible
-  double mq = massof[pidcode]; // mass times absolute value of charge
+  if (ipid==0) return 0; //other thing?
+  if (ipid==4) return 0; //neutrino 
+  if (ipid==14) return 0; //neutron 
+  if (ipid==7) return 1; //pi0 always visible
+  double mq = massof[ipid]; // mass times absolute value of charge
   //cout<<"mass: "<<m<<endl;
   double E = sqrt(mq*mq + pmom*pmom);
   //cout<<"beta: "<<pmom/E<<endl;
   return (pmom/E);
 }
-
 
 #ifndef T2K
 visRing::visRing(fqEvent* fqin){
@@ -383,10 +349,9 @@ visRing::visRing(t2kfqEvent* fqin){
   massof[15] = 0.9383e3; //p-
   massof[17] = 0.5475e3; //eta
 
-  //////////////////showerthresh = 78.33;
-  //gammathresh  = 2*0.58;
+  showerthresh = 78.33;
+  gammathresh  = 2*0.58;
 }
 #endif
-
 
 #endif

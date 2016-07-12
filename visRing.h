@@ -31,27 +31,58 @@ class visRing{
 #else
   fqEvent* fq;
 #endif
+//  visRing(TTree* tr);
   void fillVisVar(); //fills the variables relating to number of visible
+  void countsecondary();
+  void countprimary();
+  void calcderived();
+  void addvisible(int ipid, int index, double momentum);
+  void addvisiblesecondary(int ipid, int index, double momentum);
+  void countdecaypi0();
+
 
  //useful quantities
- float getbeta(int ipid, float pmom);
- map<int,float> massof;
+ double getbeta(int ipid, double pmom);
+ double getpcrit(int ipid);
+ map<int,double> massof;
+ double showerthresh;
 
  //visible variables
  int nvis;  //total number of visible rings
+ int nvisprime; // visible rings in primary stack
  int nvmu;  //number of visible muon rings
  int nve;   //number of visible electron rings
  int nvpip; //number of visible charged pion rings
  int nvpi0; //number of visible neutral pion rings
  int nvoth; //number of other visible rings
- int nvgam; //number of visible gamma rings
+ int nvgam; //number of visible gamma rings (EM showers)
  int nvp;   //number of visible proton rings
  int nvk;   //numbr of visible kaon rings
- int nvlam; //number of lambda particle
  int visindx[MAXNVIS]; //index of each visible ring in particle stack
  int vispid[MAXNVIS]; //pid code of each visible ring
+ int visscndpid[MAXNVIS]; //pid of visible secondary ring
+ int visscndparentid[MAXNVIS]; //parent pid of visible secondary ring
+ int nvisscnd;  //number of visible secondary particles
+ double visstr[MAXNVIS];  //strength of each visible ring
+ double vismom[MAXNVIS]; //momentum of visible particle
+ double mumom[MAXNVIS];
+ double pimom[MAXNVIS];
+ double pi0mom[MAXNVIS];
+ double emom[MAXNVIS];
+ double gammom[MAXNVIS];
+ double protmom[MAXNVIS];
+ double vismrpar; // multi-ring parameter (strength of 2nd strongest ring);
+ int    vismrpid2; // pid of 2nd most visible ring
+ int    vismrpid1; // pid of most visible ring
  int nvisarr[MAXNVIS];
- 
+
+ // constants
+ const double Cthresh = 0.7505; //Cherenkov threshold in c
+ const double Tthresh = 100.; //cutoff time in ns to be counted in this event
+ const double gamthresh = 30.; // min energy of gamma
+
+ // debuggin
+ void testevent(int iev);
 };
 
 #endif
