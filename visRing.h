@@ -77,9 +77,9 @@ class visRing{
  int nvisarr[MAXNVIS];
 
  // constants
- const double Cthresh = 0.7505; //Cherenkov threshold in c
- const double Tthresh = 100.; //cutoff time in ns to be counted in this event
- const double gamthresh = 30.; // min energy of gamma
+ double Cthresh; //Cherenkov threshold in c
+ double Tthresh; //cutoff time in ns to be counted in this event
+ double gamthresh; // min energy of gamma
 
  // debuggin
  void testevent(int iev);

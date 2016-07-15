@@ -301,8 +301,11 @@ TH1D* histoManager::getHistogram(int isamp, int ibin, int icomp, int iatt){
   return hMC[isamp][ibin][icomp][iatt];
 }
 
+/////////////////////////////////////////////////////////////////////////////
 //Use this to see how each MC component contributes to the overall histogram
 void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
+
+  // setup plots, colors, etc.
   int color[NCOMPMAX];
   color[0] = 4;
   color[1] = 2;
@@ -323,15 +326,16 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   style[7] = 1001;
   double size[NCOMPMAX];
   int hitolo[NCOMPMAX];
+
   for (int i=0;i<nComponents;i++){
-//    hMC[isample][ibin][i][iatt]->SetLineColor(color[i]);
     hMC[isample][ibin][i][iatt]->SetFillColor(color[i]);
     hMC[isample][ibin][i][iatt]->SetFillStyle(style[i]);
     size[i] = hMC[isample][ibin][i][iatt]->Integral();
     hitolo[i]=i;
   }
-  int nswitch=0;
-  //slow and easy 
+
+  int nswitch=1;
+  //slow but easy 
   while (nswitch>0){
     nswitch=0;
     for (int ii=0;ii<(nComponents-1);ii++){
@@ -343,8 +347,8 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
       }
     }
   }
-  double norm = 1.;
-  //if ((double)mcTree->GetEntries()>0) norm = (double)dataTree->GetEntries()/(double)mcTree->GetEntries();
+
+  // now make plot
   hMC[isample][ibin][hitolo[0]][iatt]->Draw("h");
   for (int j=1;j<nComponents;j++){
      hMC[isample][ibin][hitolo[j]][iatt]->Draw("sameh");
@@ -356,7 +360,7 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   Leg->AddEntry(hMC[isample][ibin][2][iatt],"e + Other","F");
   Leg->AddEntry(hMC[isample][ibin][3][iatt],"#mu + Other","F");
   Leg->AddEntry(hMC[isample][ibin][4][iatt],"Single #pi^{0}","F");
-  Leg->AddEntry(hMC[isample][ibin][5][iatt],"Other","F");
+//  Leg->AddEntry(hMC[isample][ibin][5][iatt],"Other","F");
  // Leg->AddEntry(hMC[isample][ibin][6][iatt],"Other","F");
   Leg->Draw("same");
   return;
@@ -367,17 +371,17 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
   int color[NCOMPMAX];
   color[0] = 4;
   color[1] = 2;
-  color[2] = 9;
-  color[3] = 46;
-  color[4] = 7;
+  color[2] = 7;
+  color[3] = 6;
+  color[4] = 5;
   color[5] = 5;
   color[6] = 15;
   color[7] = 1;
   int style[NCOMPMAX];
   style[0] = 1001;
   style[1] = 1001;
-  style[2] = 3001;
-  style[3] = 3001;
+  style[2] = 1001;
+  style[3] = 1001;
   style[4] = 1001;
   style[5] = 1001;
   style[6] = 1001;
@@ -391,7 +395,7 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
     size[i] = hMC[isample][ibin][i][iatt]->Integral();
     hitolo[i]=i;
   }
-  int nswitch=0;
+  int nswitch=1;
   //slow and easy 
   while (nswitch>0){
     nswitch=0;
@@ -411,7 +415,7 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
   for (int j=1;j<nComponents;j++){
      hstack->Add(hMC[isample][ibin][hitolo[j]][iatt]);
   }
-  hstack->Draw();
+  hstack->Draw("h");
   hData[isample][ibin][iatt]->Scale(1./norm);
   hData[isample][ibin][iatt]->SetMarkerStyle(8);
   hData[isample][ibin][iatt]->Draw("samee");

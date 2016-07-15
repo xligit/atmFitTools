@@ -467,7 +467,9 @@ int preProcess::getComponent(){
     // 4 -> Single Pi0
     // 5 -> Other (should be zero events)
     //////////////////////////////////////////
-    
+   
+    // test //
+    /*
     if (vis->nvis==1){
       if (vis->nve==1) return 0;
       if (vis->nvgam==1) return 0;
@@ -475,14 +477,14 @@ int preProcess::getComponent(){
       if (vis->nvpip==1) return 1;
       if (vis->nvp==1)   return 1;
     }
-    else if ((vis->nvis>1 && vis->vismrpar<50.)){
+//    else if ((vis->nvis>1 && vis->vismrpar<50.)){
       // count as single showering ring
-      if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 0;
+  //    if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 0;
       // count as MIP ring
-      else{
-        return 1;
-      }
-    }
+    //  else{
+      //  return 1;
+     // }
+   // }
     else if (vis->nvis>1){
       if (vis->nvpi0==1 && vis->nvgam==2) return 4; //single pi0 with two gammas
       // MR event with showering most visible ring
@@ -496,6 +498,53 @@ int preProcess::getComponent(){
     else{
       return 5;
     }
+    */
+    //////////
+
+    // select single pi0
+    if (vis->nvis<=2){
+//        if
+//       if ((vis->nvis-vis->nvgam)!=0);
+//       if (vis->nvpi0!=1) continue;
+//       return 4;
+    }
+
+    // select single ring events 
+    if (vis->nvis==1 && vis->visstr[0]>45. ){
+      if (vis->nve==1) return 0;
+      if (vis->nvgam==1) return 0;
+      if (vis->nvmu==1) return 1;
+      if (vis->nvpip==1) return 1;
+      if (vis->nvp==1)   return 1;
+    }
+
+    // select events with weak 2nd ring
+    else if ((vis->nvis>1) && vis->vismrpar<45.){ // count as single showering ring
+      if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 0;
+      // count as MIP ring
+      else{
+        return 1;
+      }
+    }
+    
+    // select MR events
+    else if (vis->nvis>1){
+      // MR event with showering most visible ring
+      if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 2;
+      // Other MR events (non-showering MIP most visible ring)
+      return 3;
+    }
+
+    // select decays
+    else if (vis->nvis==0 || (vis->vismrpar<=45. && vis->nvis==1)) {
+      return 0; //< decay e usually    
+    }
+
+    // should be nothing?
+    else{
+      return 5;
+    }
+    
 
   };
  

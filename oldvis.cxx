@@ -214,72 +214,6 @@ void visRing::addvisible(int ipid, int index, double momentum){
   return;
 }
 
-int  visRing::pdg2geant(int ipart){
-  int abspid = TMath::Abs(ipart);
-  if (ipart==2212){ return 14; }                                                                  
-  if (ipart==2112){ return 13; }                                                                  
-  if (ipart==3112){ return 18; }                                                                  
-  if (ipart==310){ return 16; }                                                                  
-  if (ipart==321){ return 11; }                                                                  
-  if (ipart==221){ return 17; }                                                                  
-  if (ipart==211){ return 8; }                                                                  
-  if (ipart==111){ return 7; }                                                                  
-  if (ipart==130){ return 10; }                                                                  
-  if (ipart==22){ return 1; }                                                                  
-  if (ipart==11){ return 2; }                                                                  
-  if (ipart==13){ return 6; }                                                                  
-  return -1;
-
-}
-
-void visRing::countprimaryvc(){
-  
-  // fqEvent has already been filled with current event info
-  int ipid;
-  double beta;
-
-  // set initial visble particles to zero
-  nvmu=0;
-  nve=0;
-  nvpip=0;
-  nvpi0=0;
-  nvoth=0;
-  nvis=0;
-  nvgam=0;
-  nvp=0;
-  nvk=0;
-
-  // loop over primary particles
-  for (int i=2;i<fq->Npvc;i++){ //< outgoing particle index starts at 2
-    
-    // get pid
-    int ipidpdg=(int)fq->Ipvc[i]; //< get ID code of particle
-    ipid = pdg2geant(int ipart); 
-    
-
-    if (ipid==1){ //< if particle is gamma, see if it will shower
-      if ((fq->pmomv[i]>gamthresh)){
-        addvisible(ipid, i, fq->pmomv[i]);
-      }
-      else{
-        continue; //< do nothing
-      }
-    }
-    else{ //count non-shower rings
-      beta = getbeta(ipid,fq->pmomv[i]);
-      if (beta<Cthresh){
-        continue;
-      }
-      else{
-        addvisible(ipid, i, fq->pmomv[i]);
-      }
-    }
-  }
-
-  return;
-
-}
-
 void visRing::countprimary(){
   
   // fqEvent has already been filled with current event info
@@ -296,7 +230,7 @@ void visRing::countprimary(){
   nvgam=0;
   nvp=0;
   nvk=0;
-
+  
   // loop over primary particles
   for (int i=2;i<fq->npar;i++){ //< outgoing particle index starts at 2
     ipid=(int)fq->ipv[i]; //< get ID code of particle
@@ -318,7 +252,6 @@ void visRing::countprimary(){
       }
     }
   }
-
   return;
 }
 
@@ -375,7 +308,7 @@ void visRing::fillVisVar(){
 
 
   // count rings in secondary stack
- // countsecondary();
+  countsecondary();
 
 
     // debuggin
