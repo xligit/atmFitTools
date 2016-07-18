@@ -37,7 +37,7 @@ class visRing{
   void countprimary();
   void countprimaryvc();
   void calcderived();
-  void addvisible(int ipid, int index, double momentum);
+  void addvisible(int ipid, int index, double momentum, int flgverb=0);
   void addvisiblesecondary(int ipid, int index, double momentum,int flgverb=0);
   void countdecaypi0();
   void initconstants();
@@ -46,6 +46,7 @@ class visRing{
  //useful quantities
  double getbeta(int ipid, double pmom);
  double getpcrit(int ipid);
+ double getEcrit(int ipid);
  int pdg2geant(int ipid);
  map<int,double> massof;
  double showerthresh;

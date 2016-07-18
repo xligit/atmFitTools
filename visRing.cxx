@@ -72,15 +72,39 @@ void visRing::countsecondary(){
 double visRing::getpcrit(int ipid){
  double pcrit = 1e9;
  // use gamma threshold for gammas or neutral pions
- if ((ipid==1)||(ipid==7)){
+ if (ipid==1){
    pcrit = gamthresh;
+   return pcrit;
+ }
+ if (ipid==7){
+   pcrit = 0.;
+   return pcrit;
  }
  else{
    double mass = massof[ipid];
-   pcrit =  (Cthresh*mass)/(1.-(Cthresh*Cthresh));
+   pcrit =  (Cthresh*mass)/TMath::Sqrt((1.-(Cthresh*Cthresh)));
  }
  return pcrit;
 }
+
+double visRing::getEcrit(int ipid){
+ double Ecrit = 1e9;
+ // use gamma threshold for gammas or neutral pions
+ if (ipid==1){
+   Ecrit = gamthresh;
+   return Ecrit;
+ }
+ if (ipid==7){
+   Ecrit = 0.;
+   return Ecrit;
+ }
+ else{
+   double mass = massof[ipid];
+   Ecrit =  (mass)/TMath::Sqrt((1.-(Cthresh*Cthresh)));
+ }
+ return Ecrit;
+}
+
 
 void visRing::addvisiblesecondary(int ipid, int index, double momentum, int flgverb){
   visscndpid[nvisscnd]=ipid;
@@ -105,7 +129,7 @@ void visRing::addvisiblesecondary(int ipid, int index, double momentum, int flgv
   return;
 }
 
-void visRing::addvisible(int ipid, int index, double momentum){
+void visRing::addvisible(int ipid, int index, double momentum, int flgverb){
 
  
   // get critical momentum
@@ -156,6 +180,14 @@ void visRing::addvisible(int ipid, int index, double momentum){
     visstr[nvis] = momentum-pcrit;
     vismom[nvis] = momentum;
     nvis++;
+  }
+
+  if (flgverb){
+    cout<<"========================"<<endl;
+    cout<<"  visible? "<<visflg<<endl;
+    cout<<"  pid:     "<<ipid<<endl;
+    cout<<"  mom:     "<<momentum<<endl;
+    cout<<"  pcrit:   "<<pcrit<<endl;
   }
 
   //
@@ -251,19 +283,19 @@ void visRing::countprimaryvc(){
 
     if (ipid==1){ //< if particle is gamma, see if it will shower
       if ((momentum>gamthresh)){
-        addvisible(ipid, i, momentum);
+        addvisible(ipid, i, momentum,1);
       }
       else{
         continue; //< do nothing
       }
     }
     else{ //count other rings
-      beta = getbeta(ipid,fq->pmomv[i]);
+      beta = getbeta(ipid,momentum);
       if (beta<Cthresh){
         continue;
       }
       else{
-        addvisible(ipid, i, fq->pmomv[i]);
+        addvisible(ipid, i, momentum,1);
       }
     }
   }
