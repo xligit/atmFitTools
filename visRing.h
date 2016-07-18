@@ -68,12 +68,12 @@ class visRing{
  int nvisscnd;  //number of visible secondary particles
  double visstr[MAXNVIS];  //strength of each visible ring
  double vismom[MAXNVIS]; //momentum of visible particle
- double mumom[MAXNVIS];
- double pimom[MAXNVIS];
- double pi0mom[MAXNVIS];
- double emom[MAXNVIS];
- double gammom[MAXNVIS];
- double protmom[MAXNVIS];
+ double mumom[MAXNVIS]; //momentum of muons
+ double pimom[MAXNVIS]; //momentum of charged pions
+ double pi0mom[MAXNVIS]; //momentum of neutral pionsj
+ double emom[MAXNVIS]; //momentum of e+-
+ double gammom[MAXNVIS]; //momentum of gammas
+ double protmom[MAXNVIS]; //momentum of proton
  double vismrpar; // multi-ring parameter (strength of 2nd strongest ring);
  int    vismrpid2; // pid of 2nd most visible ring
  int    vismrpid1; // pid of most visible ring

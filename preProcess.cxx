@@ -467,39 +467,6 @@ int preProcess::getComponent(){
     // 4 -> Single Pi0
     // 5 -> Other (should be zero events)
     //////////////////////////////////////////
-   
-    // test //
-    /*
-    if (vis->nvis==1){
-      if (vis->nve==1) return 0;
-      if (vis->nvgam==1) return 0;
-      if (vis->nvmu==1) return 1;
-      if (vis->nvpip==1) return 1;
-      if (vis->nvp==1)   return 1;
-    }
-//    else if ((vis->nvis>1 && vis->vismrpar<50.)){
-      // count as single showering ring
-  //    if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 0;
-      // count as MIP ring
-    //  else{
-      //  return 1;
-     // }
-   // }
-    else if (vis->nvis>1){
-      if (vis->nvpi0==1 && vis->nvgam==2) return 4; //single pi0 with two gammas
-      // MR event with showering most visible ring
-      if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 2;
-      // Other MR events (non-showering MIP most visible ring)
-      return 3;
-    }
-    else if (vis->nvis==0) {
-      return 0; //< decay e usually    
-    }
-    else{
-      return 5;
-    }
-    */
-    //////////
 
     // select single pi0
     if (vis->nvis<=2){
@@ -534,7 +501,7 @@ int preProcess::getComponent(){
 
     // select decays
     else if (vis->nvis==0 || (vis->vismrpar<=45. && vis->visstr[0]<45.)) {
-      return 0; //< decay e usually    
+      return 0; //< decay e 
     }
 
     // should be nothing?
