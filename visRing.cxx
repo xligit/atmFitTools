@@ -188,6 +188,8 @@ void visRing::addvisible(int ipid, int index, double momentum, int flgverb){
     cout<<"  pid:     "<<ipid<<endl;
     cout<<"  mom:     "<<momentum<<endl;
     cout<<"  pcrit:   "<<pcrit<<endl;
+    cout<<"  orgidx:  "<<fq->Iorgvc[index]<<endl;
+    cout<<"  intcode: "<<fq->Iflvc[index]<<endl;
   }
 
   //
@@ -283,7 +285,7 @@ void visRing::countprimaryvc(){
 
     if (ipid==1){ //< if particle is gamma, see if it will shower
       if ((momentum>gamthresh)){
-        addvisible(ipid, i, momentum,1);
+        addvisible(ipid, i, momentum,0);
       }
       else{
         continue; //< do nothing
@@ -295,7 +297,7 @@ void visRing::countprimaryvc(){
         continue;
       }
       else{
-        addvisible(ipid, i, momentum,1);
+        addvisible(ipid, i, momentum,0);
       }
     }
   }
