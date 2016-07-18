@@ -1077,6 +1077,12 @@ void fqEvent::Init(TTree *tree, const char* ntuple_type)
    fChain->SetBranchAddress("totwgt", &totwgt, &b_totwgt);
    }
    // for all
+   fChain->SetBranchAddress("Npvc", &Npvc, &b_Npvc);
+   fChain->SetBranchAddress("Ipvc", Ipvc, &b_Ipvc);
+   fChain->SetBranchAddress("Abspvc", Abspvc, &b_Abspvc);
+   fChain->SetBranchAddress("Iorgvc", Iorgvc, &b_Iorgvc);
+   fChain->SetBranchAddress("Iflvc", Iflvc, &b_Iflvc);
+   fChain->SetBranchAddress("Ichvc", Ichvc, &b_Ichvc);
    fChain->SetBranchAddress("nscndprt", &nscndprt, &b_nscndprt);
    fChain->SetBranchAddress("itrkscnd", itrkscnd, &b_itrkscnd);
    fChain->SetBranchAddress("istakscnd", istakscnd, &b_istakscnd);
@@ -1099,6 +1105,7 @@ void fqEvent::Init(TTree *tree, const char* ntuple_type)
    fChain->SetBranchAddress("Nchildsvc", Nchildsvc, &b_Nchildsvc);
    fChain->SetBranchAddress("Ichildidxvc", Ichildidxvc, &b_Ichildidxvc);
    fChain->SetBranchAddress("Neutmode", &Neutmode, &b_Neutmode);
+
 
 
    Notify();

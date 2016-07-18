@@ -503,10 +503,7 @@ int preProcess::getComponent(){
 
     // select single pi0
     if (vis->nvis<=2){
-//        if
-//       if ((vis->nvis-vis->nvgam)!=0);
-//       if (vis->nvpi0!=1) continue;
-//       return 4;
+       if ((vis->nvis-vis->nvgam==0) && (vis->nvpi0==1)) return 4;
     }
 
     // select single ring events 
@@ -536,7 +533,7 @@ int preProcess::getComponent(){
     }
 
     // select decays
-    else if (vis->nvis==0 || (vis->vismrpar<=45. && vis->nvis==1)) {
+    else if (vis->nvis==0 || (vis->vismrpar<=45. && vis->visstr[0]<45.)) {
       return 0; //< decay e usually    
     }
 
