@@ -1080,6 +1080,7 @@ void fqEvent::Init(TTree *tree, const char* ntuple_type)
    fChain->SetBranchAddress("Npvc", &Npvc, &b_Npvc);
    fChain->SetBranchAddress("Ipvc", Ipvc, &b_Ipvc);
    fChain->SetBranchAddress("Abspvc", Abspvc, &b_Abspvc);
+   fChain->SetBranchAddress("Pvc", Pvc, &b_Pvc);
    fChain->SetBranchAddress("Iorgvc", Iorgvc, &b_Iorgvc);
    fChain->SetBranchAddress("Iflvc", Iflvc, &b_Iflvc);
    fChain->SetBranchAddress("Ichvc", Ichvc, &b_Ichvc);

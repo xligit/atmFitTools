@@ -707,6 +707,9 @@ void preProcess::setupNewTree(){
   trout->Branch("vismrpar",&vis->vismrpar,"vismrpar/D");
   trout->Branch("vismrpid1",&vis->vismrpid1,"vismrpid1/I");
   trout->Branch("vismrpid2",&vis->vismrpid2,"vismrpid2/I");
+  trout->Branch("vismrt1",&vis->vismrt1,"vismrt1/D");
+  trout->Branch("vismrt2",&vis->vismrt2,"vismrt2/D");
+  trout->Branch("vistime",vis->vistime,"vistime[100]/D");
   trout->Branch("vispid",vis->vispid,"vispid[100]/I");
   trout->Branch("visscndpid",vis->visscndpid,"visscndpid[100]/I");
   trout->Branch("visscndparentid",vis->visscndparentid,"visscndparentid[100]/I");

@@ -37,7 +37,7 @@ class visRing{
   void countprimary();
   void countprimaryvc();
   void calcderived();
-  void addvisible(int ipid, int index, double momentum, int flgverb=0);
+  void addvisible(int ipid, int index, double momentum, int flgverb=0,int flgscnd=0);
   void addvisiblesecondary(int ipid, int index, double momentum,int flgverb=0);
   void countdecaypi0();
   void initconstants();
@@ -47,6 +47,7 @@ class visRing{
  double getbeta(int ipid, double pmom);
  double getpcrit(int ipid);
  double getEcrit(int ipid);
+ int hasdschild(int vcindex);
  int pdg2geant(int ipid);
  map<int,double> massof;
  double showerthresh;
@@ -64,6 +65,7 @@ class visRing{
  int nvk;   //numbr of visible kaon rings
  int visindx[MAXNVIS]; //index of each visible ring in particle stack
  int vispid[MAXNVIS]; //pid code of each visible ring
+ double vistime[MAXNVIS]; //time of cretion of visible ring
  int visscndpid[MAXNVIS]; //pid of visible secondary ring
  int visscndparentid[MAXNVIS]; //parent pid of visible secondary ring
  int nvisscnd;  //number of visible secondary particles
@@ -76,6 +78,8 @@ class visRing{
  double gammom[MAXNVIS]; //momentum of gammas
  double protmom[MAXNVIS]; //momentum of proton
  double vismrpar; // multi-ring parameter (strength of 2nd strongest ring);
+ double vismrt1; // time of MVR
+ double vismrt2; // time of 2MVR
  int    vismrpid2; // pid of 2nd most visible ring
  int    vismrpid1; // pid of most visible ring
  int nvisarr[MAXNVIS];
