@@ -109,6 +109,7 @@ class histoManager{
   ///////////////////////////  
   //plotting
   void showMCBreakdown(int isample,int ibin,int iatt);
+  void printBreakdownPlots(const char* directory);
   THStack* showMCBreakdownStack(int isample,int ibin,int iatt);
   void readFromFile(const char* rootename,int nsamp,int nbin,int ncomp,int natt, int nmode = 0);
   void readSplinesFromFile(const char* rootname, int nsyspartot);

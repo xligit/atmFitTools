@@ -813,4 +813,43 @@ void histoManager::showErrorComparison(int isamp, int ibin, int iatt){
   return;
 }
 
+void histoManager::printBreakdownPlots(const char* plotdir){
+
+  // directory where plots will be saved
+  TString plotoutdir = plotdir;
+
+  TString plotbasename = "mc_breakdown_";
+
+  TCanvas* cc = new TCanvas("cc","cc",800,700);
+
+  for (int ibin=0; ibin<nBins; ibin++){
+    for (int isamp=0; isamp<nSamples; isamp++){
+      for (int iatt=0; iatt<nAttributes; iatt++){
+        TString tag = Form("comp_%d_bin_%d_att_%d.png",isamp,ibin,iatt);
+        TString plotname = plotoutdir.Data();
+        plotname.Append(plotbasename.Data());
+        plotname.Append(tag.Data());
+        showMCBreakdown(isamp,ibin,iatt);
+        cc->Print(plotname.Data());
+      }
+    }
+  }
+
+  return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #endif

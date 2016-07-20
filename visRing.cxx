@@ -240,7 +240,7 @@ void visRing::initconstants(){
 
   // define some constants
   Cthresh = 0.7505; //Cherenkov threshold in c
-  Tthresh = 10.; //cutoff time in ns to be counted in this event
+  Tthresh = 50.; //cutoff time in ns to be counted in this event
   gamthresh = 10.; // min energy of gamma
 
   // particle masses in MeV
