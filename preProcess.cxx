@@ -468,15 +468,25 @@ int preProcess::getComponent(){
     // 5 -> Other (should be zero events)
     //////////////////////////////////////////
 
-    double mrthresh = 0.;
+    double visthresh = 45.;
+    
+    // no visible (decay e)
+    if (vis->nvis==0){
+      return 0;
+    }
+   
+    // weak 1R (decay e)
+    if (vis->nvis==1 && vis->visstr[0]<visthresh) return 0;
 
-    // select single pi0
+
+    // single pi0
     if (vis->nvis<=2){
+       // all visible rings are gammas and there is single pi0
        if ((vis->nvis-vis->nvgam==0) && (vis->nvpi0==1)) return 4;
     }
 
     // select single ring events 
-    if (vis->nvis==1 && vis->visstr[0]>mrthresh ){
+    if (vis->nvis==1){
       if (vis->nve==1) return 0;
       if (vis->nvgam==1) return 0;
       if (vis->nvmu==1) return 1;
@@ -485,27 +495,27 @@ int preProcess::getComponent(){
     }
 
     // select events with weak 2nd ring
-    else if ((vis->nvis>1) && vis->vismrpar<mrthresh){ // count as single showering ring
-      if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 0;
+  //  else if ((vis->nvis>1) && vis->vismrpar<mrthresh){ // count as single showering ring
+  //    if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 0;
       // count as MIP ring
-      else{
-        return 1;
-      }
-    }
+  //    else{
+  //      return 1;
+  //    }
+  //  }
     
     // select MR events
-    else if (vis->nvis>1){
+    if (vis->nvis>1){
       // MR event with showering most visible ring
       if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 2;
       // Other MR events (non-showering MIP most visible ring)
+      if ((vis->vismrpid1==5)||
+          (vis->vismrpid1==6)||
+          (vis->vismrpid1==8)||
+          (vis->vismrpid1==9)||
+          (vis->vismrpid1==14)||
+          (vis->vismrpid1==15)) return 3;
       return 3;
     }
-
-    // select decays
-    else if (vis->nvis==0 || (vis->vismrpar<=mrthresh && vis->visstr[0]<45.)) {
-      return 0; //< decay e 
-    }
-
     // should be nothing?
     else{
       return 5;

@@ -37,20 +37,29 @@ void visRing::countsecondary(){
      if (fq->tscnd[i] > Tthresh) continue;
 
      // is decay and not scatter, etc
-     if (fq->lmecscnd[i]!=5) continue;
+   //  if (fq->lmecscnd[i]!=5) continue;
+
+     // reject certiain interactions
+     if (fq->lmecscnd[i]==6) continue;  //< pair prod.
+     if (fq->lmecscnd[i]==7) continue;  //< compton
+     if (fq->lmecscnd[i]==8) continue;  //< photoelectric
+     if (fq->lmecscnd[i]==9) continue;  //< brem
+     if (fq->lmecscnd[i]==12) continue; //< hadronic int.
+     if (fq->lmecscnd[i]==13) continue; //< coh. scatt.
+     if (fq->lmecscnd[i]==30) continue; //< below thresh
 
      ipid=(int)TMath::Abs(fq->iprtscnd[i]); //< get ID code of particle
      
      // accept certain decays
-     int parentpid = TMath::Abs(fq->iorgprt[i]);
-     if (ipid==parentpid) continue;
-     if ((parentpid!=111) &&
-        (parentpid!=211) &&
-        (parentpid!=130) &&
-        (parentpid!=310) &&
-        (parentpid!=311) &&
-        (parentpid!=3122) &&
-        (parentpid!=13)) continue;
+ //    int parentpid = TMath::Abs(fq->iorgprt[i]);
+ //    if (ipid==parentpid) continue;
+ //    if ((parentpid!=111) &&
+ //       (parentpid!=211) &&
+ //       (parentpid!=130) &&
+ //       (parentpid!=310) &&
+ //       (parentpid!=311) &&
+ //       (parentpid!=3122) &&
+ //       (parentpid!=13)) continue;
 
      // convert to geant code :(
      ipid = pdg2geant(ipid);
@@ -64,14 +73,14 @@ void visRing::countsecondary(){
      // see if above threshold
      if (ipid==1){
        if (pmom > gamthresh){
-         addvisiblesecondary(ipid, i, pmom,0);
+         addvisiblesecondary(ipid, i, pmom);
        }
      }
      else{
        beta = getbeta(ipid, pmom);
        if (beta<Cthresh) continue;
        else{
-         addvisiblesecondary(ipid, i, pmom,0);
+         addvisiblesecondary(ipid, i, pmom);
        }
      }
   }
@@ -117,30 +126,35 @@ double visRing::getEcrit(int ipid){
 }
 
 
-void visRing::addvisiblesecondary(int ipid, int index, double momentum, int flgverb){
+void visRing::addvisiblesecondary(int ipid, int index, double momentum){
   visscndpid[nvisscnd]=ipid;
   visscndparentid[nvisscnd] = fq->iorgprt[index];
   nvisscnd++;
-  addvisible(ipid, index, momentum,0,1);
+  int visflg = addvisible(ipid, index, momentum,1);
 
   // print out if necessary
-  if (flgverb){
+  if (flgverbscnd && visflg){
    cout<<"---------------------"<<endl;   
-   cout<<" index:       "<<index<<endl;
-   cout<<" pid:         "<<ipid<<endl;
-   cout<<" parent:      "<<fq->iprntprt[index]<<endl;
-   cout<<" origin:      "<<fq->iorgprt[index]<<endl;
-   cout<<" process:     "<<fq->lmecscnd[index]<<endl;
-   cout<<" parentrk:    "<<fq->iprnttrk[index]<<endl;
-   cout<<" parentidx:   "<<fq->iprntidx[index]<<endl;
-   cout<<" interaction: "<<fq->iflgscnd[index]<<endl;
-  }
+   int gpid = pdg2geant(fq->iprtscnd[index]);
+   cout<<" pid:            "<<nameof[gpid]<<endl;
+   cout<<" track:          "<<fq->itrkscnd[index]<<endl;
+   cout<<" stack:          "<<fq->istakscnd[index]<<endl;
+   cout<<" momentum:       "<<momentum<<endl;
+   cout<<" time:           "<<fq->tscnd[index]<<endl;
+   cout<<" interaction:    "<<fq->lmecscnd[index]<<endl;
+   cout<<" parent id:      "<<fq->iprntprt[index]<<endl;
+   cout<<" parent trackid: "<<fq->iprnttrk[index]<<endl;
+   cout<<" parent index:   "<<fq->iprntidx[index]<<endl;
+   cout<<" parent orig:    "<<fq->iorgprt[index]<<endl;
+   cout<<" iflag:          "<<fq->iflgscnd[index]<<endl;
+   cout<<" childs:         "<<fq->nchilds[index]<<endl;
+ }
 
 
   return;
 }
 
-void visRing::addvisible(int ipid, int index, double momentum, int flgverb, int flgscnd){
+int visRing::addvisible(int ipid, int index, double momentum, int flgscnd){
 
  
   // get critical momentum
@@ -197,7 +211,7 @@ void visRing::addvisible(int ipid, int index, double momentum, int flgverb, int 
     nvis++;
   }
 
-  if (flgverb){
+  if (flgverbprime){
     cout<<"========================"<<endl;
     cout<<"  visible? "<<visflg<<endl;
     cout<<"  index:   "<<index<<endl;
@@ -213,7 +227,7 @@ void visRing::addvisible(int ipid, int index, double momentum, int flgverb, int 
   }
 
   //
-  return;
+  return visflg;
 }
 
 int  visRing::pdg2geant(int ipart){
@@ -240,9 +254,11 @@ void visRing::initconstants(){
 
   // define some constants
   Cthresh = 0.7505; //Cherenkov threshold in c
-  Tthresh = 50.; //cutoff time in ns to be counted in this event
+  Tthresh = 10.; //cutoff time in ns to be counted in this event
   gamthresh = 10.; // min energy of gamma
-
+  flgverbprime = 0;
+  flgverbscnd= 0;
+;
   // particle masses in MeV
   massof[1] = 0;  //gamma
   massof[2] = 0.511; //positron
@@ -262,6 +278,27 @@ void visRing::initconstants(){
   massof[17] = 547.8; //eta
   massof[18] = 1115.6; //lambda
 
+  // particle names (geant codes)
+  nameof[1] = "gamma";
+  nameof[2] = "positron";
+  nameof[3] = "electron";
+  nameof[4] = "neutrino";
+  nameof[5] = "muon";
+  nameof[6] = "antimuon";
+  nameof[7] = "pi0";
+  nameof[8] = "pi+";
+  nameof[9] = "pi-";
+  nameof[10] = "KL";
+  nameof[11] = "K+";
+  nameof[12] = "K-";
+  nameof[13] = "n";
+  nameof[14] = "p";
+  nameof[15] = "p-";
+  nameof[16] = "KS";
+  nameof[17] = "eta";
+  nameof[18] = "lambda";;
+  
+  
   return;
 }
 
@@ -308,7 +345,7 @@ void visRing::countprimaryvc(){
 
     if (ipid==1){ //< if particle is gamma, see if it will shower
       if ((momentum>gamthresh)){
-        addvisible(ipid, i, momentum,0);
+        addvisible(ipid, i, momentum);
       }
       else{
         continue; //< do nothing
@@ -320,7 +357,7 @@ void visRing::countprimaryvc(){
         continue;
       }
       else{
-        addvisible(ipid, i, momentum,0);
+        addvisible(ipid, i, momentum);
       }
     }
   }
@@ -348,7 +385,11 @@ void visRing::countprimary(){
 
   // loop over primary particles
   for (int i=2;i<fq->npar;i++){ //< outgoing particle index starts at 2
+
+    if (fq->light_flag[i]!=1) continue;
+
     ipid=(int)fq->ipv[i]; //< get ID code of particle
+
     if (ipid==1){ //< if particle is gamma, see if it will shower
       if ((fq->pmomv[i]>gamthresh)){
         addvisible(ipid, i, fq->pmomv[i]);
@@ -420,36 +461,13 @@ void visRing::testevent(int iev){
 void visRing::fillVisVar(){
   
   // count rings in primary stack
-//  countprimary();
+  //  countprimary();
 
   // count rings in primaryc VCWORK stack
   countprimaryvc();
 
-
   // count rings in secondary stack
   countsecondary();
-
-
-    // debuggin
-   /*
-  if (nvis==0) {
-    for (int i=0; i<fq->npar; i++){
-      int ipid = (int)fq->ipv[i];
-      if ((ipid==5)||(ipid==6)){
-        cout<<"mu mom: "<<fq->pmomv[i]<<endl;
-      }
-      if ((ipid==8)||(ipid==9)){
-        cout<<"pi mom: "<<fq->pmomv[i]<<endl;
-      }
-      if ((ipid==2)||(ipid==3)){
-        cout<<"e mom: "<<fq->pmomv[i]<<endl;
-      }
-      if (ipid==7){
-        cout<<"pi0 mom: "<<fq->pmomv[i]<<endl;
-      }
-    }
-  }
-  */
 
   // calculate derived quantities
   calcderived();
@@ -468,6 +486,39 @@ double visRing::getbeta(int ipid, double pmom){
   return (pmom/E);
 }
 
+void visRing::printsecondaryindex(int ipid){
+  for (int i=0; i<fq->nscndprt; i++){
+    int abspid = TMath::Abs(fq->iprtscnd[i]);
+    if (abspid==ipid){
+      cout<<"found "<<ipid<<" at index: "<<i<<endl;
+    }
+  }
+  return;
+}
+
+
+void visRing::printsecondaryinfo(int indx){
+   cout<<"------------------------------"<<endl;
+     int i =indx;
+     double px = fq->pscnd[i][0];
+     double py = fq->pscnd[i][1];
+     double pz = fq->pscnd[i][2];
+     double momentum = TMath::Sqrt(px*px + py*py + pz*pz);
+     cout<<" pid:            "<<fq->iprtscnd[i]<<endl;
+     cout<<" track:          "<<fq->itrkscnd[i]<<endl;
+     cout<<" stack:          "<<fq->istakscnd[i]<<endl;
+     cout<<" momentum:       "<<momentum<<endl;
+     cout<<" time:           "<<fq->tscnd[i]<<endl;
+     cout<<" interaction:    "<<fq->lmecscnd[i]<<endl;
+     cout<<" parent id:      "<<fq->iprntprt[i]<<endl;
+     cout<<" parent trackid: "<<fq->iprnttrk[i]<<endl;
+     cout<<" parent index:   "<<fq->iprntidx[i]<<endl;
+     cout<<" parent orig:    "<<fq->iorgprt[i]<<endl;
+     cout<<" iflag:          "<<fq->iflgscnd[i]<<endl;
+     cout<<" childs:         "<<fq->nchilds[i]<<endl;
+
+   return; 
+}
 
 #ifndef T2K
 visRing::visRing(fqEvent* fqin){

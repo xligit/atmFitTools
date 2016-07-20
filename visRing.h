@@ -7,6 +7,7 @@
 #include "t2kfqEvent.h"
 #endif
 #include "TMath.h"
+#include "TString.h"
 #include "iostream"
 #include <map>
 
@@ -37,8 +38,8 @@ class visRing{
   void countprimary();
   void countprimaryvc();
   void calcderived();
-  void addvisible(int ipid, int index, double momentum, int flgverb=0,int flgscnd=0);
-  void addvisiblesecondary(int ipid, int index, double momentum,int flgverb=0);
+  int addvisible(int ipid, int index, double momentum,int flgscnd=0);
+  void addvisiblesecondary(int ipid, int index, double momentum);
   void countdecaypi0();
   void initconstants();
 
@@ -47,9 +48,12 @@ class visRing{
  double getbeta(int ipid, double pmom);
  double getpcrit(int ipid);
  double getEcrit(int ipid);
+ void printsecondaryindex(int ipid);
+ void printsecondaryinfo(int idx);
  int hasdschild(int vcindex);
  int pdg2geant(int ipid);
  map<int,double> massof;
+ map<int,TString> nameof;
  double showerthresh;
 
  //visible variables
@@ -88,7 +92,8 @@ class visRing{
  double Cthresh; //Cherenkov threshold in c
  double Tthresh; //cutoff time in ns to be counted in this event
  double gamthresh; // min energy of gamma
-
+ int flgverbprime; //< verbose flag
+ int flgverbscnd; //< verbose flag
  // debuggin
  void testevent(int iev);
 };
