@@ -36,9 +36,6 @@ void visRing::countsecondary(){
      // decays near vertex
      if (fq->tscnd[i] > Tthresh) continue;
 
-     // is decay and not scatter, etc
-   //  if (fq->lmecscnd[i]!=5) continue;
-
      // reject certiain interactions
      if (fq->lmecscnd[i]==6) continue;  //< pair prod.
      if (fq->lmecscnd[i]==7) continue;  //< compton
@@ -50,17 +47,6 @@ void visRing::countsecondary(){
 
      ipid=(int)TMath::Abs(fq->iprtscnd[i]); //< get ID code of particle
      
-     // accept certain decays
- //    int parentpid = TMath::Abs(fq->iorgprt[i]);
- //    if (ipid==parentpid) continue;
- //    if ((parentpid!=111) &&
- //       (parentpid!=211) &&
- //       (parentpid!=130) &&
- //       (parentpid!=310) &&
- //       (parentpid!=311) &&
- //       (parentpid!=3122) &&
- //       (parentpid!=13)) continue;
-
      // convert to geant code :(
      ipid = pdg2geant(ipid);
      if (ipid<0) continue;
@@ -115,7 +101,7 @@ double visRing::getEcrit(int ipid){
    return Ecrit;
  }
  if (ipid==7){
-   Ecrit = 0.;
+   Ecrit = gamthresh;
    return Ecrit;
  }
  else{
@@ -125,6 +111,11 @@ double visRing::getEcrit(int ipid){
  return Ecrit;
 }
 
+double visRing::getEnergy(int ipid, double pmom){
+  double mm = massof[ipid];
+  double E = TMath::Sqrt( mm*mm + pmom*pmom);
+  return E;
+}
 
 void visRing::addvisiblesecondary(int ipid, int index, double momentum){
   visscndpid[nvisscnd]=ipid;
@@ -152,6 +143,15 @@ void visRing::addvisiblesecondary(int ipid, int index, double momentum){
 
 
   return;
+}
+
+double visRing::getVisibleEnergy(int ipid, double pmom){
+
+  double E = getEnergy(ipid, pmom);
+
+  double Ecrit = getEcrit(ipid);
+
+  return E-Ecrit;
 }
 
 int visRing::addvisible(int ipid, int index, double momentum, int flgscnd){
@@ -199,14 +199,13 @@ int visRing::addvisible(int ipid, int index, double momentum, int flgscnd){
     vispid[nvis]=ipid;
     // for neutral pions, look at energy bound of the gamma
     if (ipid==7){
-      double Epi0 = TMath::Sqrt(momentum*momentum + mass*mass);
-      visstr[nvis] = ((Epi0/2.)-pcrit);
+      visstr[nvis] = getVisibleEnergy(ipid,momentum);
     }
     if (!flgscnd) vistime[nvis]=0.0;
     else{
       vistime[nvis] = fq->tscnd[index];
     }
-    visstr[nvis] = momentum-pcrit;
+    visstr[nvis] = getVisibleEnergy(ipid,momentum);
     vismom[nvis] = momentum;
     nvis++;
   }

@@ -47,7 +47,9 @@ class visRing{
  //useful quantities
  double getbeta(int ipid, double pmom);
  double getpcrit(int ipid);
+ double getEnergy(int ipid, double pmom);
  double getEcrit(int ipid);
+ double getVisibleEnergy(int ipid, double pmom);
  void printsecondaryindex(int ipid);
  void printsecondaryinfo(int idx);
  int hasdschild(int vcindex);
