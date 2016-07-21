@@ -75,7 +75,7 @@ class visRing{
  int visscndpid[MAXNVIS]; //pid of visible secondary ring
  int visscndparentid[MAXNVIS]; //parent pid of visible secondary ring
  int nvisscnd;  //number of visible secondary particles
- double visstr[MAXNVIS];  //strength of each visible ring
+ double visbrightness[MAXNVIS];  //strength of each visible ring
  double vismom[MAXNVIS]; //momentum of visible particle
  double mumom[MAXNVIS]; //momentum of muons
  double pimom[MAXNVIS]; //momentum of charged pions
@@ -83,11 +83,13 @@ class visRing{
  double emom[MAXNVIS]; //momentum of e+-
  double gammom[MAXNVIS]; //momentum of gammas
  double protmom[MAXNVIS]; //momentum of proton
- double vismrpar; // multi-ring parameter (strength of 2nd strongest ring);
+ double vismrbrightness; // multi-ring parameter (strength of 2nd strongest ring);
  double vismrt1; // time of MVR
  double vismrt2; // time of 2MVR
  int    vismrpid2; // pid of 2nd most visible ring
  int    vismrpid1; // pid of most visible ring
+ int    vismrtype1; // 1 for shower, 0 for non-shower
+ int    vismrtype2; // 1 for shower, 0 for non-shower
  int nvisarr[MAXNVIS];
 
  // constants

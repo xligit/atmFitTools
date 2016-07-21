@@ -199,13 +199,13 @@ int visRing::addvisible(int ipid, int index, double momentum, int flgscnd){
     vispid[nvis]=ipid;
     // for neutral pions, look at energy bound of the gamma
     if (ipid==7){
-      visstr[nvis] = getVisibleEnergy(ipid,momentum);
+      visbrightness[nvis] = getVisibleEnergy(ipid,momentum);
     }
     if (!flgscnd) vistime[nvis]=0.0;
     else{
       vistime[nvis] = fq->tscnd[index];
     }
-    visstr[nvis] = getVisibleEnergy(ipid,momentum);
+    visbrightness[nvis] = getVisibleEnergy(ipid,momentum);
     vismom[nvis] = momentum;
     nvis++;
   }
@@ -417,7 +417,7 @@ void visRing::calcderived(){
   double maxstrength = 0.;
   int    imax = 0;
   for (int i=0; i<nvis; i++){
-    if (visstr[i]>maxstrength){ maxstrength = visstr[i]; imax = i; }   
+    if (visbrightness[i]>maxstrength){ maxstrength = visbrightness[i]; imax = i; }   
   }
   vismrpid1 = vispid[imax];
 
@@ -426,17 +426,31 @@ void visRing::calcderived(){
   int iscnd = 0;
   for (int j=0; j<nvis; j++){
     if (j==imax) continue;
-    double jdiff = TMath::Abs(visstr[j]-maxstrength);
+    double jdiff = TMath::Abs(visbrightness[j]-maxstrength);
     if (jdiff<diff) {iscnd = j; diff = jdiff; }
   }
-  if (nvis<=1) { vismrpar = 0.; vismrpid1=0; vismrpid2=0; vismrt1=0; vismrt2=0; }
+  if (nvis<=1) { vismrbrightness = 0.; vismrpid2=0; vismrt1=0; vismrt2=0; }
   else{
-    vismrpar = visstr[iscnd];
+    vismrbrightness = visbrightness[iscnd];
     vismrpid2 = vispid[iscnd];
     vismrt1 = vistime[imax];
     vismrt2 = vistime[iscnd];
   }
-  
+
+  // get ring types
+  if (vismrpid1==1 || vismrpid1==2 || vismrpid1==3){
+    vismrtype1 = 1; 
+  }
+  else{
+    vismrtype1 = 0;
+  }
+  if (vismrpid2==1 || vismrpid2==2 || vismrpid2==3){
+    vismrtype2 = 1; 
+  }
+  else{
+    vismrtype2 = 0;
+  }
+
   //
   return;
 }

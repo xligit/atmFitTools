@@ -468,7 +468,7 @@ int preProcess::getComponent(){
     // 5 -> Other (should be zero events)
     //////////////////////////////////////////
 
-    double visthresh = 45.;
+    double visthresh = 25.;
     
     // no visible (decay e)
     if (vis->nvis==0){
@@ -476,8 +476,7 @@ int preProcess::getComponent(){
     }
    
     // weak 1R (decay e)
-    if (vis->nvis==1 && vis->visstr[0]<visthresh) return 0;
-
+    if (vis->nvis==1 && vis->visbrightness[0]<visthresh) return 0;
 
     // single pi0
     if (vis->nvis<=2){
@@ -494,28 +493,14 @@ int preProcess::getComponent(){
       if (vis->nvp==1)   return 1;
     }
 
-    // select events with weak 2nd ring
-  //  else if ((vis->nvis>1) && vis->vismrpar<mrthresh){ // count as single showering ring
-  //    if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 0;
-      // count as MIP ring
-  //    else{
-  //      return 1;
-  //    }
-  //  }
-    
     // select MR events
     if (vis->nvis>1){
-      // MR event with showering most visible ring
-      if ((vis->vismrpid1==1)||(vis->vismrpid1==2)||(vis->vismrpid1==3)) return 2;
-      // Other MR events (non-showering MIP most visible ring)
-      if ((vis->vismrpid1==5)||
-          (vis->vismrpid1==6)||
-          (vis->vismrpid1==8)||
-          (vis->vismrpid1==9)||
-          (vis->vismrpid1==14)||
-          (vis->vismrpid1==15)) return 3;
-      return 3;
+      // showering most visible ring
+      if (vis->vismrtype1 == 1) return 2;
+      // non-showering most visible ring)
+      if (vis->vismrtype1 == 0) return 3;
     }
+
     // should be nothing?
     else{
       return 5;
@@ -714,13 +699,15 @@ void preProcess::setupNewTree(){
   trout->Branch("nvpi0",&vis->nvpi0,"nvpi0/I");
   trout->Branch("nvp",&vis->nvp,"nvp/I");
   trout->Branch("nvk",&vis->nvk,"nvk/I");
-  trout->Branch("visstr",vis->visstr,"visstr[100]/D");
+  trout->Branch("visbrightness",vis->visbrightness,"visbrightness[100]/D");
   trout->Branch("nvisscnd",&vis->nvisscnd,"nvisscnd/I");
-  trout->Branch("vismrpar",&vis->vismrpar,"vismrpar/D");
+  trout->Branch("vismrbrightness",&vis->vismrbrightness,"vismrbrightness/D");
   trout->Branch("vismrpid1",&vis->vismrpid1,"vismrpid1/I");
   trout->Branch("vismrpid2",&vis->vismrpid2,"vismrpid2/I");
   trout->Branch("vismrt1",&vis->vismrt1,"vismrt1/D");
   trout->Branch("vismrt2",&vis->vismrt2,"vismrt2/D");
+  trout->Branch("vismrtype1",&vis->vismrtype1,"vismrtype1/I");
+  trout->Branch("vismrtype2",&vis->vismrtype2,"vismrtype2/I");
   trout->Branch("vistime",vis->vistime,"vistime[100]/D");
   trout->Branch("vispid",vis->vispid,"vispid[100]/I");
   trout->Branch("visscndpid",vis->visscndpid,"visscndpid[100]/I");
