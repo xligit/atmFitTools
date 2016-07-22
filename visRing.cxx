@@ -7,6 +7,66 @@ void visRing::countdecaypi0(){
   return;
 }
 
+
+double visRing::getVisTowall(int index, int scndflg){
+
+  TVector3 vpos;
+  TVector3 vmom;
+  TVector3 vdir;
+
+  if (scndflg){
+    vpos.SetXYZ(fq->vtxscnd[index][0],
+                fq->vtxscnd[index][1],
+                fq->vtxscnd[index][2]);
+    vmom.SetXYZ(fq->pscnd[index][0],
+                fq->pscnd[index][1],
+                fq->pscnd[index][2]);
+    vdir = vmom.Unit();
+  }
+  else{
+    vpos.SetXYZ(fq->posv[0],
+                fq->posv[1],
+                fq->posv[2]);
+    vmom.SetXYZ(fq->Pvc[index][0],
+                fq->Pvc[index][1],
+                fq->Pvc[index][2]);
+    vdir = vmom.Unit();
+  }
+ 
+  double towallvalue = calcToWall(&vpos, &vdir);
+  return towallvalue;
+}
+
+double visRing::getVisWall(int index, int scndflg){
+
+  TVector3 vpos;
+  TVector3 vmom;
+  TVector3 vdir;
+
+  if (scndflg){
+    vpos.SetXYZ(fq->vtxscnd[index][0],
+                fq->vtxscnd[index][1],
+                fq->vtxscnd[index][2]);
+    vmom.SetXYZ(fq->pscnd[index][0],
+                fq->pscnd[index][1],
+                fq->pscnd[index][2]);
+    vdir = vmom.Unit();
+  }
+  else{
+    vpos.SetXYZ(fq->posv[0],
+                fq->posv[1],
+                fq->posv[2]);
+    vmom.SetXYZ(fq->Pvc[index][0],
+                fq->Pvc[index][1],
+                fq->Pvc[index][2]);
+    vdir = vmom.Unit();
+  }
+ 
+  double wallvalue = calcWall(&vpos);
+  return wallvalue;
+
+}
+
 int visRing::hasdschild(int vcindex){
   
   int haschild = 0;
@@ -159,7 +219,7 @@ int visRing::addvisible(int ipid, int index, double momentum, int flgscnd){
  
   // get critical momentum
   double mass = massof[ipid];
-  double pcrit = getpcrit(ipid);
+  //double pcrit = getpcrit(ipid);
 
   // fill arrays for individual particle types
   int visflg = 0;
@@ -194,9 +254,11 @@ int visRing::addvisible(int ipid, int index, double momentum, int flgscnd){
   }
 
   if (visflg){
-    // fill total arrays
+    // fill arrays
     visindx[nvis]=index;
     vispid[nvis]=ipid;
+    viswall[nvis] = getVisWall(index,flgscnd);
+    vistowall[nvis] = getVisTowall(index,flgscnd);
     // for neutral pions, look at energy bound of the gamma
     if (ipid==7){
       visbrightness[nvis] = getVisibleEnergy(ipid,momentum);
@@ -218,7 +280,6 @@ int visRing::addvisible(int ipid, int index, double momentum, int flgscnd){
     cout<<"  pid:     "<<ipid<<endl;
     cout<<"  pidpdg:  "<<fq->Ipvc[index]<<endl;
     cout<<"  mom:     "<<momentum<<endl;
-    cout<<"  pcrit:   "<<pcrit<<endl;
     cout<<"  orgidx:  "<<fq->Iorgvc[index]<<endl;
     cout<<"  orgpart: "<<fq->Ipvc[ fq->Iorgvc[index] -1 ]<<endl;
     cout<<"  intcode: "<<fq->Iflvc[index]<<endl;
@@ -451,6 +512,13 @@ void visRing::calcderived(){
     vismrtype2 = 0;
   }
 
+  // get FV info
+  vismrwall1 = viswall[imax];
+  vismrtowall1 = vistowall[imax];
+  vismrwall2 = viswall[iscnd];
+  vismrtowall2 = vistowall[iscnd];
+  vismrwallmin = TMath::Min(vismrwall1, vismrwall2);
+  vismrtowallmin = TMath::Min(vismrtowall1, vismrtowall2);
   //
   return;
 }

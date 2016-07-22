@@ -9,6 +9,7 @@
 #include "TMath.h"
 #include "TString.h"
 #include "iostream"
+#include "FVCalculators.cxx"
 #include <map>
 
 #define MAXNVIS 100
@@ -50,6 +51,8 @@ class visRing{
  double getEnergy(int ipid, double pmom);
  double getEcrit(int ipid);
  double getVisibleEnergy(int ipid, double pmom);
+ double getVisWall(int index, int scndflg);
+ double getVisTowall(int index, int scndflg);
  void printsecondaryindex(int ipid);
  void printsecondaryinfo(int idx);
  int hasdschild(int vcindex);
@@ -77,6 +80,8 @@ class visRing{
  int nvisscnd;  //number of visible secondary particles
  double visbrightness[MAXNVIS];  //strength of each visible ring
  double vismom[MAXNVIS]; //momentum of visible particle
+ double viswall[MAXNVIS]; // true wall of particle that produced this ring
+ double vistowall[MAXNVIS]; // true towall of particle that produced this ring
  double mumom[MAXNVIS]; //momentum of muons
  double pimom[MAXNVIS]; //momentum of charged pions
  double pi0mom[MAXNVIS]; //momentum of neutral pionsj
@@ -90,6 +95,12 @@ class visRing{
  int    vismrpid1; // pid of most visible ring
  int    vismrtype1; // 1 for shower, 0 for non-shower
  int    vismrtype2; // 1 for shower, 0 for non-shower
+ double vismrwall1; 
+ double vismrwall2;  
+ double vismrtowall1;
+ double vismrtowall2;
+ double vismrwallmin;
+ double vismrtowallmin;
  int nvisarr[MAXNVIS];
 
  // constants

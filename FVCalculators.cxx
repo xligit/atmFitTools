@@ -63,7 +63,7 @@ double calcToWallCustom(TVector3 *vpos, TVector3 *vdir, double dt){
   double t=0.;
   int    flg =0;
   double tmax = 100000.;
-  if (fabs(z0)>Z) return -10000;;
+  if (fabs(z0)>Z) return -10000;
   if (r0>R) return -10000;
   while ((flg==0)&&(t<tmax)){
     x = x0 + t*dirx;
@@ -243,7 +243,8 @@ double calcToWall(TVector3* vpostmp, TVector3* vdirtmp){
   TVector3 thedir;
   thepos.SetXYZ(vpostmp->X(),vpostmp->Y(),vpostmp->Z());
   thedir.SetXYZ(vdirtmp->X(),vdirtmp->Y(),vdirtmp->Z());
-
+  double wallval = calcWall(vpostmp)
+  if (wallval<0) return wallval; 
   towallval+= calcToWallCustom(&thepos,&thedir,1.);
   towallval+= calcToWallCustom(&thepos,&thedir,0.1);
   return towallval;

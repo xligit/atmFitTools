@@ -468,15 +468,16 @@ int preProcess::getComponent(){
     // 5 -> Other (should be zero events)
     //////////////////////////////////////////
 
-    double visthresh = 25.;
-    
+    double showerthresh = 15.;
+    double nonshowerthresh = 45.;
+
     // no visible (decay e)
     if (vis->nvis==0){
       return 0;
     }
    
     // weak 1R (decay e)
-    if (vis->nvis==1 && vis->visbrightness[0]<visthresh) return 0;
+    if (vis->nvis==1 && vis->visbrightness[0]<nonshowerthresh) return 0;
 
     // single pi0
     if (vis->nvis<=2){
@@ -493,11 +494,19 @@ int preProcess::getComponent(){
       if (vis->nvp==1)   return 1;
     }
 
+    // select weak MR events
+    if (vis->nvis>1 &&
+       ( (vis->vismrbrightness<showerthresh && vis->vismrtype2==1) ||
+         (vis->vismrbrightness<nonshowerthresh && vis->vismrtype2==0) )){
+      if (vis->vismrtype1==0) return 1; //< count as non-showering ring
+      if (vis->vismrtype1==1) return 0; //< count as showering ring
+    }
+
     // select MR events
     if (vis->nvis>1){
       // showering most visible ring
       if (vis->vismrtype1 == 1) return 2;
-      // non-showering most visible ring)
+      // non-showering most visible ring;
       if (vis->vismrtype1 == 0) return 3;
     }
 
@@ -700,6 +709,14 @@ void preProcess::setupNewTree(){
   trout->Branch("nvp",&vis->nvp,"nvp/I");
   trout->Branch("nvk",&vis->nvk,"nvk/I");
   trout->Branch("visbrightness",vis->visbrightness,"visbrightness[100]/D");
+  trout->Branch("viswall",vis->viswall,"viswall[100]/D");
+  trout->Branch("vistowall",vis->vistowall,"vistowall[100]/D");
+  trout->Branch("vismrwall1",&vis->vismrwall1,"vismrwall1/D");
+  trout->Branch("vismrwall2",&vis->vismrwall2,"vismrwall2/D");
+  trout->Branch("vismrtowall1",&vis->vismrtowall1,"vismrtowall1/D");
+  trout->Branch("vismrtowall2",&vis->vismrtowall2,"vismrtowall2/D");
+  trout->Branch("vismrwallmin",&vis->vismrwallmin,"vismrwallmin/D");
+  trout->Branch("vismrtowallmin",&vis->vismrtowallmin,"vismrtowallmin/D");
   trout->Branch("nvisscnd",&vis->nvisscnd,"nvisscnd/I");
   trout->Branch("vismrbrightness",&vis->vismrbrightness,"vismrbrightness/D");
   trout->Branch("vismrpid1",&vis->vismrpid1,"vismrpid1/I");
