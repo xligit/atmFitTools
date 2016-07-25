@@ -280,18 +280,18 @@ void histoCompare::saveFitPars(const char* filename){
 
 double histoCompare::getErrHi(int ipar){
   //scan through log likelihood by decreasing parameter until threshold is reached
-//  double thresh = 1.0; //likelihood threshold
+  double Lthresh = 1.0; //likelihood threshold
   double Ldiff = 0.;  //difference in likelihood from current value
   double Lbest = getTotLnL(); //current likelihood value
  // cout<<"lbest: "<<Lbest<<endl;
   double parbest = thePars->pars[ipar];
   double parval = thePars->pars[ipar]; 
-  double dpar = thePars->parUnc[ipar]/5.;
+  double dpar = thePars->parUnc[ipar]/2.;
   double hierr;
   int ntry = 0;
-  int ntrymax=100;
+  int ntrymax=10000;
   //coarse search
-  while (Ldiff<1){
+  while (Ldiff<Lthresh){
   //  cout<<"oldpar: "<<parval<<endl;
     parval+=dpar;
  //   cout<<"newpar: "<<parval<<endl;
@@ -339,18 +339,18 @@ double histoCompare::getErrHi(int ipar){
 
 double histoCompare::getErrLo(int ipar){
   //scan through log likelihood by decreasing parameter until threshold is reached
-  //double thresh = 1.0; //likelihood threshold
+  double Lthresh = 1.0; //likelihood threshold
   double Ldiff = 0.;  //difference in likelihood from current value
   double Lbest = getTotLnL(); //current likelihood value
-  double parbest = thePars->pars[ipar];
-  double parval = thePars->pars[ipar]; 
-  double dpar = thePars->parUnc[ipar]/5.;
+  double parbest = thePars->pars[ipar]; //current parameter value
+  double parval = thePars->pars[ipar]; //floating value for estimation 
+  double dpar = thePars->parUnc[ipar]/2.; //how much parameter should change between steps
 //  cout<<"dpar: "<<dpar<<endl;
   double loerr;
   int ntry = 0;
-  int ntrymax=100;
+  int ntrymax=10000;
   //coarse search
-  while (Ldiff<1){
+  while (Ldiff<Lthresh){
     parval-=dpar;
     thePars->setParameter(ipar,parval); //modify parameter
     Ldiff = fabs(Lbest-getTotLnL()); //check L difference
@@ -394,54 +394,7 @@ double histoCompare::getErrLo(int ipar){
   return loerr; 
 }
 
-/*
-double histoCompare::getErrLo(int ibin,int icomp,int iatt,int imod){
-  //scan through log likelihood by decreasing parameter
-  if (fixPar[ibin][icomp][iatt][imod]==1) return 0.;
-  double thresh = 1.0;
-  double Ldiff = 0.;
-  double Lbest = getTotLnL();
-  double parbest = Par[ibin][icomp][iatt][imod];
-  double parval = 0.;
-  double dpar = 1.;
-  double loerr;
-  int ntry = 0;
-  int ntrymax=1000;
-  if (imod==0) dpar = 0.005;
-  if (imod==1) dpar = 10.;
-  //course search
-  while (Ldiff<1){
-    Par[ibin][icomp][iatt][imod]-=dpar; //modify parameter
-    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-  //  cout<<"Ldiff: "<<Ldiff<<endl;
-    ntry++;
-  }
- // cout<<"ntry: "<<ntry<<endl;
-  Par[ibin][icomp][iatt][imod]+=dpar;
-  Ldiff = 0;
-  dpar*=0.2;
-  ntry=0;
-  while ((Ldiff<1)&&(ntry<ntrymax)){
-    Par[ibin][icomp][iatt][imod]-=dpar; //modify parameter
-    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-  //  cout<<"Ldiff: "<<Ldiff<<endl;
-    ntry++;
-  }
-  Par[ibin][icomp][iatt][imod]+=dpar;
-  Ldiff = 0;
-  dpar*=0.1;
-  ntry=0;
-  while ((Ldiff<1)&&(ntry<ntrymax)){
-    Par[ibin][icomp][iatt][imod]-=dpar; //modify parameter
-    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-  //  cout<<"Ldiff: "<<Ldiff<<endl;
-    ntry++;
-  }
-  loerr = parbest-Par[ibin][icomp][iatt][imod];
-  Par[ibin][icomp][iatt][imod] = parbest;
-  return loerr; 
-}
-*/
+
 
 void histoCompare::profileL(int ipar, double range, int npts, int sameflg){
   TString pname = "p";

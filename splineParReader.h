@@ -12,6 +12,8 @@
 #include <TChain.h>
 #include <TFile.h>
 #include "shared.h"
+#include "TH2D.h"
+#include "TH1D.h"
 
 class splineParReader {
 public :
@@ -59,6 +61,11 @@ public :
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
    virtual void     Loop();
+
+
+   // plotting functions for debugging etc.
+   TH2D* draw2D(int ientry = -1);
+   TH1D* drawSpline(int ibin);
 };
 
 #include "splineParReader.cxx"

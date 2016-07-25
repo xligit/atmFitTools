@@ -113,7 +113,8 @@ class histoManager{
   THStack* showMCBreakdownStack(int isample,int ibin,int iatt);
   void readFromFile(const char* rootename,int nsamp,int nbin,int ncomp,int natt, int nmode = 0);
   void readSplinesFromFile(const char* rootname, int nsyspartot);
-  
+  void drawSpline(int isamp, int ibin, int icomp, int iatt, int hbin, int isyst);
+  void drawSpline2D( int isamp, int ibin, int icomp, int iatt, int isyst);
   ///////////////////////////
   //debugging
   void showErrorComparison(int isamp, int ibin, int iatt);

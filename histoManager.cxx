@@ -11,6 +11,21 @@
 //  return hTot;
 //}
 
+////////////////////////////////////////////////////
+// Draw a particular spline
+void histoManager::drawSpline(int isamp, int ibin, int icomp, int iatt, int hbin, int isyst){
+  theSplines[isamp][ibin][icomp][iatt]->drawSpline(hbin,isyst);
+  return;
+}
+
+////////////////////////////////////////////////////
+// Draw 2D variation from splinesj
+void histoManager::drawSpline2D(int isamp, int ibin, int icomp, int iatt, int isyst){
+  int npts = 10;
+  theSplines[isamp][ibin][icomp][iatt]->draw2D(npts,isyst);
+  return;
+}
+
 ///////////////////////////////////////////////////
 //make some useful histograms for debugging
 void histoManager::showSysParVariation(int isamp, int ibin, int icomp, int iatt, int ipar,double varscale){
@@ -162,6 +177,8 @@ TH1D* histoManager::getSplineModifiedHisto(int isamp, int ibin, int icomp, int i
     double weightsum=0.;
     for (int isyspar=0;isyspar<fitPars->nSysPars;isyspar++){
       //get sum of spline weights from this bin
+//      cout<<"evaluating: spline for bin: "<<i<<endl;
+ //     cout<<"for histo : "<< hMC[isamp][ibin][icomp][iatt]->GetName()<<endl;;
       weightsum+=getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(i,isyspar,fitPars->sysPar[isyspar]);
     }
     //this formula gives the total weight to assign to this bin 
@@ -537,6 +554,7 @@ void histoManager::fillHistogramData(int isamp, int ibin, int iatt, double value
 
 //reads histograms from file
 void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncomp,int natt, int nmode){
+
   nSamples = nsamp;
   nBins    = nbin;
   nComponents = ncomp;
@@ -546,6 +564,7 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
 
   //file containing histograms 
   fin = new TFile(filename.Data());
+
   ///////////////////////////////////////////////
   //get normalization factor between data and MC
   TH1D* htmp = (TH1D*)fin->Get("hnorm");
@@ -572,6 +591,7 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
       }
     }
   }
+
   if (!separateNeutMode) {
     //setup mc histos
     for (int isamp=0;isamp<nSamples;isamp++){
@@ -589,6 +609,7 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
       }
     }
   }
+
 #ifdef T2K
   else {
     // setup mc histos

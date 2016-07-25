@@ -34,6 +34,7 @@ class atmFitPars{
   int nComponents; // 1Re, 1Rmu, MR1e, MR1mu, 1Rpi0, other 
   int nAttributes; // pid, ring-counting, etc
   int nSysPars;
+  int nNormPars;
   int nModes;
   int nTotPars;
   int flgUseNormPars;

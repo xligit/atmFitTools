@@ -64,8 +64,8 @@ void splineFactory::fillBranches(int isamp,int ibin,int icomp,int iatt,int isyst
    // these numbers identify which histogram bin the spline is for
    nsample = isamp;
    nbin = ibin;
-   ncomponent=icomp;
-   nattribute=iatt;
+   ncomponent = icomp;
+   nattribute = iatt;
    nsystpar = isyst;
 
    // set up the 2D histogram that shows how the bin contents of this histogram
@@ -88,7 +88,7 @@ void splineFactory::fillBranches(int isamp,int ibin,int icomp,int iatt,int isyst
    for (int ipt=0;ipt<NPTSMAX;ipt++){
      for (int jhistobin=1;jhistobin<=nhistobins;jhistobin++){
        if (hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin)==0){
-         binWeight[ipt][jhistobin] = 1.;
+         binWeight[ipt][jhistobin] = 0.;
        }
        else{
          binWeight[ipt][jhistobin] =
@@ -136,9 +136,6 @@ void splineFactory::buildTheSplines(){
   splineTree->Branch("binWeight",binWeight,Form("binWeight[%d][%d]/D",NPTSMAX,NHBINSMAX));
   splineTree->Branch("h2DWeights","TH2D",&h2DWeights,320000,0);
 
-  //setup systematic deviations (in sigma)
- // double sigvals[5] = {-4.,-2.,0.,2.,4.};
-
   cout<<"creating spines"<<endl; 
 
   //loop over each systematic parameter specified in the parameter file
@@ -151,7 +148,7 @@ void splineFactory::buildTheSplines(){
       //loop over the values of this parameter
       for (int ipt=0;ipt<NPTSMAX;ipt++){
         incrementSystPars(isyst,sigmaValues[ipt]); //< set parameter value
-        getEvtWeight(mcEvt,isyst,fitPars->sysPar[isyst]);
+        getEvtWeight(mcEvt,isyst,fitPars->sysPar[isyst]); //< get weight given parameter value
         //loop over fiTQun attributes and fill histograms
         for (int iatt=0;iatt<nAtt;iatt++){
           hMC[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]

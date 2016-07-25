@@ -34,6 +34,7 @@ class hSplines{
   void drawSpline(int ibin, int isyst); 
   //debug test
   void debugTest();
+  void initFlgs();
 
   int checkSum;
 
@@ -41,11 +42,21 @@ class hSplines{
   TH1D* modHisto;  //pointer to the histogram that has been modified by splines
   TH2F* drawHisto;  //pointer to the histogram that is used in the draw functions
   TSpline3 *theSpline[NHBINSMAX][NSYSPARMAX]; //number of bins* number of sys pars
+  int setflg[NHBINSMAX][NSYSPARMAX];
   double evaluateSpline(int ibin, int ipar, double parvalue);
   TString nameTag;
   int nSyst; //number of systematic pars
   int nHistoBins; //number of bins in histogram
 };
+
+void hSplines::initFlgs(){
+  for (int i=0; i<nHistoBins; i++){
+    for (int j=0; j<nSyst; j++){
+      setflg[i][j] = 0;
+    }
+  }
+  return;
+}
 
 double hSplines::evaluateSpline(int ibin, int ipar, double parvalue){
 #ifndef T2K
@@ -181,6 +192,7 @@ TH1D* hSplines::buildModHistoAllPar(int npars, double *systPars){
 
 void hSplines::setSpline(int ibin, int isyst, TSpline3 *spline){
   theSpline[ibin][isyst] = spline;
+  setflg[ibin][isyst] = 1;
   checkSum--;
   return;
 }
@@ -199,7 +211,7 @@ void hSplines::buildSpline(int ibin, int isyst,double* X, double*Y, int N){
     yvals[index]=Y[ipt];
     index++;
 #else
-    if (X[ipt]>=0.){
+    if (Y[ipt]>=0.){
       xvals[index]=X[ipt];
       yvals[index]=Y[ipt];
       index++;
@@ -208,35 +220,46 @@ void hSplines::buildSpline(int ibin, int isyst,double* X, double*Y, int N){
   }
   TString splineName = nameTag.Data();
   splineName.Append(Form("_spline_bin%d_par%d",ibin,isyst));
-  if (!theSpline[ibin][isyst])  theSpline[ibin][isyst] = new TSpline3(splineName.Data(),xvals,yvals,index); 
+ // if (!theSpline[ibin][isyst])  theSpline[ibin][isyst] = new TSpline3(splineName.Data(),xvals,yvals,index); 
+  theSpline[ibin][isyst] = new TSpline3(splineName.Data(),xvals,yvals,index); 
+  theSpline[ibin][isyst]->SetName(splineName.Data());
   cout<<"hSplines: Built spline: "<<splineName.Data()<<endl;
+  setflg[ibin][isyst] = 1;  
   checkSum--;
   return;
 }
 
 hSplines::hSplines(TH1D* h, int nsyst, const char* name){
-  if (name!=NULL) nameTag = name;
-   nameTag = h->GetName();
+
+   // fix the name of this histogram + spline object
+   if (name!=NULL) nameTag = name;
+   else{
+     nameTag = h->GetName();
+   }
+
+   // get number of histo bins and number of systematic parameters
    nHistoBins=h->GetNbinsX();
    nSyst=nsyst;
+
    //initialize base histogram
    baseHisto=h;
-   cout<<"hSpline: Initialized splines for base histogram: "<<baseHisto->GetName()<<endl;
+
    //initialize modified histogram
    TString modhname = baseHisto->GetName();
    modhname.Append("_modified");
-   int hbins = baseHisto->GetNbinsX();
-   double hmin = baseHisto->GetBinLowEdge(1);
-   double hmax = baseHisto->GetBinLowEdge(baseHisto->GetNbinsX())+baseHisto->GetBinWidth(1);
+//   int hbins = baseHisto->GetNbinsX();
+ //  double hmin = baseHisto->GetBinLowEdge(1);
+  // double hmax = baseHisto->GetBinLowEdge(baseHisto->GetNbinsX())+baseHisto->GetBinWidth(1);
    //modHisto = new TH1D(modhname.Data(),modhname.Data(),hbins,hmin,hmax);
    modHisto = (TH1D*)baseHisto->Clone(modhname.Data());
+   modHisto->Reset();
    cout<<"mod histogram: "<<modHisto->GetName()<<endl;
 
-   int basenbins = baseHisto->GetNbinsX();
-   double basexmin  = baseHisto->GetBinLowEdge(1);
-   double  basexmax = baseHisto->GetBinLowEdge(basenbins);
+ //  int basenbins = baseHisto->GetNbinsX();
+ //  double basexmin  = baseHisto->GetBinLowEdge(1);
+  // double  basexmax = baseHisto->GetBinLowEdge(basenbins);
    checkSum = nHistoBins*nSyst;
-
+   initFlgs(); //< initialize set spline flag values
    //modHisto= new TH1D(modhname.Data(),modhname.Data(),basenbins,basexmin,basexmax);
    
 //   modHisto=(TH1D*)baseHisto->Clone(modhname.Data());

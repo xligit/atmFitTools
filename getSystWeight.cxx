@@ -189,6 +189,10 @@ double getSystWeight(const char* systype, fqProcessedEvent* mcevent, int ipar, d
 
   }
 
+  if (!parameterization_type.CompareTo("debug")){ 
+    return value;
+  }
+
   //no negative weights
   if (ww<0.) ww = 0.;
 

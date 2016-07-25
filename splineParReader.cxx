@@ -6,6 +6,43 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
+ 
+///////////////////////////////////////////////
+// Draw 1D plot of the spline for a given bin
+TH1D* splineParReader::drawSpline(int ibin){
+  TH1D* h  = new TH1D();
+  return h;
+}
+
+
+/////////////////////////////////////////////
+// Draw a 2D plot of the histogram variation
+TH2D* splineParReader::draw2D(int ievent){
+ 
+  if (ievent>0) fChain->GetEntry(ievent);
+
+  // setup histogram
+  int nbinsx = nhistobins;
+  double xmin   = 0;
+  double xmax   = nhistobins;
+  int nbinsy = npoints;
+  double ymin = systParValues[0];
+  double ymax = systParValues[npoints-1];
+  TH2D* h2 = new TH2D("h2d","h2d",nbinsx,xmin,xmax,nbinsy,ymin,ymax);
+
+  // fill histogram
+  for (int iy=0; iy<npoints; iy++){
+    for (int ix=1; ix<=nbinsx; ix++){
+       double value = binWeight[iy][ix];
+       h2->SetBinContent(ix,iy+1,value);
+    }
+  }
+
+  // draw histogram
+  h2->Draw("lego2");
+
+  return h2;
+}
 
 void splineParReader::Loop()
 {

@@ -350,6 +350,7 @@ void atmFitPars::initPars(const char* systype){
   // initialize systematic error parameters
   TString stype = systype;
   nSysPars=0;
+  nNormPars=0;
   
   if (!stype.CompareTo("tn186simple")){
     //CCQE xsec norm bin 1//
@@ -497,6 +498,14 @@ void atmFitPars::initPars(const char* systype){
     nSysPars++;
   }
 
+  // debugging parameters
+  if (!stype.CompareTo("debug")){
+   nSysPars = 1;
+   sysPar[0] = 1.0;
+   sysParDefault[0] = 1.0;
+   sysParUnc[0] = 0.05;
+  }
+
   // no parameters
   if (!stype.CompareTo("none")){
     nSysPars=0;
@@ -566,6 +575,7 @@ void atmFitPars::initPars(const char* systype){
        //count these as systematic parameters if using in fit
        if (flgUseNormPars){
          nSysPars++;
+         nNormPars++;
 	       index++;
        }
     }
@@ -629,6 +639,7 @@ void atmFitPars::setCov(covBase *covariance)
        //count these as systematic parameters if using in fit
        if (flgUseNormPars){
          nSysPars++;
+         nNormPars++;
 	       index++;
        }
     }
