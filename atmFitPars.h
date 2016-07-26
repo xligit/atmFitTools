@@ -61,7 +61,7 @@ class atmFitPars{
   int   parIndex[NBINMAX][NCOMPMAX][NATTMAX][2]; //< stores 1D array position for bias/smear pars
   int   sysParIndex[NSYSPARMAX]; //< stores 1D array position for systematic pars
   int   normParIndex[NSAMPMAX][NBINMAX]; //< stores 1D array position for normalization pars
-  double norm;  
+  double normFactor;  
   // for T2K parameterization///////////////////////////////////
   float fScale;
   double sysParNom[NSYSPARMAX]; // NEUT "nominal" xsec parameter value
@@ -73,7 +73,7 @@ class atmFitPars{
 
   //////////////////////////////////////////////////////////////
   //methods
-  void setNorm(double x){norm=x;}
+  void setNorm(double x){normFactor=x;}
   void initPars(const char* systype=""); //< sets parameters to initial values
   int getParIndex(int ibin, int icomp, int iatt, int imod){return parIndex[ibin][icomp][iatt][imod];}
   double getParameter(int ipar){return pars[ipar];}

@@ -127,6 +127,8 @@ atmFitPars::atmFitPars(const std::string parfilename, covBase *covm){
   cout<<"  nBins: "<<nBins<<endl;
   nAttributes = runpars->nAttributes;
   cout<<"  nAttributes: "<<nAttributes<<endl;
+  normFactor = runpars->normFactor;
+  cout<<"MC normalization: "<<normFactor<<endl;
   rnd = new TRandom3();
   fScale = 1;
   TString systype = runpars->sysParType;
@@ -153,6 +155,8 @@ atmFitPars::atmFitPars(const char* parfilename){
   cout<<"atmFitPars:  nSysPars: "<<nSysPars<<endl;
   nAttributes = runpars->nAttributes;
   cout<<"atmFitPars:  nAttributes: "<<nAttributes<<endl;
+  normFactor = runpars->normFactor;
+  cout<<"MC normalization: "<<normFactor<<endl;
   flgUseNormPars = runpars->flgUseNormPars;
   if (flgUseNormPars) cout<<"atmFitPars: Using normalization pars"<<endl;
   TString sysType = runpars->sysParType;

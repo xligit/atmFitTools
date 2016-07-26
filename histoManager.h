@@ -70,8 +70,8 @@ class histoManager{
   ///////////////////////////
   //parametrs
   atmFitPars* fitPars; 
-  void setFitPars(atmFitPars* thepars){fitPars=thepars;}
-
+  //void setFitPars(atmFitPars* thepars){fitPars=thepars;}
+  void setFitPars(atmFitPars* thepars);
   ///////////////////////////
   //methods
   //for initialization

@@ -1292,16 +1292,18 @@ histoCompare::histoCompare(const char* parfile, bool sep)
   int nsyspars = runPars->nSysPars;
   TString histofilename = runPars->hFactoryOutput;
   readFromFile(histofilename.Data(),nsamples,nbins,ncomponents,nattributes); 
-
+  //hManager = new histoManager(parfile);
+  
   //setup fit parameters
+  //thePars = hManager->fitPars;
   thePars = new atmFitPars(parfile);
   hManager->setFitPars(thePars);
 
   
   //read in splines if you're into that
-  if (runPars->useSplinesFlg){
-    setupSplines(runPars->splineFactoryOutput.Data(),nsyspars);
-  }
+//  if (runPars->useSplinesFlg){
+//    setupSplines(runPars->splineFactoryOutput.Data(),nsyspars);
+//  }
 
 
 }
