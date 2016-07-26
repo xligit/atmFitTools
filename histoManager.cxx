@@ -472,7 +472,10 @@ histoManager::histoManager(const char* parfile, int nmode, bool separateneutmode
   //read in parameters
   sharedPars* runPars = new sharedPars(parfile);
   runPars->readParsFromFile();
-  
+ 
+  //set MC normalization
+  normFactor = runPars->normFactor;
+
   //read in previously created histograms
   int nsamp = runPars->nSamples;
   int nbin  = runPars->nFVBins;
@@ -575,7 +578,7 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
 #ifdef T2K
   normFactor = scaling;
 #else
-  normFactor=htmp->GetBinContent(1);
+  //normFactor=htmp->GetBinContent(1);
 #endif
   //////////////////////////////////////////////
   //read in histograms by name

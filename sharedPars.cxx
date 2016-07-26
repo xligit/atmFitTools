@@ -40,6 +40,7 @@ class sharedPars{
   int nAttributes;
   int nSysPars;
   int nModes;
+  double normFactor;
   TString preProcessFilesMC;
   TString preProcessFilesSpline;
   TString preProcessFilesBANFF;
@@ -138,6 +139,7 @@ void sharedPars::readParsFromFile(const char* filename){
   useSplinesFlg = kr->getKeyI("useSplinesFlg");
   MCMCNSteps= kr->getKeyI("MCMCNSteps");
   MCMCTunePar = kr->getKeyD("MCMCTunePar");
+  normFactor = kr->getKeyD("normFactor");
   fixAllSmearFlg = kr->getKeyI("fixAllSmearFlg");
   FVBinName0= kr->getKeyS("FVBinName0");
   FVBinName1=kr->getKeyS("FVBinName1");
