@@ -243,7 +243,7 @@ double calcToWall(TVector3* vpostmp, TVector3* vdirtmp){
   TVector3 thedir;
   thepos.SetXYZ(vpostmp->X(),vpostmp->Y(),vpostmp->Z());
   thedir.SetXYZ(vdirtmp->X(),vdirtmp->Y(),vdirtmp->Z());
-  double wallval = calcWall(vpostmp)
+  double wallval = calcWall(vpostmp);
   if (wallval<0) return wallval; 
   towallval+= calcToWallCustom(&thepos,&thedir,1.);
   towallval+= calcToWallCustom(&thepos,&thedir,0.1);

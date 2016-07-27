@@ -82,20 +82,20 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
 //  int parindex = 0;
   double result = 0.;
 // markovTools* mc = new markovTools(npars); //< create markovTools object
-  markovTools* mc = new markovTools(thePars); //< create markovTools object
-  mc->setTuneParameter(tunePar);
+  markovTools* mcmc = new markovTools(thePars); //< create markovTools object
+  mcmc->setTuneParameter(tunePar);
 
   //fill parameter array and set uncertainties
   for (int ipar=0;ipar<thePars->nTotPars;ipar++){
    // par[ipar]=thePars->getParameter(ipar); //< parameter array
-    mc->setParVar(ipar,thePars->parUnc[ipar]); //< set parameter variance
-    mc->setFixPar(ipar,thePars->fixPar[ipar]); //< set parameter fix flag
+    mcmc->setParVar(ipar,thePars->parUnc[ipar]); //< set parameter variance
+    mcmc->setFixPar(ipar,thePars->fixPar[ipar]); //< set parameter fix flag
   }
 
   //set initial state
   result = getTotLnL();
 //  getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
-  mc->setL(result);//< sets the initial likelihood
+  mcmc->setL(result);//< sets the initial likelihood
   double Linit = result;
 
   //run tuning
@@ -103,21 +103,21 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
     double xaccepted=0.;
     int   istep=0;
     while (istep<nsteps){
-      istep = mc->iStep;
-      mc->proposeStep(); //< propose a new step
-      //getTotLnL1D(result, npars,par);  //< get likelihood of new step
+      cout<<"----------"<<"step : "<<istep<<"---------------"<<endl;;
+      mcmc->proposeStep(); //< propose a new step
       result = getTotLnL();
-      cout<<result-Linit<<endl;
-      if (mc->acceptStepLnL(result)){ //< check if new step is accepted
+      cout<<"hc: Likelihood "<<Linit<<" -> "<<result<<" diff: "<<result-Linit<<endl;
+      if (mcmc->acceptStepLnL(result)){ //< check if new step is accepted
         xaccepted++; 
       }
+      istep = mcmc->iStep;
     }
 
     double rate = xaccepted/(double)nsteps;
     cout<<"acceptance rate: "<<rate<<endl;
     cout<<"tune parameter: "<<tunePar<<endl;
     tunePar*=(rate/goal);
-    cout<<"new tune parameter: "<<tunePar<<endl;
+    cout<<"new tune parameter: "<<tunePar<<endl;;
   }
   return; 
 }
@@ -286,7 +286,7 @@ double histoCompare::getErrHi(int ipar){
  // cout<<"lbest: "<<Lbest<<endl;
   double parbest = thePars->pars[ipar];
   double parval = thePars->pars[ipar]; 
-  double dpar = thePars->parUnc[ipar]/2.;
+  double dpar = thePars->parUnc[ipar]/10.;
   double hierr;
   int ntry = 0;
   int ntrymax=10000;
@@ -344,7 +344,7 @@ double histoCompare::getErrLo(int ipar){
   double Lbest = getTotLnL(); //current likelihood value
   double parbest = thePars->pars[ipar]; //current parameter value
   double parval = thePars->pars[ipar]; //floating value for estimation 
-  double dpar = thePars->parUnc[ipar]/2.; //how much parameter should change between steps
+  double dpar = thePars->parUnc[ipar]/10.; //how much parameter should change between steps
 //  cout<<"dpar: "<<dpar<<endl;
   double loerr;
   int ntry = 0;

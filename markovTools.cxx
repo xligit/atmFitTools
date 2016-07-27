@@ -48,7 +48,7 @@ class markovTools{
    //setters
    void setFixPar(int ipar, int value){fixPar[ipar]=value;}
    void setPar(int ipar,double value){oldPars[ipar]=value;}
-   void setL(double value){oldL=value;}
+   void setL(double value){oldL=value; cout<<"Lset: "<<value<<endl;}
    void setParVar(int ipar,double value); //< sets parameter standard deviations
 
    /////////////////////////
@@ -92,7 +92,7 @@ void markovTools::savePath(){
 
 void markovTools::setParVar(int ipar,double value){
   varPar[ipar] = value;
-  cout<<"param "<<ipar<<" variance set to: "<<value<<endl;
+  cout<<"parameter "<<ipar<<" variance set to: "<<value<<endl;
   return;
 }
 
@@ -164,8 +164,13 @@ void markovTools::test(int ntry){
 //decide if new parameters shoudl be accepted
 int markovTools::acceptStepLnL(double newL){
 
+
   double alpha = (oldL-newL); //< get difference in LnL
+ // cout<<"mcmc: Likelihood: "<<oldL;;
+//  cout<<" -> "<<newL;
+//  cout<<" diff: "<<alpha<<endl;
   double rand = randy->Rndm(); //< throw a random number
+ // cout<<"Log unit random: "<<TMath::Log(rand)<<endl;
   int iaccept = 0; //< acceptance flag
 
   /////////////////////////////
@@ -174,6 +179,7 @@ int markovTools::acceptStepLnL(double newL){
     //accepted! new pars are now old
     for (int i=0;i<nPars;i++){
       oldPars[i]=atmPars->getParameter(i);
+      oldL = newL;
     }
 #ifdef T2K
     atmPars->acceptStep();
@@ -181,15 +187,17 @@ int markovTools::acceptStepLnL(double newL){
     pathTree->Fill();
     iaccept = 1;
   } 
-  /*
   else{
     for (int i=0;i<nPars;i++){
       //rejected, reset to old parameters
       atmPars->setParameter(i,oldPars[i]);
     }
   }
-  */
 
+//  if (iaccept) cout<<"accepted!"<<endl;
+//  else{
+//   cout<<"not accepted"<<endl;
+//  }
   iStep++; //< increment global step  count
   if ((iStep%100)==0) cout<<"step: "<<iStep<<endl;
 
@@ -201,7 +209,11 @@ int markovTools::acceptStepLnL(double newL){
 
 int markovTools::acceptStepLnL(double newL,double* par){
   double alpha = (oldL-newL);
+  cout<<"oldL: "<<oldL<<endl;
+  cout<<"newL: "<<newL<<endl;
+  cout<<"Ldiff: "<<alpha<<endl;
   double rand = randy->Rndm();
+  cout<<"rand: "<<rand<<endl;
   int iaccept = 0;
   //cout<<"delta L: "<<alpha<<endl;
   if (alpha>TMath::Log(rand)){
@@ -222,6 +234,7 @@ int markovTools::acceptStepLnL(double newL,double* par){
   }
   iStep++;
   if ((iStep%100)==0) cout<<"step: "<<iStep<<endl;
+  if (iaccept) cout<<" accepted! "<<endl;
   return iaccept;
 }
 
@@ -266,7 +279,10 @@ void markovTools::proposeStep(double* par){
   for (int i=0;i<nPars;i++){
 #ifndef T2K
     oldPars[i] = par[i];
-    if (fixPar[i]!=1) par[i] = randy->Gaus(par[i],varPar[i]*tuneParameter);
+    if (fixPar[i]!=1){
+      par[i] = randy->Gaus(par[i],varPar[i]*tuneParameter);
+      cout<<"Proposed parameter "<<i<<" as :"<<par[i]<<endl;
+    }
 #else
     if (fixPar[i]!=1) par[i] = atmPars->getPropParameter(i);
 #endif
@@ -283,11 +299,11 @@ void markovTools::proposeStep(){
   for (int i=0;i<nPars;i++){
     oldPars[i] = atmPars->getParameter(i);
     if (atmPars->fixPar[i]!=1){
-    //  cout<<"old par: "<<oldPars[i]<<endl;
+//      cout<<"par "<<i<<": "<<oldPars[i];
       double random = randy->Gaus(oldPars[i],atmPars->parUnc[i]*tuneParameter);
-   //   cout<<"random: "<<random<<endl;
+      //cout<<"random: "<<random<<endl;
       atmPars->setParameter(i,random);
-   //   cout<<"new par: "<<atmPars->getParameter(i);
+ //     cout<<"->  "<<atmPars->getParameter(i)<<endl;;
     }
   }
 #else

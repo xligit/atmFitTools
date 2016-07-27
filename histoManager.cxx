@@ -58,8 +58,8 @@ void histoManager::showSysParVariation(int isamp, int ibin, int icomp, int iatt,
      fitPars->setParameter(ipar,testval[ipt]);
      cout<<"parval: "<<testval[ipt]<<endl;
      TH1D* htemp = getModHistogram(isamp,ibin,icomp,iatt);
-     for (int ibin=1;ibin<=nbinsx;ibin++){
-       h2d->SetBinContent(ibin,ipt,htemp->GetBinContent(ibin));
+     for (int jbin=1;jbin<=nbinsx;jbin++){
+       h2d->SetBinContent(jbin,ipt,htemp->GetBinContent(jbin));
      } 
    }
 
