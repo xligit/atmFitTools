@@ -491,7 +491,7 @@ histoManager::histoManager(const char* parfile, int nmode, bool separateneutmode
  
   //setup histogram bin splines if using them 
   if (runPars->useSplinesFlg){
-    readSplinesFromFile(runPars->splineFactoryOutput.Data(),runPars->nSysPars);
+    readSplinesFromFile(runPars->splineFactoryOutput.Data());
   }
 
   return;
@@ -712,19 +712,28 @@ void  histoManager::initHistos(){
   return; 
 }
 
-void histoManager::readSplinesFromFile(const char* fname,int nsyspartot){
+void histoManager::readSplinesFromFile(const char* fname){
+
+  //open spline parameter file
+  TFile splineFile(fname);
+  TTree* splinePars = (TTree*)splineFile.Get("splinePars");
+  splineParReader* parReader = new splineParReader(splinePars);
+  splinePars->GetEntry(0);
+  int nsyspartot = parReader->nsyspartot;
+
+
+  // make spline objects that will be filled with the spline parameters
   TString splinename;
-  //make empty splines
   if (!separateNeutMode) {
     for (int ibin=0;ibin<nBins;ibin++){
       for (int isamp=0;isamp<nSamples;isamp++){
-	for (int icomp=0;icomp<nComponents;icomp++){
-	  for (int iatt=0;iatt<nAttributes;iatt++){
-	    splinename="splinefor_";
-	    splinename.Append(hMC[isamp][ibin][icomp][iatt]->GetName());
-	    theSplines[isamp][ibin][icomp][iatt]=new hSplines(hMC[isamp][ibin][icomp][iatt],nsyspartot,splinename.Data());
-	  }
-	}
+      	for (int icomp=0;icomp<nComponents;icomp++){
+	        for (int iatt=0;iatt<nAttributes;iatt++){
+	          splinename="splinefor_";
+	          splinename.Append(hMC[isamp][ibin][icomp][iatt]->GetName());
+	          theSplines[isamp][ibin][icomp][iatt]=new hSplines(hMC[isamp][ibin][icomp][iatt],nsyspartot,splinename.Data());
+	        }
+	      }
       }
     }
   }
@@ -732,24 +741,21 @@ void histoManager::readSplinesFromFile(const char* fname,int nsyspartot){
   else {
     for (int ibin=0;ibin<nBins;ibin++){
       for (int isamp=0;isamp<nSamples;isamp++){
-	for (int icomp=0;icomp<nComponents;icomp++){
-	  for (int imode = 0; imode < nModes; ++imode) {
-	    for (int iatt=0;iatt<nAttributes;iatt++){
-	      splinename="splinefor_";
-	      splinename.Append(hMCNeut[isamp][ibin][icomp][imode][iatt]->GetName());
-	      moreSplines[isamp][ibin][icomp][imode][iatt] = new hSplines(hMCNeutNom[isamp][ibin][icomp][imode][iatt],nsyspartot,splinename.Data());
-	    }
-	  }
-	}
+       	for (int icomp=0;icomp<nComponents;icomp++){
+	        for (int imode = 0; imode < nModes; ++imode) {
+	          for (int iatt=0;iatt<nAttributes;iatt++){
+	            splinename="splinefor_";
+	            splinename.Append(hMCNeut[isamp][ibin][icomp][imode][iatt]->GetName());
+	            moreSplines[isamp][ibin][icomp][imode][iatt] =
+                new hSplines(hMCNeutNom[isamp][ibin][icomp][imode][iatt],nsyspartot,splinename.Data());
+	          }
+	        }
+	      }
       }
     }
   }
 #endif
-  //open spline parameter file
-  TFile splineFile(fname);
-  TTree* splinePars = (TTree*)splineFile.Get("splinePars");
-  splineParReader* parReader = new splineParReader(splinePars);
-  splinePars->GetEntry(0);
+
   //build the splines
   //double Y[parReader->npoints];
   //double X[parReader->npoints];
@@ -764,22 +770,25 @@ void histoManager::readSplinesFromFile(const char* fname,int nsyspartot){
         X[ipt] = parReader->systParValues[ipt];
       }
       if (!separateNeutMode) {
-	theSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nattribute]
-	  ->buildSpline(hbin,parReader->nsystpar,X,Y,parReader->npoints);
+      	theSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nattribute]
+	       ->buildSpline(hbin,parReader->nsystpar,X,Y,parReader->npoints);
       }
 #ifdef T2K
       else {
-	moreSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nmode][parReader->nattribute]->buildSpline(hbin, parReader->nsystpar, X, Y, parReader->npoints);
+      	moreSplines[parReader->nsample][parReader->nbin][parReader->ncomponent][parReader->nmode][parReader->nattribute]
+          ->buildSpline(hbin, parReader->nsystpar, X, Y, parReader->npoints);
       }
 #endif
     }
   }
   splineFile.Close();
-//  */
   useSplineFlg=1;
   return;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// this constructor creates a "blank" histogram manager that is used by histoFactory to 
 histoManager::histoManager(int nsampl,int nbins,int ncomp,const char* name, int nmode, bool separateneutmode)
   : nModes(nmode)
   , separateNeutMode(separateneutmode)

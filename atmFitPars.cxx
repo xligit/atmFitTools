@@ -151,8 +151,8 @@ atmFitPars::atmFitPars(const char* parfilename){
   cout<<"atmFitPars:  nComponents: "<<nComponents<<endl;
   nBins = runpars->nFVBins;
   cout<<"atmFitPars:  nBins: "<<nBins<<endl;
-  nSysPars = runpars->nSysPars;
-  cout<<"atmFitPars:  nSysPars: "<<nSysPars<<endl;
+ // nSysPars = runpars->nSysPars;
+ // cout<<"atmFitPars:  nSysPars: "<<nSysPars<<endl;
   nAttributes = runpars->nAttributes;
   cout<<"atmFitPars:  nAttributes: "<<nAttributes<<endl;
   normFactor = runpars->normFactor;

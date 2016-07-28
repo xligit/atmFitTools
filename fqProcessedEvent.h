@@ -384,7 +384,7 @@ void fqProcessedEvent::Init(TTree *tree)
    fChain->SetBranchAddress("nvpi0", &nvpi0, &b_nvpi0);
    fChain->SetBranchAddress("nvp", &nvp, &b_nvp);
    fChain->SetBranchAddress("nvk", &nvk, &b_nvk);
-   fChain->SetBranchAddress("nvoth", &nvoth, &b_nvoth);
+   //fChain->SetBranchAddress("nvoth", &nvoth, &b_nvoth);;
    fChain->SetBranchAddress("vispid", vispid, &b_vispid);
    fChain->SetBranchAddress("fqwall", &fqwall, &b_fqwall);
    fChain->SetBranchAddress("fqtowall", &fqtowall, &b_fqtowall);

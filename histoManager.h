@@ -31,7 +31,7 @@ class histoManager{
   ///////////////////////////
   //CONSTRUCTORS//
   histoManager(int nsampl,int nbins,int ncomp,const char* name="", int nmode = 0, bool separateneutmode = false); //creates blank histogram manager
-  histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int natt, int nmode = 0, bool separateneutmode = false); //recreates a histoManager from a file
+  histoManager(const char* rootfilename,int nsamp,int nbin,int ncomp,int natt, int nmode = 0, bool separateneutmode = false); //recreates a histoManager from a file
   histoManager(int nptsmc, int nptsdata); //< for unit testing, makes histoManager with gaussian histograms 
   histoManager(const char* parfile, int nmode = 0, bool separateneutmode = false); //< builds a histogram manager from histograms and values in parameter file
 
@@ -112,7 +112,7 @@ class histoManager{
   void printBreakdownPlots(const char* directory);
   THStack* showMCBreakdownStack(int isample,int ibin,int iatt);
   void readFromFile(const char* rootename,int nsamp,int nbin,int ncomp,int natt, int nmode = 0);
-  void readSplinesFromFile(const char* rootname, int nsyspartot);
+  void readSplinesFromFile(const char* rootname);
   void drawSpline(int isamp, int ibin, int icomp, int iatt, int hbin, int isyst);
   void drawSpline2D( int isamp, int ibin, int icomp, int iatt, int isyst);
   ///////////////////////////

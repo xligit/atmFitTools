@@ -1289,7 +1289,6 @@ histoCompare::histoCompare(const char* parfile, bool sep)
   int ncomponents = runPars->nComponents;
   int nsamples = runPars->nSamples;
   int nattributes  = runPars->nAttributes;
-  int nsyspars = runPars->nSysPars;
   TString histofilename = runPars->hFactoryOutput;
   readFromFile(histofilename.Data(),nsamples,nbins,ncomponents,nattributes); 
   //hManager = new histoManager(parfile);
@@ -1298,6 +1297,7 @@ histoCompare::histoCompare(const char* parfile, bool sep)
   //thePars = hManager->fitPars;
   thePars = new atmFitPars(parfile);
   hManager->setFitPars(thePars);
+  int nsyspars = thePars->nSysPars;
 
   
   //read in splines if you're into that

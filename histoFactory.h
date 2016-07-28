@@ -8,13 +8,21 @@
 
 using namespace std;
 
-//class for building histograms from sorted data and mc trees
+/////////////////////////////////////////////////////////////////////
+//class for building histograms from processed data and mc trees
 class histoFactory{
   public:
-
+  
+  ////////////////////////////////////////////////////////////////////
+  // Constructors
+  //obsolete, do not use
   histoFactory(int nsampl,int nbins,int ncomp,const char* name=""); //creates blank histogram factory
+  // use ths one 
   histoFactory(const char* parfile);//< initialize using parameters in par file
-  histoManager* hManager; 
+
+  ///////////////////////////////////////////////////////////////
+  //Internal variables
+  histoManager* hManager; //manages pointers to hisograms 
   TTree* dataTree; //tree containing data events
   TTree* mcTree;  //tree conttaining MC events
   fqProcessedEvent* fqData;  //reads data tree
@@ -31,15 +39,15 @@ class histoFactory{
   int nMCEvents;  //number of MC events
   double normMC; //normalization factor for MC
   double att[NATTMAX]; //array of all attribute values
-  //TString attType[NATTMAX];  //array of attribute type codes
+  TString parFileName; //name of parameter file at initialization
+  sharedPars* runpars; //runtime paramters from parameter file
+
+  /////////////////////////////////////////////////////////////
+  //Methods
   void init();  //initialize after attributes have been set (sets branch addresses, creates histograms)
-  //void addAttribute(int iatt);  //add an attribute (fiTQun variable) to list of histograms to be made
   TH1D* getHistogram(int iatt,const char* thename); //returns pointer to MC histogram
   TH1D* getHistogramData(int iatt,const char* thename); //returns pointer to Data histogram
-  void fillAttributesData(); //fills all data histograms
-  void fillAttributesMC();  //fills all MC histograms
   void fillHistos(); //fills all histograms
-  //setters
   void setDataTree(TTree* tr);
   void setDataTree(TChain* ch);
   void setMCTree(TTree* tr);
@@ -49,9 +57,7 @@ class histoFactory{
   TString getOutputFileName(){return outputFileName;}
   void setOutputFileName(const char *name){outputFileName=name;}
   void normalizeHistos(double scale=-1.);
-  void runHistoFactory();
-  TString parFileName;
-  sharedPars* runpars;
+  void runHistoFactory(); //< this will run the factory and fill all histograms
 };
 
 #endif

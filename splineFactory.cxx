@@ -510,7 +510,7 @@ splineFactory::splineFactory(const char*  parfile){
   nBin=runpars->nFVBins;
   nComp=runpars->nComponents;
   nAtt=runpars->nAttributes;
-  nSyst=runpars->nSysPars;
+  nSyst=fitPars->nSysPars;
   nameTag=runpars->globalRootName.Data();
   foutName = runpars->splineFactoryOutput.Data(); //< name of output file with spline parameters
   sysParType = runpars->sysParType; 

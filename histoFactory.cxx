@@ -17,7 +17,6 @@ histoFactory::histoFactory(const char* parfile){
 
   //setup factory
   nameTag = runpars->globalRootName;
- // nameTag.Append("_histograms.root");
   nSamples = runpars->nSamples;
   nComponents = runpars->nComponents;
   nAttributes = runpars->nAttributes;
@@ -43,9 +42,9 @@ void histoFactory::runHistoFactory(){
   cout<<"histoFactory: Number of data events: "<<dataTree->GetEntries()<<endl;
   cout<<"histoFactory: Number of MC events: "<<mcTree->GetEntries()<<endl;
 
-
   cout<<"histoFactory: Initializing histograms..."<<endl;  
-  //initialize histograms
+
+  //Initialize  histograms
   init();
 
   //loop over events and fill histograms
@@ -55,8 +54,8 @@ void histoFactory::runHistoFactory(){
   //normalize all of the histograms
   normalizeHistos();
 
-  cout<<"histoFactory: Saving histograms"<<endl;
   //save all filled histograms
+  cout<<"histoFactory: Saving histograms"<<endl;
   saveToFile();
 
   ///////////////////
@@ -73,40 +72,22 @@ histoFactory::histoFactory(int nsampl,int nbins,int ncomp,const char* name){
   nComponents = ncomp;
   nAttributes = 0;
   nBins = nbins;
+
   //create an empty histogram manager
   hManager = new histoManager(nsampl,nbins,ncomp,name); 
   return;
 }
 
-//void histoFactory::addAttribute(int iatt){
-  //adds an attribute to the attribute list
-  //the attribute type is a code for the fiTQun output being used
-  //this code is used to determine histogram binning and names
 
-  //list of codes:
-  //0 - e/mu likelihood ratio for subev 1
-  //1 - e/mu likelihood ratio for subev 2
-  //
-
- // attType[nAttributes]=iatt; 
- // nAttributes++;
- // return;
-//}
 
 /////////////////////////////////////////////////////////////////////////////
-//builds all new histograms for data and MC. Call after all attributes are specified
+//builds all new histograms for data and MC. 
 void histoFactory::init(){
 
   //////////////////////////////////////
   //setup name for output file 
-//  if (!outputFileName.cxxompareTo("")){
-//    outputFileName = "histoFactoryOutput.root";
-//  }
-//  outputFileName = runpars->hFactoryOuputDir.Data();
   outputFileName = runpars->hFactoryOutput.Data();
- // outputFileName.Append( nameTag.Data() );
   fout = new TFile(outputFileName.Data(),"RECREATE");
-
 
   ///////////////////////////////////////////
   //make sure to set sumw2 to proporly calculate errors (?)
@@ -120,11 +101,11 @@ void histoFactory::init(){
       for (int iatt=0;iatt<nAttributes;iatt++){
          TString hname = "hdata_";
          hname.Append(Form("samp%d_bin%d_att%d",isamp,ibin,iatt));
-         //cout<<"Making histogram: "<<hname.Data()<<endl;
          hManager->setHistogram(isamp,ibin,0,iatt,1,getHistogramData(iatt,hname.Data()));
       }
     }
   }
+
   //setup mc histos
   for (int isamp=0;isamp<nSamples;isamp++){
     for (int ibin=0;ibin<nBins;ibin++){
@@ -132,7 +113,6 @@ void histoFactory::init(){
         for (int iatt=0;iatt<nAttributes;iatt++){
            TString hname = "hmc_";
            hname.Append(Form("samp%d_bin%d_comp%d_att%d",isamp,ibin,icomp,iatt));
-         //  cout<<"Making histogram: "<<hname.Data()<<endl;
            hManager->setHistogram(isamp,ibin,icomp,iatt,0,getHistogram(iatt,hname.Data()));
         }
       }
@@ -142,10 +122,10 @@ void histoFactory::init(){
 }
 
 ////////////////////////////////////////////////////////////////////
-//use this function to build histograms
+//Use this function to build data histograms
 TH1D* histoFactory::getHistogramData(int iatt, const char* thename){
  
-  //setup binning
+  //setup binning from runtime parameters
   TString parname = Form("nBinsAtt%d",iatt);
   int nbins = runpars->getParI(parname.Data());
   parname = Form("xMinAtt%d",iatt);
@@ -162,20 +142,13 @@ TH1D* histoFactory::getHistogramData(int iatt, const char* thename){
   cout<<"    xmax:  "<<xmax<<endl;
   TH1D* hnew = new TH1D(thename,thename,nbins,xmin,xmax);
 
-//  int nBinsNllEMu = 50;
-//  if (iatt==0){
-//     hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
-//  }
-//  if (iatt==1){
-//     hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
-//  }
-
-
+  //
   return hnew;
 }
 
 
-
+/////////////////////////////////////////////////////////////////////////////////////
+//Use this function to build MC histograms
 TH1D* histoFactory::getHistogram(int iatt, const char* thename){
 
   //setup binning
@@ -195,39 +168,9 @@ TH1D* histoFactory::getHistogram(int iatt, const char* thename){
   cout<<"    xmax:  "<<xmax<<endl;
   TH1D* hnew = new TH1D(thename,thename,nbins,xmin,xmax);
 
-//  int nBinsNllEMu = 50;
-//  if (iatt==0){
-//     hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
-//  }
-//  if (iatt==1){
-//     hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
-//  }
-
-
   return hnew;
- // int nBinsNllEMu = 50;
- // int nBinsNllEMuData = 50;
- // if (iatt==0){
- //    hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
- // }
- // if (iatt==1){
- //    hnew = new TH1D(thename,thename,nBinsNllEMu,-3000,6000);
- // }
-//  return hnew;
 }
 
-//calculates attributes from the raw fiTQun output
-void histoFactory::fillAttributesData(){
-  att[0] = fqData->fq1rnll[0][2]-fqData->fq1rnll[0][1];
-  att[1] = fqData->fq1rnll[1][2]-fqData->fq1rnll[1][1];
-  return;
-}
-
-void histoFactory::fillAttributesMC(){
-  att[0] = fqMC->fq1rnll[0][2]-fqMC->fq1rnll[0][1];
-  att[1] = fqMC->fq1rnll[1][2]-fqMC->fq1rnll[1][1];
-  return;
-}
 
 void histoFactory::normalizeHistos(double scale){
   //scale all MC histograms by some scaling factor
@@ -256,30 +199,37 @@ void histoFactory::normalizeHistos(double scale){
   return;
 }
 
+
+///////////////////////////////////////////////////////////////////////
+// This will fill all of the histrograms built by init()
 void histoFactory::fillHistos(){
+
+  // get total numbers of data and MC events
   int nevdata = dataTree->GetEntries();
   int nevmc   = mcTree->GetEntries();
   cout<<"histoFactory: Number of Data entries: "<<nevdata<<endl;
   cout<<"histoFactory: Number of MC entries: "<<nevmc<<endl;
+
   //fill data histos
   for (int i=0;i<nevdata;i++){
     dataTree->GetEntry(i);
-    //fillAttributesData();
     for (int iatt=0;iatt<nAttributes;iatt++){
       hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,
                                   fqData->attribute[iatt],fqData->evtweight);
    }
   }
+
   //fill MC histos
   for (int j=0;j<nevmc;j++){
     mcTree->GetEntry(j);
-    fillAttributesMC();
+    //fillAttributesMC();
     for (int jatt=0;jatt<nAttributes;jatt++){
       hManager->fillHistogram(fqMC->nsample,fqMC->nbin,fqMC->ncomponent,
                               jatt,fqMC->attribute[jatt],fqMC->evtweight);
-    //  hManager->fillHistogram(fqMC->nsample,fqMC->nbin,fqMC->ncomponent,jatt,att[jatt],fqMC->evtweight);
     }
   } 
+
+  //
   return;
 }
 

@@ -83,7 +83,7 @@ class histoCompare{
   //initialize all necessary components
   void initialize(histoManager* hm, atmFitPars* apars);
 
-  void setupSplines(const char* fname,int npar){hManager->readSplinesFromFile(fname,npar);}
+  void setupSplines(const char* fname){hManager->readSplinesFromFile(fname);}
   //tools for adding histogram directly..for debugging
   void addHistogram(TH1D* h,int dataflg);
   int  rebinFactor;
