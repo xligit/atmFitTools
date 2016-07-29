@@ -177,6 +177,31 @@ double visRing::getEnergy(int ipid, double pmom){
   return E;
 }
 
+double visRing::getKEcrit(int ipid){
+   // use gamma threshold for gammas or neutral pions
+ double Tcrit = 0.;
+ if (ipid==1){
+   Tcrit = gamthresh;
+   return Tcrit;
+ }
+ if (ipid==7){
+   Tcrit = 0;
+   return Tcrit;
+ }
+ double mass = massof[ipid];
+ Tcrit = (mass/TMath::Sqrt(1 - (Cthresh* Cthresh))) - mass;
+ return Tcrit;
+}
+
+double visRing::getKE(int ipid, double pmom){
+  if (ipid==1){
+    return pmom;
+  }
+  double E = getEnergy(ipid, pmom);
+  double m = massof[ipid];
+  return E-m;
+}
+
 void visRing::addvisiblesecondary(int ipid, int index, double momentum){
   visscndpid[nvisscnd]=ipid;
   visscndparentid[nvisscnd] = fq->iorgprt[index];

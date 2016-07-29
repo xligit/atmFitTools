@@ -50,6 +50,8 @@ class visRing{
  double getpcrit(int ipid);
  double getEnergy(int ipid, double pmom);
  double getEcrit(int ipid);
+ double getKEcrit(int ipid);
+ double getKE(int ipid, double pmom);
  double getVisibleEnergy(int ipid, double pmom);
  double getVisWall(int index, int scndflg);
  double getVisTowall(int index, int scndflg);
