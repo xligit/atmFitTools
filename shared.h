@@ -12,6 +12,7 @@
 #define NBINMAX 10
 #define NCOMPMAX 8
 #define NATTMAX 6
+#define FLGDEBUG 0 // set to 1 to print out some useful things
 #ifndef T2K
 #define NSYSPARMAX 20
 #else
@@ -20,6 +21,6 @@
 #define NHBINSMAX 300 // 
 #define NPTSMAX 21
 #define NMODE 10
-#define scaling 0.1 // 0.1 for 10 years data / 100 years MC 
+#define SCALING 0.1 // 0.1 for 10 years data / 100 years MC 
 
 #endif

@@ -9,6 +9,7 @@
 #include "histoManager.cxx"
 //#include "fqProcessedEvent.cxx"
 #include "splineFactory.cxx"
+#include "getSystWeight.cxx"
 #include "mcmcReader.cxx"
 #include "THStack.h"
 #include "sharedPars.cxx"
@@ -19,6 +20,7 @@
 //This class aims to take the MCMC output and generate uncertainties in number of events 
 class postfitCalculator{
   public:
+
   ///////////////////////////////////////////////////////////////////////////////
   //constructor
   //initialize using the file name that the contains the mcmc tree to be analyzed
@@ -46,6 +48,7 @@ class postfitCalculator{
   double evtweight;
   int evtclass; //< code for event class 
   TString parFileName;  //< name of parameter file
+  TString sysParType; //< string code for which systematic parameters to use
   //for "nsk" tree
   double nevents[10]; //< number of events for each event class
   double neventsdef[10]; //< number of events for each class in default mc
@@ -67,7 +70,7 @@ class postfitCalculator{
 //  TH1D* hPIDemuSE2[10][200]; //< e/mu PID of second subev
   TH1D* hPIDemu[10][200]; //<e/mu PID
   TH1D* hNSK[10]; //< numbers of events after cuts
-  TH1D* hMCMod[3][3][5][20];
+  TH1D* hMCMod[3][6][5][25];
   TH1D* hPostFit[3][3][5];
   TH1D* hPassFail[100];
   TH1D* hPassFailData;
@@ -129,23 +132,26 @@ void postfitCalculator::printPostFitHistos(const char* directory){
 
 }
 
-
+////////////////////////////////////////////////////////////
+// Make some summary histograms;
 void postfitCalculator::calcPostFitHistos(int errtype){
 
+  /*
   /////////////////////////////////////////
   //initialize hisotgrams
   for (int ibin=0;ibin<runPars->nFVBins;ibin++){
     for (int isamp=0;isamp<runPars->nSamples;isamp++){
       for (int iatt=0;iatt<runPars->nAttributes;iatt++){
         TString hname = Form("hMCMCPostfit_samp%d_bin%d_iatt%d",isamp,ibin,iatt);
+        // use modified histogram (from previously filled histos) as template
         hPostFit[isamp][ibin][iatt] = (TH1D*)hMCMod[isamp][ibin][iatt][0]->Clone(hname.Data());
         hPostFit[isamp][ibin][iatt]->SetLineColor(kBlue);
-       // hPostFit[isamp][ibin][iatt]->SetFillColor(kBlue+1);
         hPostFit[isamp][ibin][iatt]->Reset();        
       }
     }
   }
-
+  
+  /*
   ////////////////////////////////////////////////////
   //calculate mean 
   double thenorm=(double)NMCMCPts-1.;
@@ -169,6 +175,7 @@ void postfitCalculator::calcPostFitHistos(int errtype){
     }
   }
 
+  cout<<"break1"<<endl;
   ////////////////////////////////////////////////////////
   //calculate RMS:
   double rms[3][3][5][100];
@@ -184,6 +191,8 @@ void postfitCalculator::calcPostFitHistos(int errtype){
       }
     }
   }
+
+cout<<"break2"<<endl;
   //now we fill rms array
   for (int ibin=0;ibin<runPars->nFVBins;ibin++){
     for (int isamp=0;isamp<runPars->nSamples;isamp++){
@@ -197,25 +206,34 @@ void postfitCalculator::calcPostFitHistos(int errtype){
       }
     }
   }
+
+cout<<"break3"<<endl;
   //now set error equal to rms
   for (int ibin=0;ibin<runPars->nFVBins;ibin++){
     for (int isamp=0;isamp<runPars->nSamples;isamp++){
       for (int iatt=0;iatt<runPars->nAttributes;iatt++){
         for (int hbin=0;hbin<hPostFit[isamp][ibin][iatt]->GetNbinsX();hbin++){
+
+cout<<"break4"<<ibin<<" "<<isamp<<" "<<iatt<<" "<<hbin<<endl;
+
           double staterr = hPostFit[isamp][ibin][iatt]->GetBinError(hbin);
           double systerr = rms[isamp][ibin][iatt][hbin];
           double toterr  = TMath::Sqrt(( staterr*staterr) + (systerr*systerr) );
+
           if (errtype==1) hPostFit[isamp][ibin][iatt]->SetBinError(hbin,staterr);
+
           else if (errtype==2) hPostFit[isamp][ibin][iatt]->SetBinError(hbin,systerr);
           else{
             hPostFit[isamp][ibin][iatt]->SetBinError(hbin,toterr);
           }
+cout<<"break5"<<ibin<<" "<<isamp<<" "<<iatt<<" "<<hbin<<endl;
         }
       }
     }
   }
 
-
+*/
+cout<<"break6"<<endl;
   return;
 
 }
@@ -283,6 +301,8 @@ void postfitCalculator::initHistos(){
     for (int isamp=0;isamp<runPars->nSamples;isamp++){
       for (int iatt=0;iatt<runPars->nAttributes;iatt++){
         for (int ipt=0;ipt<NMCMCPts;ipt++){
+          
+ //         cout<<ibin<<isamp<<iatt<<ipt<<endl;
           TString hname = Form("hMCMCMod_samp%d_bin%d_iatt%d_mcmcpt%d",isamp,ibin,iatt,ipt);
           hMCMod[isamp][ibin][iatt][ipt] = (TH1D*)hManager->getHistogram(isamp,ibin,0,iatt)->Clone(hname.Data());
           hMCMod[isamp][ibin][iatt][ipt]->Reset();
@@ -306,8 +326,11 @@ void postfitCalculator::makeHistoArray(TH1D* harr[], int nhistos, const char* na
   return;
 }
 
-void postfitCalculator::attributeAnalysisFast(){
 
+// fast way of checking fit results by comparing
+// how the histograms change in MCMC to the data
+void postfitCalculator::attributeAnalysisFast(){
+  
   //get number of total steps minus burn-in
   int nsteps=mcmcpath->GetEntries()-MCMCBurnIn;
   if (nsteps<(NMCMCPts)){
@@ -330,7 +353,6 @@ void postfitCalculator::attributeAnalysisFast(){
   if ((NMCEvents<=0)||(NMCEvents>mctree->GetEntries())) NMCEvents = mctree->GetEntries(); 
   
   fitpars->resetDefaults(); //< set parameters to default values (no modifications to MC)
-
   //set MC defaults to first point
   for (int ibin=0;ibin<fitpars->nBins;ibin++){
     for  (int isamp=0;isamp<fitpars->nSamples;isamp++){
@@ -344,11 +366,10 @@ void postfitCalculator::attributeAnalysisFast(){
     }
   }
 
-
   //loop over number of MCMC points
   for (int ipt=1;ipt<NMCMCPts;ipt++){
     currentMCMCPoint = samppts[ipt];
-    setParsFromMCMC(currentMCMCPoint); //< sets parameters from current step of MCMC path
+//    setParsFromMCMC(currentMCMCPoint); //< sets parameters from current step of MCMC path
      for (int ibin=0;ibin<fitpars->nBins;ibin++){
        for  (int isamp=0;isamp<fitpars->nSamples;isamp++){
         for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
@@ -362,19 +383,6 @@ void postfitCalculator::attributeAnalysisFast(){
     }
   }
 
-  /*
-  // calculate normalization of MC using sum of weights
-  double mcsumweights = 0.;
-  for (int ievt=0;ievt<NMCEvents;ievt++){
-    currentMCEvent = ievt;
-    mctree->GetEntry(currentMCEvent); //< read in default MC event
-    mcsumweights += mcreader->evtweight;
-  }
-
-  double norm = (double)datatree->GetEntries()/mcsumweights; //< this is the norm factor
-  // scale all modified histograms
-  */
-
   for (int ibin=0;ibin<runPars->nFVBins;ibin++){
     for (int isamp=0;isamp<runPars->nSamples;isamp++){
       for (int iatt=0;iatt<runPars->nAttributes;iatt++){
@@ -385,7 +393,6 @@ void postfitCalculator::attributeAnalysisFast(){
       }
     }
   }
-
   return;
 
 }
@@ -662,10 +669,10 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
 
 ////////////////////////////////////////////////////////
 //construct from parameters in parameter file
+
 postfitCalculator::postfitCalculator(const char* parfile){
-  
   //setup canvas
-  TCanvas* cc = new TCanvas("cc","cc",800,700);
+  cc = new TCanvas("cc","cc",800,700);;
 
   //read in parameters
   runPars = new sharedPars(parfile);
@@ -676,6 +683,9 @@ postfitCalculator::postfitCalculator(const char* parfile){
   NMCEvents = runPars->NMCEvents;
   NDataEvents = runPars->NDataEvents;
 
+  //set which systematic parameters to use
+  sysParType = runPars->sysParType;
+    
   //set parameter file name
   parFileName = parfile;
 
@@ -684,17 +694,12 @@ postfitCalculator::postfitCalculator(const char* parfile){
   fitpars = new atmFitPars(parfile); 
 
 
-  //setup histogram manager
-//  hManager = new histoManager(runPars->hFactoryOutput.Data(),
-//                              runPars->nSamples,
-//                              runPars->nFVBins,
-//                              runPars->nComponents,
-//                              runPars->nAttributes);
-  hManager = new histoManager(parfile);
+  //hManager = new histoManager(parfile);
+  //setup histograms using histoManager
+  TString hFactoryOutput = runPars->hFactoryOutput;
+  hManager = new histoManager(hFactoryOutput.Data(),runPars->nSamples,runPars->nFVBins,runPars->nComponents,runPars->nAttributes);
   hManager->setFitPars(fitpars); //< bind histoManager to the previously created parameters
-
   initHistos(); //< initilize attribute histograms using hmanager as a template 
-
 
   //get mcmc path tree
   TString mcmcfilename = runPars->MCMCFile;
@@ -717,7 +722,8 @@ postfitCalculator::postfitCalculator(const char* parfile){
   TTree* trdata = (TTree*)(chdat);
   setMCTree(trmc);
   setDataTree(trdata);
-  normFactor = (double)datatree->GetEntries()/(double)mctree->GetEntries(); 
+//  normFactor = (double)datatree->GetEntries()/(double)mctree->GetEntries(); 
+  normFactor = runPars->normFactor; 
   cout<<"postfitCalculator: normalization: "<<normFactor<<endl;
 
   //get number of attributes in post fit
@@ -726,8 +732,8 @@ postfitCalculator::postfitCalculator(const char* parfile){
   //initialize histograms
   init();    
 
-
 }
+
 
 /////////////////////////////////////////
 //draws all modified histograms on same pad
@@ -1129,9 +1135,11 @@ void postfitCalculator::fillHistos(int iclass,int islot){
 ///////////////////////////////////////////////////////////////////////////////////
 //fills the atmFitPars object with the parameters from step "istep" of the MCMC
 void  postfitCalculator::setParsFromMCMC(int istep){
-  mcmcpath->GetEntry(istep); //< fills mcmcpath reader
+//  mcmcpath->GetEntry(istep); //< fills mcmcpath reader;
+  cout << "npars: " << path->npars << endl;
   for (int ipar=0;ipar<path->npars;ipar++){
-    fitpars->setParameter(ipar,path->par[ipar]);
+
+  //  fitpars->setParameter(ipar,path->par[ipar]);
   } 
   return;
 }
@@ -1160,12 +1168,8 @@ double  postfitCalculator::getEvtWeight(){
   /////////////////////////////////////////////
   //get event weights
    double ww = mcreader->evtweight;
-  //double ww = 1.;
-  //loop over all flux and xsec parameters
   for (int isyspar=0;isyspar<fitpars->nSysPars;isyspar++){
-//  for (int isyspar=0;isyspar<1;isyspar++){
-    double sysweight = sfact->getEvtWeight(mcreader,isyspar,fitpars->sysPar[isyspar]);
- //   cout<<"sysweight"<<sysweight<<endl; 
+    double sysweight = getSystWeight(sysParType.Data(), mcreader, isyspar, fitpars->sysPar[isyspar]);
     ww*=sysweight;
   } 
   evtweight = ww;
@@ -1210,7 +1214,7 @@ void postfitCalculator::init(){
 
   ////////////////////////////
   //setup spline factory
-  sfact = new splineFactory(parFileName.Data());  
+  //sfact = new splineFactory(parFileName.Data());  
 
   ////////////////////////////
   //other defaults

@@ -589,7 +589,7 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
   htmp->SetDefaultSumw2();
 
 #ifdef T2K
-  normFactor = scaling;
+  normFactor = SCALING;
 #else
   normFactor=htmp->GetBinContent(1);
 #endif

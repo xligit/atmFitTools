@@ -386,7 +386,7 @@ void visRing::countprimaryvc(){
     // make sure particle escapes
     if (fq->Ichvc[i]!=1) continue;
 
-    // make sure particle has no children (from scatters etc.)
+    // make sure particle has no children (want most downstream particle);
     if (hasdschild(i)) continue;
 
     // get pid
