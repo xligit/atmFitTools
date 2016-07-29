@@ -232,11 +232,13 @@ void visRing::addvisiblesecondary(int ipid, int index, double momentum){
 
 double visRing::getVisibleEnergy(int ipid, double pmom){
 
-  double E = getEnergy(ipid, pmom);
+//  double E = getEnergy(ipid, pmom);
 
-  double Ecrit = getEcrit(ipid);
+  //double Ecrit = getEcrit(ipid);
 
-  return E-Ecrit;
+  double KE = getKE(ipid, pmom);
+  double KEc = getKEcrit(ipid);
+  return KE-KEc;
 }
 
 int visRing::addvisible(int ipid, int index, double momentum, int flgscnd){
