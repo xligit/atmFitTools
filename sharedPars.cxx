@@ -20,7 +20,7 @@ class sharedPars{
   TString parFileName;
   
   //read in values from parameter file
-  void readParsFromFile(const char* filename="");
+  void readParsFromFile();
 
   //shared variables
   TString globalRootName;
@@ -122,13 +122,8 @@ int sharedPars::getParI(const char* parname){
   return kr->getKeyI(parname);
 }
 
-void sharedPars::readParsFromFile(const char* filename){
-  //if file name is given as argument, use it
-//  if (filename){
-//    cout<<"sharedPars: setting input file name to : "<<filename<<endl;
-//    parFileName = filename;
-//  }
-  
+void sharedPars::readParsFromFile(){
+
   //create object to read in keys from file
   kr = new keyread(parFileName.Data());
 

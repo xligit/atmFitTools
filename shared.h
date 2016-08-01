@@ -8,6 +8,9 @@
 
 //#define T2K // should be uncommented if using T2K xsec parametrization
 
+// uncomment this line if not using xiaoyue's skimmed atmospheric MC
+#define USE_ATM_WEIGHTS 
+
 #define NSAMPMAX 5
 #define NBINMAX 10
 #define NCOMPMAX 8

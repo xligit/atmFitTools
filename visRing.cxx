@@ -243,11 +243,6 @@ double visRing::getVisibleEnergy(int ipid, double pmom){
 
 int visRing::addvisible(int ipid, int index, double momentum, int flgscnd){
 
- 
-  // get critical momentum
-  double mass = massof[ipid];
-  //double pcrit = getpcrit(ipid);
-
   // fill arrays for individual particle types
   int visflg = 0;
   if (ipid==1){ //< gamma
@@ -423,12 +418,10 @@ void visRing::countprimaryvc(){
       cout<<"No conversion found for particle: "<<ipidpdg<<endl;
       continue;
     }
-//    cout<<"pid: "<<ipid<<endl;;
 
     // particle kinematics
     double mass = massof[ipid];
     double momentum = fq->Abspvc[i];
-    double energy   = TMath::Sqrt(mass*mass + momentum*momentum);
 
     if (ipid==1){ //< if particle is gamma, see if it will shower
       if ((momentum>gamthresh)){

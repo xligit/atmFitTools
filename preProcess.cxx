@@ -108,25 +108,21 @@ void preProcess::processFile(const char* fname,const char* outname){
 //Gets a weight for an event
 //Usefull for making fake data sets
 float preProcess::getWeight(){
-//  absmode = TMath::Abs(fq->mode);
-//  float enu   = fq->pmomv[0];
   evtweight = 1.0;
-  //CCQE norm bin1 
-//  if ((absmode==1)&&(enu<200.)){
-//    evtweight = 1.5;
-//  }
-  //CCQE norm bin2 
-//  if ((absmode==1)&&(enu>200.)&&(enu<400.)) evtweight*=1.2;
-  //CCQE norm bin3 
-//  if ((absmode==1)&&(enu>400.)&&(enu<800.)) evtweight*=0.9;
-  //CCQE norm bin4 
-//  if ((absmode==1)&&(enu>800.)) evtweight*=1.05;
-
-
+;
   if (useWeights){
     evtweight = gWeight->Eval(fq->fq1rmom[0][2],0,"s");
   }
 
+// if using skimmed tree from Xiaoyue, calculate event weight
+// based on these variables in the ntuples
+#ifdef USE_ATM_WEIGHTS
+
+
+  evtweight *= fq->wgtosc1[3];
+  evtweight *= fq->wgtflx[3];
+#endif
+   
   return evtweight;
 }
 
@@ -142,7 +138,6 @@ void preProcess::setParFileName(const char* fname){
   sharedPars* runpars = new sharedPars(parFileName.Data());
   runpars->readParsFromFile();
   nameTag = runpars->globalRootName;
-  cout<<"nametag: "<<nameTag.Data()<<endl;
   FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
   if (FVBinning==4) setFVBinHisto();
   MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
@@ -159,14 +154,14 @@ void preProcess::setParFileName(const char* fname){
   if (flgUseSpikeMask>0){
      TString fmaskname = runpars->preProcMaskFile.Data();
      TFile* maskfile = new TFile(fmaskname.Data());
-     cout<<"preProc: Getting spike mask from file: "<<fmaskname.Data()<<endl;     
+     cout<<"preProcess: Getting spike mask from file: "<<fmaskname.Data()<<endl;     
      hmask = (TH1D*)maskfile->Get("hmask");
   }
 
   // type of ntuple structure in input files
   // used to avoid printed errors in "SetBranchAddress"
   ntupleType = runpars->ntupleType;
-  cout<<"ntuple type: "<<ntupleType.Data()<<endl;
+  cout<<"preProcess: ntuple type: "<<ntupleType.Data()<<endl;
 
   // list of attributes to use
   nAttributes = runpars->nAttributes;
@@ -183,8 +178,8 @@ void preProcess::setParFileName(const char* fname){
   //create data and mc chains
   chmc = new TChain("h1");
   chdat = new TChain("h1");
-  cout<<"preProc: adding MC files: "<<runpars->preProcessFilesMC.Data()<<endl;
-  cout<<"preProc: adding Data files: "<<runpars->preProcessFilesData.Data()<<endl;
+  cout<<"preProcess: adding MC files: "<<runpars->preProcessFilesMC.Data()<<endl;
+  cout<<"preProcess: adding Data files: "<<runpars->preProcessFilesData.Data()<<endl;
   chmc->Add(runpars->preProcessFilesMC.Data());
   chdat->Add(runpars->preProcessFilesData.Data());
   if (chmc->GetEntries()<1){
@@ -331,15 +326,7 @@ int preProcess::getBin(){
       int fvbin = hFVBins->FindBin(towall,wall)-1;
       return fvbin;
    }
-//    if (fvbin<0){
-//      cout<<"Bad FV value:"<<endl;
-//      cout<<"  wall:   "<<wall<<endl;
-//      cout<<"  towall: "<<towall<<endl;
-//  //  }
-      //return fvbin;
- //   if (fq->fq1rmom[0][1]<230.) return fvbin;
-  //  if (fq->fq1rmom[0][1]>800.) return fvbin+12;
-   // return fvbin+6;
+
   
 
   return -1;
@@ -400,7 +387,22 @@ int preProcess::getSample(){
     if (fq->fqnse==2) return 1;
     if (fq->fqnse>2)  return 2;
   }
-  
+
+  //atmospheric selection with energy
+  if (MCSamples==3){
+    double evis = fq->fq1rmom[0][1];
+    if (evis<1000.){
+      if (fq->fqnse==1) return 0;
+      if (fq->fqnse==2) return 1;
+      if (fq->fqnse>2)  return 2;
+    }
+    else{
+      if (fq->fqnse==1) return 3;
+      if (fq->fqnse==2) return 4;
+      if (fq->fqnse>2)  return 5;
+    }
+  }
+
   
   //cosmic selection
   if (MCSamples==1){
@@ -426,7 +428,7 @@ int preProcess::getSample(){
     return 0;
   }
 
-  cout<<"preProcess:  Error sample not defined!"<<endl;
+  cout<<"preProcess:getSample():  Warning sample code"<<MCSamples<<" not defined!"<<endl;
   return -1;
 }
 
@@ -437,7 +439,7 @@ int preProcess::getComponent(){
   ////////////////////////////
   // useful for cuts
   absmode = TMath::Abs(fq->mode);
-  int absnu   = TMath::Abs(fq->ipnu[0]);
+ // int absnu   = TMath::Abs(fq->ipnu[0]);
  
   /////////////////////////////////////////
   // visible + NEUT event selection for atm
@@ -542,6 +544,7 @@ int preProcess::preProcessIt(){
   for (int i=0;i<nev;i++){
     //get info for event
     if ((i%1000)==0) cout<<"event:  "<<i<<endl;
+
     tr->GetEntry(i);
     //calc FV bin and fill FV variables
     nbin=getBin();
@@ -681,7 +684,6 @@ void preProcess::setupNewTree(){
   tr->SetBranchStatus("nring",1);
   tr->SetBranchStatus("*scnd*",1);
   tr->SetBranchStatus("nscndprt",1);
-
   tr->SetBranchStatus("iprnttrk",1);
   tr->SetBranchStatus("iprntprt",1);
   tr->SetBranchStatus("iorgprt",1);
@@ -689,6 +691,9 @@ void preProcess::setupNewTree(){
   tr->SetBranchStatus("nchilds",1);
   tr->SetBranchStatus("ichildidx",1);
   tr->SetBranchStatus("iflgscnd",1);
+#ifdef USE_ATM_WEIGHTS
+  tr->SetBranchStatus("wgt*",1);
+#endif
   tr->SetBranchStatus("*vc",1);
   trout = tr->CloneTree(0); //clone but don't copy data
   trout->CopyAddresses(tr); //set addresses

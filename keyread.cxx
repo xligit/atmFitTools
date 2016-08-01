@@ -79,7 +79,7 @@ void keyread::readFile(){
       //cout<<"appending "<<line[i]<<" to tstring"<<endl;
       sline.Append(line[i]);
     }
-    cout<<"keyread: processing line: "<<nline<<endl;
+   // cout<<"keyread: processing line: "<<nline<<endl;
     processLine(sline);
     sline.Clear();
   }

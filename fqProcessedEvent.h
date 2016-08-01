@@ -120,6 +120,10 @@ public :
    Int_t           best2RID;
    Float_t         fq1rperim[10][7];
    Float_t         fq1rmincone[10][7];
+   // from Xiaoyue's skimmed tree with atmospheric weights
+   Double_t        wgtosc1[4];
+   Double_t        wgtflx[4];
+
 
    // List of branches
    TBranch        *b_nev;   //!
@@ -396,6 +400,10 @@ void fqProcessedEvent::Init(TTree *tree)
    fChain->SetBranchAddress("best2RID", &best2RID, &b_best2RID);
    fChain->SetBranchAddress("fq1rperim", fq1rperim, &b_fq1rperim);
    fChain->SetBranchAddress("fq1rmincone", fq1rmincone, &b_fq1rmincone);
+#ifdef USE_ATM_WEIGHTS
+   fChain->SetBranchAddress("wgtosc1", wgtosc1);
+   fChain->SetBranchAddress("wgtflx", wgtflx);
+#endif
    Notify();
 }
 

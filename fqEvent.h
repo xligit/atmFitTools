@@ -11,6 +11,7 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+#include "shared.h"
 #include <TString.h>
 
 class fqEvent {
@@ -409,8 +410,9 @@ public :
    Int_t           t2knuenpi0;
    Int_t           t2knueflag;
    Double_t        totwgt;
-
-
+   // from Xiaoyue's skimmed tree with atmospheric weights
+   Double_t        wgtosc1[4];
+   Double_t        wgtflx[4];
 
    // List of branches
    TBranch        *b_nring;   //!
@@ -803,6 +805,10 @@ public :
    TBranch        *b_t2knuenpi0;   //!
    TBranch        *b_t2knueflag;   //!
    TBranch        *b_totwgt;   //!
+   // for skimmed trees
+
+   TBranch        *b_wgtosc1;   //!
+   TBranch        *b_wgtflx;   //!
 
    fqEvent(TTree *tree=0,const char* ntuple_type = "");
    virtual ~fqEvent();
@@ -984,6 +990,8 @@ void fqEvent::Init(TTree *tree, const char* ntuple_type)
    fChain->SetBranchAddress("fqmst0", fqmst0, &b_fqmst0);
    fChain->SetBranchAddress("fqmspos", fqmspos, &b_fqmspos);
    fChain->SetBranchAddress("fqmsdir", fqmsdir, &b_fqmsdir);
+   fChain->SetBranchAddress("wgtosc1", wgtosc1, &b_wgtosc1);
+   fChain->SetBranchAddress("wgtflx", wgtflx);
    }
    if (!ntype.CompareTo("T2KMCReduced")){
    fChain->SetBranchAddress("nring", &nring, &b_nring);
@@ -1106,7 +1114,12 @@ void fqEvent::Init(TTree *tree, const char* ntuple_type)
    fChain->SetBranchAddress("Nchildsvc", Nchildsvc, &b_Nchildsvc);
    fChain->SetBranchAddress("Ichildidxvc", Ichildidxvc, &b_Ichildidxvc);
    fChain->SetBranchAddress("Neutmode", &Neutmode, &b_Neutmode);
-
+   
+   // for skimmed atmospheric
+//#ifdef USE_ATM_WEIGHTS
+   fChain->SetBranchAddress("wgtosc1", wgtosc1, &b_wgtosc1);
+   fChain->SetBranchAddress("wgtflx", wgtflx);
+//#endif 
 
 
    Notify();
