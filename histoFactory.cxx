@@ -3,8 +3,7 @@
 
 
 #include "histoFactory.h"
-
-
+;
 
 /////////////////////////////////////////////////
 //construct from parameter file
@@ -171,8 +170,10 @@ TH1D* histoFactory::getHistogram(int iatt, const char* thename){
   return hnew;
 }
 
-
+/////////////////////////////////////////////////////
+// Find the naive normaliztion
 void histoFactory::normalizeHistos(double scale){
+
   //scale all MC histograms by some scaling factor
   if (scale < 0.){
     cout<<"histoFactory: Finding MC normalization"<<endl;
@@ -182,20 +183,19 @@ void histoFactory::normalizeHistos(double scale){
       mcTree->GetEntry(ievt);
       mcsumweights += fqMC->evtweight; 
     }
-    scale = datasum/mcsumweights;
-  }
-  hnorm = new TH1D("hnorm","hnorm",1,0,1);
- // scale = (double)nDataEvents/(double)nMCEvents;
-  hnorm->SetBinContent(1,scale);
-  for (int ibin=0;ibin<nBins;ibin++){
-    for (int isamp=0;isamp<nSamples;isamp++){
-      for (int iatt=0;iatt<nAttributes;iatt++){
-        for (int icomp=0;icomp<nComponents;icomp++){
- //         hManager->getHistogram(isamp,ibin,icomp,iatt)->Scale(scale);
-        }
-      }
+    double datsumweights = 0;
+    for (int iev=0; iev<nDataEvents; iev++){
+      cout<<"evt: "<<iev<<endl;
+      dataTree->GetEntry(iev);
+      cout<<"wgt: "<<fqData->evtweight;
+      datsumweights += fqData->evtweight;
     }
+    scale = datsumweights/mcsumweights;
+    cout<<"   ..norm = "<<datsumweights<<"/"<<mcsumweights<<" = "<<scale<<endl;
   }
+  
+  hnorm = new TH1D("hnorm","hnorm",1,0,1);
+  hnorm->SetBinContent(1,scale);
   return;
 }
 

@@ -144,6 +144,7 @@ void splineFactory::buildTheSplines(){
     cout<<"splineFactory: Filling histograms while modifying systematic parameter: "<<isyst<<endl;
     //loop over the MC events
     for (int iev=0;iev<mcTree->GetEntries();iev++){
+      if ((iev%5000)==0) cout<<" splineFactory: Reading MC event "<<iev<<endl;
       mcTree->GetEvent(iev);  //< read event
       //loop over the values of this parameter
       for (int ipt=0;ipt<NPTSMAX;ipt++){

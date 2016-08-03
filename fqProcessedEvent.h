@@ -351,7 +351,7 @@ void fqProcessedEvent::Init(TTree *tree)
    fChain->SetBranchAddress("fqpi0dir2", fqpi0dir2, &b_fqpi0dir2);
    fChain->SetBranchAddress("fqpi0dirtot", fqpi0dirtot, &b_fqpi0dirtot);
    fChain->SetBranchAddress("fqnmrfit", &fqnmrfit, &b_fqnmrfit);
-   fChain->SetBranchAddress("fqmrifit", fqmrifit, &b_fqmrifit);
+//   fChain->SetBranchAddress("fqmrifit", fqmrifit, &b_fqmrifit);
    fChain->SetBranchAddress("fqmrnring", fqmrnring, &b_fqmrnring);
    fChain->SetBranchAddress("fqmrpcflg", fqmrpcflg, &b_fqmrpcflg);
    fChain->SetBranchAddress("fqmrnll", fqmrnll, &b_fqmrnll);

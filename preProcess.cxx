@@ -40,8 +40,14 @@ void  preProcess::setWeightHistogram(const char* file, const char * name){
 //Takes in a chain and loops over all files in the chain
 //For each file, a new file with a modified TTree is created
 void preProcess::processAllFiles(TChain* chain){
+
+  // find how many files are in this chain
   int nfiles = chain->GetNtrees();
+  
+  // get a list of all of the files
   TObjArray* listOfFiles = chain->GetListOfFiles();
+
+  // loop over files and process each one
   TString tag;
   TString fname;
   for (int ifile=0;ifile<nfiles;ifile++){
@@ -49,6 +55,8 @@ void preProcess::processAllFiles(TChain* chain){
     fname = listOfFiles->At(ifile)->GetTitle();
     processFile(fname,tag);
   }
+
+  //
   return;
 }
 
@@ -102,6 +110,83 @@ void preProcess::processFile(const char* fname,const char* outname){
   fout->Close();
   
   return;   
+}
+
+///////////////////////////////////////////////////////////////////
+// makes a couple test bumps in the specified directory
+void preProcess::makeTestFiles(const char* outdir, int testtype, int nmc, int ndata, int randseed){
+
+  // random numbers
+  TRandom2* randy = new TRandom2(randseed);
+
+  // file name
+  TString fnamebase = "testbump_";
+
+  // make a simple gaussian bump
+  if (testtype==0){
+   
+   // fill fake mc files
+   outDir = outdir;
+   TString outputName = outDir.Data(); //name of directory
+   outputName.Append(fnamebase.Data()); 
+   outputName.Append("_ppmc.root"); 
+
+   // make mc file
+   fout = new TFile(outputName.Data(),"recreate");
+
+   //make new mc tree and set branches
+   trout = new TTree("h1","h1");
+   trout->Branch("attribute",attribute,"attribute[1000]/F");
+   trout->Branch("fqrcpar",&fqrcpar,"fqrcpar/F");
+   trout->Branch("ncomponent",&ncomponent,"ncomponent/I");
+   trout->Branch("nsample",&nsample,"nsample/I");
+   trout->Branch("nbin",&nbin,"nbin/I");
+
+   // fill with fake data
+   for (int i=0; i<nmc; i++){
+      attribute[0] = randy->Gaus();
+      nsample = 0;
+      nbin    = 0;
+      ncomponent = 0;
+      trout->Fill();
+   }
+
+   // write output
+   fout->Write();
+   fout->Close();
+  
+   // now fill fake data file
+   outputName = outDir.Data(); //name of directory
+   outputName.Append(fnamebase.Data()); 
+   outputName.Append("_ppdata.root"); 
+
+   // make data file
+   fout = new TFile(outputName.Data(),"recreate");
+
+   //make new tree and set branches
+   trout = new TTree("h1","h1");
+   trout->Branch("attribute",attribute,"attribute[1000]/F");
+   trout->Branch("fqrcpar",&fqrcpar,"fqrcpar/F");
+   trout->Branch("ncomponent",&ncomponent,"ncomponent/I");
+   trout->Branch("nsample",&nsample,"nsample/I");
+   trout->Branch("nbin",&nbin,"nbin/I");
+
+   // fill with fake data
+   for (int i=0; i<ndata; i++){
+      attribute[0] = randy->Gaus();
+      nsample = 0;
+      nbin    = 0;
+      ncomponent = 0;
+      trout->Fill();
+   }
+
+   // write output
+   fout->Write();
+   fout->Close();
+  }
+
+
+  return;
 }
 
 ///////////////////////////////////
@@ -674,11 +759,12 @@ void preProcess::fillAttributeMap(fqEvent* fqevent){
 }
 
 void preProcess::setupNewTree(){
+
+  // select just a few branches
   tr->SetBranchStatus("*",0);
   tr->SetBranchStatus("fq*",1);
   tr->SetBranchStatus("*v",1);
   tr->SetBranchStatus("ipnu",1);
-  //tr->SetBranchStatus("cluster*",1);
   tr->SetBranchStatus("mode",1);
   tr->SetBranchStatus("nhitac",1);
   tr->SetBranchStatus("nring",1);
@@ -695,9 +781,11 @@ void preProcess::setupNewTree(){
   tr->SetBranchStatus("wgt*",1);
 #endif
   tr->SetBranchStatus("*vc",1);
+
+  // make new output tree that is clone of old tree,
+  // with a few extra branchs
   trout = tr->CloneTree(0); //clone but don't copy data
   trout->CopyAddresses(tr); //set addresses
-  
   //add new branches
   trout->Branch("attribute",attribute,"attribute[1000]/F");
   trout->Branch("fqrcpar",&fqrcpar,"fqrcpar/F");
@@ -761,6 +849,7 @@ preProcess::preProcess(){
 //////////////////////////////////////////
 //read in parameters and run preprocessing!
 void preProcess::runPreProcessing(){
+
    //process the files
   TString datatag = nameTag.Data();
   datatag.Append("_ppdata");

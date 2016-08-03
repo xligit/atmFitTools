@@ -13,10 +13,13 @@
 #include "mcmcReader.cxx"
 #include "THStack.h"
 #include "sharedPars.cxx"
+#include "TH2FV.h"
+
 
 
 #define NCLASSMAX 10
 
+////////////////////////////////////////////////////////////////////////////////////////
 //This class aims to take the MCMC output and generate uncertainties in number of events 
 class postfitCalculator{
   public:
@@ -64,10 +67,9 @@ class postfitCalculator{
   int nAttributes;
   TCanvas* cc;
 
-
+  //////////////////////////////////////////////////////////////
   //histogrms of interest
   TH1D* hEnuMu[10][200]; //<energy assuming muon
-//  TH1D* hPIDemuSE2[10][200]; //< e/mu PID of second subev
   TH1D* hPIDemu[10][200]; //<e/mu PID
   TH1D* hNSK[10]; //< numbers of events after cuts
   TH1D* hMCMod[3][6][5][25];
@@ -75,9 +77,9 @@ class postfitCalculator{
   TH1D* hPassFail[100];
   TH1D* hPassFailData;
   TH1D* hPassFailAvg;
+
   ////////////////////////////////////////////////////////
   //methods
-  // modfies the values of the current MC event using parameters from current MCMC point
   void  initHistos();
   void  modifyCurrentEvent();
   void  setMCTree(TTree* tr);
@@ -105,7 +107,7 @@ class postfitCalculator{
   void drawPostFitHistoAll(int isamp,int ibin, int iatt);
   void calcPostFitHistos(int errtype=0);
   void printPostFitHistos(const char* directory);
-//  void runPostFit();
+
 };
 
 void postfitCalculator::printPostFitHistos(const char* directory){
@@ -136,7 +138,6 @@ void postfitCalculator::printPostFitHistos(const char* directory){
 // Make some summary histograms;
 void postfitCalculator::calcPostFitHistos(int errtype){
 
-  /*
   /////////////////////////////////////////
   //initialize hisotgrams
   for (int ibin=0;ibin<runPars->nFVBins;ibin++){
@@ -151,7 +152,6 @@ void postfitCalculator::calcPostFitHistos(int errtype){
     }
   }
   
-  /*
   ////////////////////////////////////////////////////
   //calculate mean 
   double thenorm=(double)NMCMCPts-1.;
@@ -232,7 +232,6 @@ cout<<"break5"<<ibin<<" "<<isamp<<" "<<iatt<<" "<<hbin<<endl;
     }
   }
 
-*/
 cout<<"break6"<<endl;
   return;
 
@@ -661,11 +660,6 @@ void  postfitCalculator::cosmicPostFitAnalysis(){
 
 }
 
-//void postfitCalculator::runPostFit(){
-
- // return;
-//}
-
 
 ////////////////////////////////////////////////////////
 //construct from parameters in parameter file
@@ -859,10 +853,10 @@ void postfitCalculator::modifyAttributes(){
   return;
 }
 
-///////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 // modfies the values of the current MC event using parameters from current MCMC point
 void postfitCalculator::modifyCurrentEvent(){
-//  cout<<"test"<<endl;
+
   setParsFromMCMC(currentMCMCPoint); //< sets parameters from current step of MCMC path
 
   mctree->GetEntry(currentMCEvent); //< read in default MC event

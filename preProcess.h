@@ -65,6 +65,8 @@ class preProcess{
   TH2FV* hFVBins;
   TH1D* hmask;
 
+
+
   ////////////////////////
   //for cuts
   int NHITACMax;
@@ -119,7 +121,7 @@ class preProcess{
   //sets a histogram to calculate weights for events (use to correct cosmic
   //muon momenum distribution)
   void setWeightHistogram(const char* file, const char * name);
- 
+  void makeTestFiles(const char* outdir, int testtype, int nmc, int ndata, int randseed); //< makes test files
   private:
 
   int flgAddMoreVars;

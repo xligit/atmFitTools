@@ -130,7 +130,8 @@ void makeCov::buildMatrix(){
   // set default parameter arrays
   atmFitPars* fitpars = new atmFitPars(runparfile.Data());
   for (int ipar=0; ipar<npartot; ipar++){
-    pardefault[ipar] = fitpars->parDefaultValue[ipar];
+//    pardefault[ipar] = fitpars->parDefaultValue[ipar];
+    pardefault[ipar] = fitpars->getParameter(ipar);
   }
 
   // make pull histogram
@@ -139,7 +140,10 @@ void makeCov::buildMatrix(){
     double pullvalue = (parmean[ipar] - pardefault[ipar])/parsigma[ipar];
     hpull->Fill(ipar, pullvalue);
   }
-
+  // remove pull errors
+  for (int ibin=1; ibin<hpull->GetNbinsX(); ibin++){
+    hpull->SetBinError(ibin,0.);
+  }
   // draw the correlation
   cor->SetContour(100);
   cor->Draw("colz");
