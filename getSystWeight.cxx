@@ -82,12 +82,6 @@ double getSystWeight(const char* systype, fqProcessedEvent* mcevent, int ipar, d
     double Enu     = mcevent->pmomv[0]; //< True neutrino Energy
     int  nutype  = TMath::Abs(mcevent->ipnu[0]); //< True neutrino type 
 
-    // all of these parameters are sclaing parameters. If the value is <0,
-    // then just set weight to 0 
-    if (value<0.){
-      ww=0.;
-      return ww;
-    }
 
     //CCQE norm bin1 
     if (ipar==0){

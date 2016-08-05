@@ -164,13 +164,22 @@ atmFitPars::atmFitPars(const char* parfilename){
   initPars(sysType.Data());
 }
 
-void atmFitPars::printPars(){
-  cout<<"$$$ CURRENT PARAMETER VALUES $$$"<<endl;
+
+
+void atmFitPars::printPars(int ipar){
+  if (ipar>=0){
+    cout<<"PAR: "<<ipar<<" = "<<pars[ipar]<<" +/- "<<parUnc[ipar]<<endl;
+    return;
+  }
+  else
+  {
+  cout<<"$$$ CURRENT PARAMETER VALUES My ASS$$$"<<endl;
   for (int i=0;i<nTotPars;i++){
     cout<<"PAR: "<<i<<" = "<<pars[i]<<" +/- "<<parUnc[i]<<endl;
   }
   cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
   return;
+  }
 }
 
 
@@ -236,11 +245,14 @@ void atmFitPars::setRandSysPar(){
 #endif
 }
 
+/* use printPars() instead!!;;
 void atmFitPars::printParValues(){
+  cout<<"-------Parameter Values-------"<<endl;
   for (int ipar=0;ipar<nTotPars;ipar++){
     cout<<"par "<<ipar<<": "<<pars[ipar]<<endl;
   }
 }
+*/
 
 int atmFitPars::checkFixFlg(int ibin, int icomp, int iatt, int imod){
   return fixPar[parIndex[ibin][icomp][iatt][imod]];
