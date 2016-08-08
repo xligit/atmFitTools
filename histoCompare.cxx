@@ -1025,7 +1025,7 @@ void histoCompare::getTotLnL1D(double& result,int npar, double par[]){
 ////////////////////////////////////////////////
 //Compute the total log liklihood by comparing all histograms
 double histoCompare::getTotLnL(){
-
+;;
   double totL = 0.;
   ////////////////////////////////////////
   //contribution from histogram comparison  
@@ -1151,12 +1151,21 @@ void histoCompare::addHistogram(TH1D* h,int dataflg){
   return;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// Read in histograms from a specified file
 void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, int ncomp, int natt){
+
+  // set variables
   nSamp = nsamp;
   nBin  = nbin;
   nComp = ncomp; 
   nAtt  = natt;
+
+  // read in histograms
   hManager = new histoManager(filerootname,nsamp,nbin,ncomp,natt);
+  
+
+  /*
   double ndataevents=0;
   double nmcevents=0;
   double events;
@@ -1175,8 +1184,11 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
       }
     }
   }
-  Norm = ndataevents/nmcevents;
-  
+
+
+  Norm = ndataevents/nmcevents;;
+  */
+
   return;
 }
 
@@ -1240,6 +1252,9 @@ histoCompare::histoCompare(){
   return;
 }
 
+
+//////////////////////////////////////////////////////////
+// Use this constructor 
 histoCompare::histoCompare(const char* parfile, bool sep)
   : separateNeutMode(sep)
 {
@@ -1252,7 +1267,7 @@ histoCompare::histoCompare(const char* parfile, bool sep)
   //setup canvas
   cc = new TCanvas("cc","cc",700,600);
   
-  //set LnL definition
+  //set LnL definition to default (0)
   useLnLType=0;
 
   //MCMC tuning parameter
@@ -1268,19 +1283,17 @@ histoCompare::histoCompare(const char* parfile, bool sep)
   int nattributes  = runPars->nAttributes;
   TString histofilename = runPars->hFactoryOutput;
   readFromFile(histofilename.Data(),nsamples,nbins,ncomponents,nattributes); 
-  //hManager = new histoManager(parfile);
   
   //setup fit parameters
-  //thePars = hManager->fitPars;
   thePars = new atmFitPars(parfile);
   hManager->setFitPars(thePars);
   int nsyspars = thePars->nSysPars;
 
   
   //read in splines if you're into that
-//  if (runPars->useSplinesFlg){
-//    setupSplines(runPars->splineFactoryOutput.Data(),nsyspars);
-//  }
+  if (runPars->useSplinesFlg){
+    setupSplines(runPars->splineFactoryOutput.Data());
+  };
 
 
 }

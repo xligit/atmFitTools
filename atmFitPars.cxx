@@ -326,8 +326,13 @@ atmFitPars::atmFitPars(int isamp, int ibin, int icomp, int iatt, int nsyst){
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //initialize pars to preset values, the number of bins, components, attributes and systematic parameters must be previously set
 void atmFitPars::initPars(const char* systype){
+
+  //for parameter names
+  TString basename = "parameter_";
+
 
   //initialize histogram parameterss
   int index = 0;
@@ -345,6 +350,12 @@ void atmFitPars::initPars(const char* systype){
         typeOfPar[index]=0;
         fixPar[index]=0;
         parIndex[ibin][icomp][iatt][0]=index;  
+        TString parname = basename.Data();
+        parname.Append(Form("bin%d_",ibin));
+        parname.Append(Form("comp%d_",icomp));
+        parname.Append(Form("att%d_",iatt));
+        parname.Append("bias");
+        parName[index] = parname.Data();
         index++;
         // "bias" parameters
         histoPar[ibin][icomp][iatt][1]=0.0;
@@ -356,6 +367,12 @@ void atmFitPars::initPars(const char* systype){
         compOfPar[index]=icomp;
         attOfPar[index]=iatt;
         typeOfPar[index]=1;
+        parname = basename.Data();
+        parname.Append(Form("bin%d_",ibin));
+        parname.Append(Form("comp%d_",icomp));
+        parname.Append(Form("att%d_",iatt));
+        parname.Append("smear");
+        parName[index] = parname.Data();
         fixPar[index]=0;
         index++;
       }
@@ -569,7 +586,10 @@ void atmFitPars::initPars(const char* systype){
     pars[index]=sysPar[isys];
     parDefaultValue[index] = sysParDefault[isys];
     parUnc[index]=sysParUnc[isys];
-    sysParIndex[isys] = index;
+    sysParIndex[isys] = index;;
+    TString parname = basename.Data();
+    parname.Append(Form("_syspar%d",isys));
+    parName[index] = parname.Data();
     index++;
   }
 
@@ -582,6 +602,9 @@ void atmFitPars::initPars(const char* systype){
     for (int isamp=0; isamp<nSamples; isamp++){
        histoNorm[isamp][ibin] = 1.; //< default histo norm is one
        pars[normindex] = 1.0;
+       TString parname = basename.Data();
+       parname.Append(Form("_normpar%d",nNormPars));
+       parName[normindex] = parname.Data();
        parDefaultValue[normindex] = 1.0;
        parUnc[normindex] = 0.1;
        sysParUnc[nSysPars] = 0.1;
