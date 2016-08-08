@@ -540,59 +540,55 @@ void histoCompare::showModHiso(int isamp,int ibin, int icomp, int iatt, double s
 
 
 void histoCompare::showFitResult(int isamp,int ibin,int iatt){
-  //sum up mc components
-  //get MC prediction
+
+  // get (normalized) histogram with parameter modifications
   hMod = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Clone("hmod");
+
+  // get nominal histgram (also normalized)
   hTmp = hManager->getSumHistogram(isamp,ibin,iatt);
- // hMod = smearIt(hManager->hMC[isamp][ibin][0][iatt],smear,bias);
-//  hTot = (TH1D*)hManager->hMC[isamp][ibin][0][iatt]->Clone("htot");
-//  for (int jcomp=1;jcomp<nComp;jcomp++){
-//    hTot->Add(hManager->hMC[isamp][ibin][jcomp][iatt]);
-//    smear = bestPar[ibin][jcomp][iatt][0];
-//    bias  = bestPar[ibin][jcomp][iatt][1];
- //   hMod->Add(smearIt(hManager->hMC[isamp][ibin][jcomp][iatt],smear,bias));
-//  }
-//  hTot->SetLineColor(kRed);
- // hMod->Scale(Norm);
- // hTmp->Scale(Norm);
+
+  // draw MC histograms
   hMod->SetLineColor(kBlue);
   hTmp->SetLineColor(kRed);
-//  hTot->Rebin(rebinFactor);
-//  hMod->Rebin(rebinFactor);
   hTmp->Draw("h");
   hMod->Draw("sameeh");
- // hTmp->Draw("samee");
-
+ 
+  // draw data histograms
   hManager->hData[isamp][ibin][iatt]->SetMarkerStyle(8);
   hManager->hData[isamp][ibin][iatt]->Draw("samee");
+
+  //
   return;
 }
 
-//Show the effect of varying a single bias or smear parameter
+//Show the effect of varying a single set of bias and smear parameters
 void histoCompare::showFitEffect(int isamp,int ibin,int icomp,int iatt){
-  //sum up mc components
+
+  // get the modified version of the specified histogram
   hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt); //gets the modified histogram
 
+  // get the default sum of histograms
   hTmp = hManager->getSumHistogram(isamp,ibin,iatt); //get the sum histogram
 
-//  double smear = bestPar[ibin][icomp][iatt][0];
-//  double bias  = bestPar[ibin][icomp][iatt][1];
-//  cout<<"SMEAR: "<<smear<<endl;
-//  cout<<"BIAS:  "<<bias<<endl;
-//  hMod = smearIt(hManager->hMC[isamp][ibin][icomp][iatt],smear,bias);
-//  hTot = (TH1D*)hManager->hMC[isamp][ibin][icomp][iatt]->Clone("htot");
+  // add default histograms to modified histograms
   for (int jcomp=0;jcomp<nComp;jcomp++){
     if (jcomp!=icomp){
       hMod->Add(hManager->hMC[isamp][ibin][jcomp][iatt]);
     }
   }
+
+  // modified histogram is blue
   hMod->SetLineColor(kBlue);
- // hTmp->Scale(Norm);
+
+  // default is red
   hTmp->SetLineColor(kRed);
-//  hMod->Scale(Norm);
-//  hTot->Rebin(rebinFactor);
-//  hMod->Rebin(rebinFactor);
-//  hTmp->Draw();
+
+  // scale to data
+  double thenorm = hManager->normFactor;
+  hMod->Scale(thenorm);
+//  hTmp->Scale(thenorm);
+
+  // draw to same canvas
   hMod->Draw("h");
   hTmp->Draw("sameh");
   hManager->hData[isamp][ibin][iatt]->SetMarkerStyle(8);
@@ -612,8 +608,6 @@ void histoCompare::showFitHisto(int isamp,int ibin,int icomp,int iatt){
   hMod->Draw("eh");
   hTmp = hManager->getHistogram(isamp,ibin,icomp,iatt);
   hTmp->SetLineColor(kRed);
-//  hMod->Smooth(1);
-//  convolveThisHisto(*hMod,hMod->GetBinWidth(2)*0.5,0.);
   hTmp->Draw("sameeh");
   return;
 }
@@ -627,6 +621,9 @@ void histoCompare::lnLWrapper(int& ndim, double* gout, double& result, double pa
   result = (double)staticthis->getTotLnL();
 }
 
+
+////////////////////////////////////////////
+// Pre-fit parameters using MINUIT
 void histoCompare::LnLPreFit(){
 
   //setup static this so wrapper doesn't segfault
@@ -642,11 +639,9 @@ void histoCompare::LnLPreFit(){
   
   //individually fit each parameter
   int parindex =0;
-  //int parindextmp;
+
   //parameter name container
   TString parnametmp;  
-
- // double  parinit; //container to temporarily store initial values 
 
   //total number of parameters to be fit
   int npars = thePars->nTotPars;
@@ -689,11 +684,11 @@ void histoCompare::LnLPreFit(){
         cout<<"total entries: "<<hTot->GetEntries()<<endl;
         //check to make sure histogram is above fitting threshold
         if (hTot->GetEntries()<nthresh){
-          cout<<"  FIXING PARAMETER:  "<<parName[ibin][icomp][iatt][0].Data()<<" (ENTRIES TOO LOW!) "<<endl; 
+          cout<<"  FIXING PARAMETER:  "<<parName[ibin][icomp][iatt][0].Data()<<" (# ENTRIES TOO LOW!) "<<endl; 
           fixPar[ibin][icomp][iatt][0]=1;
           thePars->fixParameter(ibin,icomp,iatt,0);
           thePars->fixParameter(ibin,icomp,iatt,1);
-          cout<<"  FIXING PARAMETER:  "<<parName[ibin][icomp][iatt][1].Data()<<" (ENTRIES TOO LOW!) "<<endl; 
+          cout<<"  FIXING PARAMETER:  "<<parName[ibin][icomp][iatt][1].Data()<<" (# ENTRIES TOO LOW!) "<<endl; 
         }
         hTot->Delete();
         parindex+=2;
@@ -704,11 +699,13 @@ void histoCompare::LnLPreFit(){
 
   //setup the fitter!
   TFitter* fit = new TFitter(npars);
+
   //shut fitter up
   {
     double pp = -1;
     fit->ExecuteCommand("SET PRINTOUT",&pp,1);
   }
+
   //specify function to be fit
   fit->SetFCN(lnLWrapper);
 
@@ -755,6 +752,7 @@ void histoCompare::LnLPreFit(){
     }
   }
   parindex=0;
+
   //run individual smear fits
   for (int jbin=0;jbin<nBin;jbin++){
     for (int jatt=0;jatt<nAtt;jatt++){
@@ -769,7 +767,6 @@ void histoCompare::LnLPreFit(){
           cout<<"fitting "<<jbin<<jcomp<<jatt<<0<<" # "<<thePars->getParIndex(jbin,jcomp,jatt,0)<<endl;
           fit->ExecuteCommand("SIMPLEX",0,0);
           fit->FixParameter(parindex);
-         // bestPar[jbin][jcomp][jatt][0] = fit->GetParameter(parindex); 
           parindex+=2;
       }
     }
@@ -837,7 +834,8 @@ void histoCompare::sysParFit(){
 }
 
 
-
+/////////////////////////////////////////////////
+// Fits only parameter "ipar"
 void histoCompare::singleParFit(int ipar){
   //setup static this so wrapper doesn't segfault
   staticthis = this;
@@ -901,14 +899,13 @@ void histoCompare::printFitResults(const char* directory){
   return;
 }
 
+
+
+/////////////////////////////////////////////////////////////
+// Fits all parameters using MINUIT
 void histoCompare::LnLFit(){
   //setup static this so wrapper doesn't segfault
   staticthis = this;
-
-  //threshold to determine if a parameter is fit or not
-  //if the MC histograms for this parameter have a size less than this value,
-  //don't bother fitting them!
- // double nthresh = 50.;
 
   //sets the precision of the fits
   double parerr = 0.001;  
@@ -924,42 +921,38 @@ void histoCompare::LnLFit(){
     thePars->fixAllSmearPars();
   }
 
-//  double  parinit; //container to temporarily store initial values 
-
   //total number of parameters to be fit
   int npars = thePars->nTotPars;
 
+  /////////////////////////////////////////////////////////
   //run the prefit
   LnLPreFit();
 
+  ////////////////////////////////////////////////////////
+  //setup the fitter!
   cout<<"$$$$$$$$$$$$$$$$$ LNL FIT $$$$$$$$$$$$$$$$$"<<endl;
   cout<<"  ---------------------------------------- "<<endl;
   cout<<"  NUMBER OF PARAMETERS: "<<npars<<endl;
   cout<<"  PRECISION:            "<<parerr<<endl;
   cout<<"  ---------------------------------------  "<<endl;
 
-  ////////////////////////////////////////////////////////
-  //setup the fitter!
   TFitter* fit = new TFitter(npars);
   //shut fitter up
   {
     double pp = 0;
     fit->ExecuteCommand("SET PRINTOUT",&pp,1);
   }
+  
   //specify function to be fit
   fit->SetFCN(lnLWrapper);
   //setup parameters
   TString aname;
   for (int ipar=0;ipar<npars;ipar++){
-  //  int kbin=thePars->binOfPar[ipar];
-  //  int kcomp=thePars->compOfPar[ipar];
-  //  int katt = thePars->attOfPar[ipar];
     aname = "parameter_";
     aname.Append(Form("%d",ipar));
     fit->SetParameter(ipar,aname.Data(),thePars->pars[ipar],parerr,0,0);
   } 
   parindex = 0;
-  //int parindextmp = 0;
 
   ///////////////////////////////////////////////////////////////////
   //do individual fits
@@ -997,20 +990,15 @@ void histoCompare::LnLFit(){
         }
       }
       fit->ExecuteCommand("SIMPLEX",0,0); //run the fit for ALL parameters
-  //    fit->ExecuteCommand("MIGRAD",0,0); //run the fit for ALL parameters
 
       //end of fit block//
       
     }
   }
 
-  //print final results
+  //set final results
   for (int ipar=0;ipar<npars;ipar++){
     thePars->setParameter(ipar,fit->GetParameter(ipar));
-//    errParLo[ipar]=getErrLo(ipar);
-//    errParHi[ipar]=getErrHi(ipar);
-//    thePars->parUnc[ipar]=(errParHi[ipar]-errParLo[ipar]);
- //   cout<<"  PAR "<<ipar<<" FIT RESULT: "<<thePars->pars[ipar]<<" +/- : "<<thePars->parUnc[ipar]<<endl;
   }
 
   //calculate rough errors and print results
@@ -1031,17 +1019,6 @@ void histoCompare::getTotLnL1D(double& result,int npar, double par[]){
     thePars->setParameter(ipar,par[ipar]);
   }
 
-//  int index=0;
-//  for (int ibin=0;ibin<nBin;ibin++){
- //   for (int icomp=0;icomp<nComp;icomp++){
- //     for (int iatt=0;iatt<nAtt;iatt++){
-  //      Par[ibin][icomp][iatt][0] = par[index];
-  //      Par[ibin][icomp][iatt][1] = par[index+1]; 
-  //      index+=2;
-  //    }
-  //  }
- // }
- // */
   result = getTotLnL();
 }
 

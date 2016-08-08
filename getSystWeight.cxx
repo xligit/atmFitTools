@@ -141,7 +141,7 @@ double getSystWeight(const char* systype, fqProcessedEvent* mcevent, int ipar, d
     }
     //SubGevFlux
     if (ipar==14){
-      if (Enu<1000.) ww*=value;
+      if (Enu<=1000.) ww*=value;
     }
     //MultiGeVFlux
     if (ipar==15){

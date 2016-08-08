@@ -81,7 +81,7 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
 
   //////////////////////////////////////////
   //make sure this is set to properly account for errors
-  hSumHistoMod[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
+//  hSumHistoMod[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
 
   ///////////////////////////////////////////
   //add bin contents from all histograms
@@ -89,15 +89,12 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
     for (int icomp=0;icomp<nComponents;icomp++){
       TH1D* tmppointer=getModHistogram(isamp,ibin,icomp,iatt);
       for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
-	double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
-	//     content*=normFactor; //< scale the bin content
-	content+=tmppointer->GetBinContent(jbin);
-	double err1 = tmppointer->GetBinError(jbin);
-	double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
-	hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,content);
-	hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
-	// hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,100.); //<sum of squares weights
-	//  hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,(err1+err2)); //<average scaling factors
+      	double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
+       	content+=tmppointer->GetBinContent(jbin);
+	      double err1 = tmppointer->GetBinError(jbin);
+      	double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
+      	hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,content);
+      	hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
       }        
     }
   }
@@ -105,17 +102,17 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
   else {
     for (int icomp=0;icomp<nComponents;icomp++){
       for (int imode=0;imode<nModes;++imode) {
-	TH1D* tmppointer=getModHistogram(isamp,ibin,icomp,imode,iatt);
-	for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
-	  double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
-	  //     content*=normFactor; //< scale the bin content
-	  content+=tmppointer->GetBinContent(jbin);
-	  double err1 = tmppointer->GetBinError(jbin);
-	  double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
-	  hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,content);
-	  hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
-	  //std::cout<<"comp "<<icomp<<", mode "<<imode<<", jbin "<<jbin<<", "<<hSumHistoMod[isamp][ibin][iatt]->Integral()<<std::endl;
-	} 
+      	TH1D* tmppointer=getModHistogram(isamp,ibin,icomp,imode,iatt);
+      	for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
+      	  double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
+	        //     content*=normFactor; //< scale the bin content
+       	  content+=tmppointer->GetBinContent(jbin);
+      	  double err1 = tmppointer->GetBinError(jbin);
+      	  double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
+      	  hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,content);
+       	  hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
+      	  //std::cout<<"comp "<<icomp<<", mode "<<imode<<", jbin "<<jbin<<", "<<hSumHistoMod[isamp][ibin][iatt]->Integral()<<std::endl;
+	      } 
       }
     }
   }
