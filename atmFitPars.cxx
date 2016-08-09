@@ -354,7 +354,7 @@ void atmFitPars::initPars(const char* systype){
         parname.Append(Form("bin%d_",ibin));
         parname.Append(Form("comp%d_",icomp));
         parname.Append(Form("att%d_",iatt));
-        parname.Append("bias");
+        parname.Append("smear");
         parName[index] = parname.Data();
         index++;
         // "bias" parameters
@@ -371,7 +371,7 @@ void atmFitPars::initPars(const char* systype){
         parname.Append(Form("bin%d_",ibin));
         parname.Append(Form("comp%d_",icomp));
         parname.Append(Form("att%d_",iatt));
-        parname.Append("smear");
+        parname.Append("bias");
         parName[index] = parname.Data();
         fixPar[index]=0;
         index++;

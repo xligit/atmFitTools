@@ -2,6 +2,7 @@
 #include "TFile.h"
 #include "TH2F.h"
 #include "TMath.h"
+#include "TLine.h"
 #include "TString.h"
 #include <iostream>
 #include "atmFitPars.h"
@@ -46,6 +47,16 @@ class makeCov{
   //pull histograms
   TH1D* hpull;
 
+  ///////////////////////
+  //dividing lines
+  TLine* lhoriz;
+  TLine* lvert;
+
+  ////////////////////////
+  // number of parameters
+  int nsyspar;
+  int ntotpar;
+
   ////////////////////////
   //arrays
   double parmean[NTOTALPARS];
@@ -57,7 +68,30 @@ class makeCov{
   /////////////////////////
   //build that matrix
   void buildMatrix();
+
+  void drawCor();
+
 };
+
+void makeCov::drawCor(){
+  
+  cor->SetStats(0);
+  cor->Draw("colz");
+
+  double xmax = cor->GetXaxis()->GetXmax();
+  double ymax = cor->GetYaxis()->GetXmax();
+  double xmin = cor->GetXaxis()->GetXmin();
+  double ymin = cor->GetYaxis()->GetXmin();
+  double xsep = (double)ntotpar - (double)nsyspar;
+  lhoriz = new TLine(0,xsep,xmax,xsep);
+  lvert = new TLine(xsep,0,xsep,ymax);
+  lvert->SetLineWidth(3);
+  lhoriz->SetLineWidth(3);
+  lhoriz->Draw("same");
+  lvert->Draw("same");
+
+  return;
+}
 
 
 
@@ -79,6 +113,7 @@ void makeCov::buildMatrix(){
 
   //set initial values to zero
   const int npartot = npar; //< total number of parameters in MCMC cloud
+  ntotpar = npar;
   /*
   double matrix[npartot][npartot];
   for (int i0=0;i0<npartot;i0++){
@@ -115,7 +150,7 @@ void makeCov::buildMatrix(){
   }
   for (int kk=0;kk<npartot;kk++){
       cout<<"matrix: "<<kk<<" "<<covarray[kk][kk]<<endl;
-  }
+  };
 
   //fill histogram of matrix values
   for (int j=0;j<npartot;j++){
@@ -129,8 +164,8 @@ void makeCov::buildMatrix(){
 
   // set default parameter arrays
   atmFitPars* fitpars = new atmFitPars(runparfile.Data());
+  nsyspar = fitpars->nSysPars;
   for (int ipar=0; ipar<npartot; ipar++){
-//    pardefault[ipar] = fitpars->parDefaultValue[ipar];
     pardefault[ipar] = fitpars->getParameter(ipar);
   }
 
