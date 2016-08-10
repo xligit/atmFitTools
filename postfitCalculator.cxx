@@ -834,8 +834,6 @@ void postfitCalculator::unmodifyAttributes(){
 ///////////////////////////////////////////////////
 //changes attributes of event to the modified quantities
 void postfitCalculator::modifyAttributes(){
-//  cout<<"N "<<fitpars->nAttributes<<endl;
-  ////////////////////////////////////////////////////
   //modify attributes
   for (int iatt=0;iatt<fitpars->nAttributes;iatt++){
     int evtbin = mcreader->nbin;

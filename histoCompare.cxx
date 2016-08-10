@@ -182,26 +182,16 @@ void histoCompare::runMCMC(int nsteps){
 
   markovTools* mc = new markovTools(thePars);
   mc->setTuneParameter(tunePar);
-//  const int npars = thePars->nTotPars; //< total number of parameters in fit
-//  double par[npars]; //< container for parameters
-//  int parindex = 0;
-  double result = 0.;
-//  markovTools* mc = new markovTools(npars); //< create markovTools object
-//  mc->setTuneParameter(tunePar);
 
   ///////////////////////////////////////////////
   //fill parameter array and set uncertainties
   for (int ipar=0;ipar<thePars->nTotPars;ipar++){
-//    par[ipar]=thePars->getParameter(ipar);
     mc->setParVar(ipar,thePars->parUnc[ipar]);
   }
   
   ///////////////////////////////////////////////////
   //set initial state
-
-  
- // getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
-  result = getTotLnL();
+  double result = getTotLnL();
   mc->setL(result);//< sets the initial likelihood
 
   //loop through steps

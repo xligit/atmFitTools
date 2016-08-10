@@ -207,7 +207,14 @@ float preProcess::getWeight(){
   evtweight *= fq->wgtosc1[3];
   evtweight *= fq->wgtflx[3];
 #endif
-   
+
+  // fake normalization bump
+  if (fakeNormFlg){
+    if (fq->pmomv[0]<1000.){
+      evtweight*=1.15;
+    }
+  }
+
   return evtweight;
 }
 
@@ -688,20 +695,6 @@ void preProcess::fillAttributes(fqEvent* fqevent){
     attribute[i] = value;
   }
 
-
-/*  attribute[0] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
-  int ibest = getBest2RFitID();
-  double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
-  attribute[1] = best1Rnglnl-fqevent->fqmrnll[ibest];
-  attribute[2] = wall;
-  attribute[5] = fqevent->fq1rnll[1][2]-fqevent->fq1rnll[1][1];
-//  attribute[2] = fqevent->fq1rmom[0][2];
-  attribute[3] = fqevent->fq1rpos[0][2][2];
-  double xx = fqevent->fq1rpos[0][2][0];
-  double yy = fqevent->fq1rpos[0][2][1];
-  attribute[4] = TMath::Sqrt(xx*xx + yy*yy);
-  */
-
   return;
 }
 
@@ -712,6 +705,11 @@ void preProcess::fillAttributeMap(fqEvent* fqevent){
 
   // PID e vs. mu ratio of first subevent
   attributeMap["fqelike"] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
+  if (fakeShiftFlg){
+    if (ncomponent==0){
+      attributeMap["fqelike"] = attributeMap["fqelike"] + 150.;
+    }
+  }
 
   // Ring Counting (RC) parameter
   int ibest = getBest2RFitID();

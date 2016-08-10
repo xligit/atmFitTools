@@ -185,9 +185,9 @@ void histoFactory::normalizeHistos(double scale){
     }
     double datsumweights = 0;
     for (int iev=0; iev<nDataEvents; iev++){
-      cout<<"evt: "<<iev<<endl;
+    //  cout<<"evt: "<<iev<<endl;
       dataTree->GetEntry(iev);
-      cout<<"wgt: "<<fqData->evtweight;
+    //  cout<<"wgt: "<<fqData->evtweight;
       datsumweights += fqData->evtweight;
     }
     scale = datsumweights/mcsumweights;

@@ -4,6 +4,7 @@
 #include "TMath.h"
 #include "TLine.h"
 #include "TString.h"
+#include "TCanvas.h"
 #include <iostream>
 #include "atmFitPars.h"
 
@@ -69,13 +70,58 @@ class makeCov{
   //build that matrix
   void buildMatrix();
 
+  //////////////////////////////
+  // draw nice correlation matrix
   void drawCor();
 
+  ////////////////////////////////
+  // print all 1d parameter distributions to a directory
+  void printall1D(const char* dir);
+
 };
+
+void makeCov::printall1D(const char* dir){
+
+  TString dirname = dir;
+
+  TString basename = "h1D_parameter";
+  TString branchname = "par";
+
+  int npts = partree->GetEntries();
+
+  //setup mcmc trees
+  double par[500];
+  int npar;
+  partree->SetBranchAddress("par",par);
+  partree->SetBranchAddress("npars",&npar);
+  partree->GetEntry(0); //fills npar
+  cout<<"Total # of parameters: "<<npar<<endl;
+  cout<<"Total # of steps: "<<partree->GetEntries()<<endl;
+  cout<<"Burn-in: "<<nburn<<endl;
+
+  // canvas setup
+  TCanvas* cc = new TCanvas("cc","cc",800,700);
+  //partree->Draw("par[0]");
+ // cc->Print("testplot.png");
+
+  // print
+  for (int ipar=0; ipar<npar; ipar++){
+    TString bname = branchname.Data();
+    bname.Append(Form("[%d]",ipar));
+    partree->Draw(bname.Data());
+    TString plotname = dirname.Data();
+    plotname.Append(basename.Data());
+    plotname.Append(Form("%d.png",ipar));
+    cc->Print(plotname.Data());
+  }
+
+  return;      
+}
 
 void makeCov::drawCor(){
   
   cor->SetStats(0);
+  cor->GetZaxis()->SetRangeUser(-1.,1.);
   cor->Draw("colz");
 
   double xmax = cor->GetXaxis()->GetXmax();

@@ -41,6 +41,9 @@ class markovTools{
    double oldL; //< likelihood value of previous step
    double tuneParameter; //< tunes the size of MCMC steps
    double varPar[NMCMCPARS]; //< stores parameter standard deviations
+   // histogram means, this information is required to properly apply "smear" parameter so
+   // it should be saved in the MCMC output, although it is constant throughout the chain
+   double hMCMean[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; 
    TTree* pathTree;
    atmFitPars* atmPars;
 
@@ -351,8 +354,8 @@ markovTools::markovTools(int npars){
   pathTree->Branch("par",oldPars,"par[500]/D");
 }
 
-////////////////////////////////////////////
-//construct from atmFitPars 
+//////////////////////////////////////////////////////////////////////////////////////
+//construct from atmFitPars (this is constructor used in histoCompare so it must work) 
 markovTools::markovTools(atmFitPars* fitpars){
   fout = new TFile("mcmctree.root","RECREATE"); //< set output file name
   pathTree = new TTree("MCMCpath","MCMCpath"); //< initialize new tree for steps
