@@ -1263,6 +1263,9 @@ histoCompare::histoCompare(const char* parfile, bool sep)
   //MCMC tuning parameter
   tunePar = runPars->MCMCTunePar;
 
+  //Use smear parameters or no?
+  flgFixAllSmearPars = runPars->flgFixAllSmearPars;
+
   //MCMC nsteps;
   MCMCNSteps = runPars->MCMCNSteps;
 

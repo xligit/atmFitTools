@@ -41,9 +41,9 @@ class markovTools{
    double oldL; //< likelihood value of previous step
    double tuneParameter; //< tunes the size of MCMC steps
    double varPar[NMCMCPARS]; //< stores parameter standard deviations
+  // double means[NMCMCPARS]; //< stores means of distributions for application of smear parameters
    // histogram means, this information is required to properly apply "smear" parameter so
    // it should be saved in the MCMC output, although it is constant throughout the chain
-   double hMCMean[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; 
    TTree* pathTree;
    atmFitPars* atmPars;
 
@@ -53,6 +53,7 @@ class markovTools{
    void setPar(int ipar,double value){oldPars[ipar]=value;}
    void setL(double value){oldL=value; cout<<"Lset: "<<value<<endl;}
    void setParVar(int ipar,double value); //< sets parameter standard deviations
+ //  void setMeans(histoManager* hmanager);
 
    /////////////////////////
    //MCMC Functions
@@ -78,6 +79,25 @@ class markovTools{
 
 };
 
+/*
+void markovTools::setMeans(histoManager* hmanager){
+  
+  int nsamp = atmPars->nSamples;
+  int nbin  = atmPars->nBins;
+  int ncomp = atmPars->nComponents;
+  int natt  = atmPars->nAttributes;
+  
+  for (int ibin=0; ibin<nbin; ibin++){
+    for (int icomp=0; icomp<ncomp; icomp++){
+      for (int iatt=0; iatt<natt; iatt++){
+         int parindex = atmPars->getParIndex(ibin,icomp,iatt,0);
+         means[parindex] = hmanager->hMCMean
+      }
+    }
+  }
+
+}
+*/
 
 
 void markovTools::savePath(){

@@ -465,6 +465,49 @@ void compareEvtByEvt(int nevts, double mean0, double sig0,double scale, double b
 
 
 
+//smear it faster without mean
+void smearThisHistoFast(TH1D &hh, double* hcontent, double bias, double normscale=1.){
+
+  int nbins=hh.GetNbinsX();
+  double oldintegral = hh.Integral();
+  double binw = hh.GetBinWidth(1);
+
+  //parameters for calculations
+  double binedge;
+  double sum;
+  double binerr;
+  double weight;
+  double xmin;
+  double xmax;
+  double ymin;
+  double ymax;
+  double sumw;
+
+  //loop over bins and modify contents
+  for (int newbin=1;newbin<=nbins;newbin++){
+    sum = 0.;
+    sumw = 0;
+    binerr=0.;
+    binedge = hh.GetBinLowEdge(newbin);
+    ymin = binedge - bias;
+    ymax = ymin + binw;
+    for (int oldbin=1;oldbin<=nbins;oldbin++){
+      xmin = hh.GetBinLowEdge(oldbin);
+      xmax = (xmin+binw);
+      weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
+      double binc = hcontent[oldbin];
+      sum+=(weight*binc);
+      binerr += weight*weight*binc;
+      sumw += weight;
+    }
+    hh.SetBinContent(newbin,sum);
+    hh.SetBinError(newbin,TMath::Sqrt(binerr));
+  }
+  return;
+}
+
+
+
 //smear it faster
 void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double mean, double bias, double normscale=1.){
 
@@ -487,6 +530,7 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
 
   //parameters for calculations
   double binedge;
+  double binwidth;
   double sum;
   double binerr;
   double weight;
@@ -495,7 +539,7 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
   double ymin;
   double ymax;
   double smear = 1./spread;
-//  double mean = hh.GetMean() + (binw/2.);
+  //double mean = hh.GetMean() + (binw/2.);
   double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
   double sumw2;
   double sumw;
@@ -507,8 +551,9 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
     sumw2 = 0;
     binerr=0.;
     binedge = hh.GetBinLowEdge(newbin);
-    ymin = ((binedge-bias)*smear) - shift;
+    ymin = ((binedge-bias)*smear);
     ymax = ymin + (binw*smear);
+//    ymin = (binedge-bias)*
     for (int oldbin=1;oldbin<=nbins;oldbin++){
       xmin = hh.GetBinLowEdge(oldbin);
       xmax = (xmin+binw);
@@ -527,7 +572,40 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
 }
 
 
+TH1D* testsmear(double bias, int nev, const char* name = "testsmear.png"){
 
+  //canvas
+  TCanvas* cc = new TCanvas("cc","cc",800,700);
+  
+
+  //make a test histo
+  TH1D* hh = testBumpD(nev,1.0,1.0); 
+  hh->Sumw2();
+  TH1D* horig = (TH1D*)hh->Clone("orig");
+
+  horig->SetLineColor(kRed);
+  horig->Draw("h");
+
+  //make content
+  double hcont[1000]; 
+  for (int i=0; i<hh->GetNbinsX();i++){
+    hcont[i] = hh->GetBinContent(i);
+  }
+
+  //smear it
+  smearThisHistoFast(*hh, hcont,bias, 1);
+
+  hh->Draw("sameh");
+
+  cc->Print(name);
+
+  return hh;
+  
+
+}
+
+
+/*
 //smear it faster
 void smearThisHistoFast(TH1D &hh, double* hcontent, double spread, double bias=0.){
   if (hh.Integral()<1e-4) return;
@@ -589,7 +667,7 @@ void smearThisHistoFast(TH1D &hh, double* hcontent, double spread, double bias=0
   hh.Scale(scale);
   return;
 }
-
+*/
 
 /*
 void smearHisto(TH1D &hi,TH1D &hf,double spread, double bias=0.){

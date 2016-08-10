@@ -106,6 +106,7 @@ class sharedPars{
   TString sysParType;
   int NDataEvents;
   int flgUseNormPars;
+  int flgFixAllSmearPars;
  
 };
 
@@ -206,6 +207,7 @@ void sharedPars::readParsFromFile(){
   preProcInGateCut=kr->getKeyD("preProcInGateCut");
   NDataEvents = kr->getKeyI("NDataEvents");
   flgUseNormPars = kr->getKeyI("flgUseNormPars");
+  flgFixAllSmearPars = kr->getKeyI("flgFixAllSmearPars");
 }
 
 sharedPars::sharedPars(const char* parfilename){
