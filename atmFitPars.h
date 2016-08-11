@@ -54,6 +54,7 @@ class atmFitPars{
   double sysParDefault[NSYSPARMAX];
   double sysParUnc[NSYSPARMAX];
   double pars[4000];
+  TString parName[4000];
   double parDefaultValue[4000];
   double parUnc[4000];
   int   fixPar[4000]; //< array of fix flags for parameters
@@ -72,7 +73,7 @@ class atmFitPars{
   //////////////////////////////////////////////////////////////
 
   //////////////////////////////////////////////////////////////
-  //methods
+  //methods;
   void setNorm(double x){normFactor=x;}
   void initPars(const char* systype=""); //< sets parameters to initial values
   int getParIndex(int ibin, int icomp, int iatt, int imod){return parIndex[ibin][icomp][iatt][imod];}
@@ -90,7 +91,7 @@ class atmFitPars{
   void setRandSysPar(); //sets systematic parameters to random values
   int  checkFixFlg(int ibin,int icomp,int iatt, int imod);
   void resetDefaults();
-  void printParValues();
+  //void printParValues();
   int binOfPar[4000];
   int compOfPar[4000];
   int attOfPar[4000];
@@ -107,7 +108,7 @@ class atmFitPars{
   //saving and reading pars
   void savePars(const char* filename);
   void readPars(const char* filename);
-  void printPars();
+  void printPars(int ipar = -1);
 };
 
 #endif

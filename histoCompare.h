@@ -64,6 +64,8 @@ class histoCompare{
   // For T2K parameterization
   void setupPars(int nsyspars=0); //sets up all parameters  
   void setupPars(atmFitPars *a);
+
+ 
   //
   //post-fit toolts
   void profileL(int ibin, int icomp, int iatt, int imod, double range, int npts=100);
@@ -85,9 +87,12 @@ class histoCompare{
 
   void setupSplines(const char* fname){hManager->readSplinesFromFile(fname);}
   //tools for adding histogram directly..for debugging
+  void printParName(int ipar){cout<<thePars->parName[ipar].Data()<<endl;}
   void addHistogram(TH1D* h,int dataflg);
   int  rebinFactor;
   void setRebinFactor(int ifact){rebinFactor=ifact;}
+
+
   TH1D* hData[10];
   TH1D* hMC[10];
   TH1D* hModDebug;

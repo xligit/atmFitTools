@@ -64,7 +64,8 @@ class preProcess{
   int nAttributes;
   TH2FV* hFVBins;
   TH1D* hmask;
-
+  int fakeShiftFlg; //< puts a fake 50 pt shift in PID likelihood for sample 0
+  int fakeNormFlg;  //< puts a fake 15% normalization shift for sub GeV events
 
 
   ////////////////////////

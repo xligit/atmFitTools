@@ -71,21 +71,20 @@ class splineFactory{
   void setOutputFileName(const char* name){foutName=name;}
   TString getOutputFileName(){return foutName;}
   //
-  void fillHistograms(int ipt,int isyst); //fills all histograms given weight
   void  makeManagerFromFile(const char* fname); //reads in histograms from histoFactory
   void fillBranches(int nsamp,int nbin,int ncomp,int natt,int isyst); //fills leaves of output tree
   void setMCTree(TTree* tr);
+  void setupOutputFile();
+
   //build the splines
   void buildTheSplines();
-
+  void buildSplineForPar(int isyspar);
   //debugging
   void debugtest();
 
   //do everything
   void runSplineFactory();
 
-//  private:
-  void fillAttributes();
   void setupHistos();
 //  void setupSystPars(); //sets up systematic parameters
   void incrementSystPars(int isyspar, double nsig);

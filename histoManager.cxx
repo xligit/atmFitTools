@@ -262,12 +262,17 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   // do nothing if histogram has hardly any events
   if (hMC[isamp][ibin][icomp][iatt]->GetEntries()<10) return hMC[isamp][ibin][icomp][iatt];
   // otherwise, modifiy this histogram
-  smearThisHistoFastMean( (*hMCModified[isamp][ibin][icomp][iatt]),
+/*  smearThisHistoFastMean( (*hMCModified[isamp][ibin][icomp][iatt]),
                           binContents, 
                           fitPars->getHistoParameter(ibin,icomp,iatt,0),
                           hMCMean[isamp][ibin][icomp][iatt],
                           fitPars->getHistoParameter(ibin,icomp,iatt,1),
 			                    fitPars->getNormParameter(isamp,ibin) );
+  */
+  smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),
+                        binContents, 
+                        fitPars->getHistoParameter(ibin,icomp,iatt,1),
+			                  fitPars->getNormParameter(isamp,ibin) );
 
   
   return hMCModified[isamp][ibin][icomp][iatt];
@@ -294,8 +299,9 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int imode, i
       hMCNeutModified[isamp][ibin][icomp][imode][iatt]->SetBinError(i,hMCNeut[isamp][ibin][icomp][imode][iatt]->GetBinError(i));
     }
   }
+  smearThisHistoFast( (*hMCNeutModified[isamp][ibin][icomp][imode][iatt]), binContents, fitPars->histoPar[ibin][icomp][iatt][1]);
 
-  smearThisHistoFast( (*hMCNeutModified[isamp][ibin][icomp][imode][iatt]), binContents, fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
+//  smearThisHistoFast( (*hMCNeutModified[isamp][ibin][icomp][imode][iatt]), binContents, fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
 
   return hMCNeutModified[isamp][ibin][icomp][imode][iatt];
 }

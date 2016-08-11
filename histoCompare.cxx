@@ -20,6 +20,7 @@ void histoCompare::calcRoughParErr(){
 
   //print final results
   for (int ipar=0;ipar<thePars->nTotPars;ipar++){
+    if (thePars->fixPar[ipar]) continue;
  //   thePars->setParameter(ipar,fit->GetParameter(ipar));
     errParLo[ipar]=getErrLo(ipar);
     errParHi[ipar]=getErrHi(ipar);
@@ -85,16 +86,17 @@ void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
   markovTools* mcmc = new markovTools(thePars); //< create markovTools object
   mcmc->setTuneParameter(tunePar);
 
+
+  // CAN REMOVE THIS BLOC? DONE IN MCMCTOOLS INIT()?
   //fill parameter array and set uncertainties
-  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
+//  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
    // par[ipar]=thePars->getParameter(ipar); //< parameter array
-    mcmc->setParVar(ipar,thePars->parUnc[ipar]); //< set parameter variance
-    mcmc->setFixPar(ipar,thePars->fixPar[ipar]); //< set parameter fix flag
-  }
+  //  mcmc->setParVar(ipar,thePars->parUnc[ipar]); //< set parameter variance
+  //  mcmc->setFixPar(ipar,thePars->fixPar[ipar]); //< set parameter fix flag
+ // }
 
   //set initial state
   result = getTotLnL();
-//  getTotLnL1D(result,npars, par);//< get total likelihood from 1D array
   mcmc->setL(result);//< sets the initial likelihood
   double Linit = result;
 
@@ -710,18 +712,6 @@ void histoCompare::LnLPreFit(){
   for (int jpar=0;jpar<npars;jpar++){
     fit->FixParameter(jpar);
   }
-
-  //release and fit flux and xsec parameters
-  parindex = thePars->nTotPars-thePars->nSysPars;
-  for (int isyspar=0;isyspar<thePars->nSysPars;isyspar++){
-    fit->ReleaseParameter(parindex);
-    parindex++;
-  }
-  fit->ExecuteCommand("SIMPLEX",0,0);
-  parindex = 0;
-  for (int jpar=0;jpar<npars;jpar++){
-    fit->FixParameter(jpar);
-  }
  
   //run individual bias fits
   for (int jbin=0;jbin<nBin;jbin++){
@@ -762,6 +752,22 @@ void histoCompare::LnLPreFit(){
     }
   }
 
+  //fix all parameters
+  for (int jpar=0;jpar<npars;jpar++){
+    fit->FixParameter(jpar);
+  }
+
+  //release and fit flux and xsec parameters
+  parindex = thePars->nTotPars-thePars->nSysPars;
+  for (int isyspar=0;isyspar<thePars->nSysPars;isyspar++){
+    fit->ReleaseParameter(parindex);
+    parindex++;
+  }
+  fit->ExecuteCommand("SIMPLEX",0,0);
+  parindex = 0;
+  for (int jpar=0;jpar<npars;jpar++){
+    fit->FixParameter(jpar);
+  }
   //print final results
   for (int ipar=0;ipar<npars;ipar++){
     thePars->setParameter(ipar,fit->GetParameter(ipar));

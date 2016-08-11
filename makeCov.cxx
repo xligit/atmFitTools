@@ -91,9 +91,11 @@ void makeCov::printall1D(const char* dir){
 
   //setup mcmc trees
   double par[500];
+  double parnominal[500];
   int npar;
   partree->SetBranchAddress("par",par);
   partree->SetBranchAddress("npars",&npar);
+  partree->SetBranchAddress("parnominal",parnominal);
   partree->GetEntry(0); //fills npar
   cout<<"Total # of parameters: "<<npar<<endl;
   cout<<"Total # of steps: "<<partree->GetEntries()<<endl;
@@ -143,11 +145,14 @@ void makeCov::drawCor(){
 
 void makeCov::buildMatrix(){
 
-  //setup mcmc trees
+
+    //setup mcmc trees
   double par[500];
+  double parnominal[500];
   int npar;
   partree->SetBranchAddress("par",par);
   partree->SetBranchAddress("npars",&npar);
+  partree->SetBranchAddress("parnominal",parnominal);
   partree->GetEntry(0); //fills npar
   cout<<"Total # of parameters: "<<npar<<endl;
   cout<<"Total # of steps: "<<partree->GetEntries()<<endl;
@@ -209,10 +214,14 @@ void makeCov::buildMatrix(){
   }
 
   // set default parameter arrays
-  atmFitPars* fitpars = new atmFitPars(runparfile.Data());
-  nsyspar = fitpars->nSysPars;
+//  atmFitPars* fitpars = new atmFitPars(runparfile.Data());
+//  nsyspar = fitpars->nSysPars;
+//  for (int ipar=0; ipar<npartot; ipar++){
+//    pardefault[ipar] = fitpars->getParameter(ipar);
+//  }
+  partree->GetEntry(1);
   for (int ipar=0; ipar<npartot; ipar++){
-    pardefault[ipar] = fitpars->getParameter(ipar);
+    pardefault[ipar] = parnominal[ipar];
   }
 
   // make pull histogram

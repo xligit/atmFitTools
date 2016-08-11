@@ -113,6 +113,7 @@ void atmFitPars::acceptStep()
 }
 
 atmFitPars::atmFitPars(const std::string parfilename, covBase *covm){
+
   /////////////////////////////////////
   //fill shared parameters from file
   cout<<"atmFitPars: reading parameter file: "<<parfilename<<endl;
@@ -160,6 +161,10 @@ atmFitPars::atmFitPars(const char* parfilename){
   flgUseNormPars = runpars->flgUseNormPars;
   if (flgUseNormPars) cout<<"atmFitPars: Using normalization pars"<<endl;
   TString sysType = runpars->sysParType;
+  int flgFixAllSmearPars = runpars->flgFixAllSmearPars;
+  if (flgFixAllSmearPars){
+    fixAllSmearPars(1);
+  }
   //fill all initial parameter values and count number of pars
   initPars(sysType.Data());
 }

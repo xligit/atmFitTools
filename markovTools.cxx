@@ -22,6 +22,7 @@ TRandom2* randy = new TRandom2();
 #endif
 
 //class to manage a Markov Chain Monte Carlo
+//  construct with pointer to atmFitPars
 class markovTools{
    public:
    
@@ -35,15 +36,16 @@ class markovTools{
    //variables
    TFile* fout; //< output file
    int nPars;  //< totla number of parameters
+   int nParsEffective; //< total number of non-fixed parameters;
+   double effectivePars[NMCMCPARS]; //< array of non-fixed parameters
+   double nominalPars[NMCMCPARS]; //< array of nominal parameters
+   int  effectiveIndex[NMCMCPARS]; //< indiciies of non-fixed parameters
    int iStep;  //< counter for total step number
    double oldPars[NMCMCPARS]; //< array of parameters from previous step
    int fixPar[NMCMCPARS]; //< array of fix flags for each parameter
    double oldL; //< likelihood value of previous step
    double tuneParameter; //< tunes the size of MCMC steps
    double varPar[NMCMCPARS]; //< stores parameter standard deviations
-  // double means[NMCMCPARS]; //< stores means of distributions for application of smear parameters
-   // histogram means, this information is required to properly apply "smear" parameter so
-   // it should be saved in the MCMC output, although it is constant throughout the chain
    TTree* pathTree;
    atmFitPars* atmPars;
 
@@ -53,7 +55,6 @@ class markovTools{
    void setPar(int ipar,double value){oldPars[ipar]=value;}
    void setL(double value){oldL=value; cout<<"Lset: "<<value<<endl;}
    void setParVar(int ipar,double value); //< sets parameter standard deviations
- //  void setMeans(histoManager* hmanager);
 
    /////////////////////////
    //MCMC Functions
@@ -189,11 +190,7 @@ int markovTools::acceptStepLnL(double newL){
 
 
   double alpha = (oldL-newL); //< get difference in LnL
- // cout<<"mcmc: Likelihood: "<<oldL;;
-//  cout<<" -> "<<newL;
-//  cout<<" diff: "<<alpha<<endl;
   double rand = randy->Rndm(); //< throw a random number
- // cout<<"Log unit random: "<<TMath::Log(rand)<<endl;
   int iaccept = 0; //< acceptance flag
 
   /////////////////////////////
@@ -202,6 +199,10 @@ int markovTools::acceptStepLnL(double newL){
     //accepted! new pars are now old
     for (int i=0;i<nPars;i++){
       oldPars[i]=atmPars->getParameter(i);
+      // fill array of all effective (non-fixed) parameter values
+      if (fixPar[i]!=1){
+        effectivePars[effectiveIndex[i]] = atmPars->getParameter(i); 
+      }
       oldL = newL;
     }
 #ifdef T2K
@@ -217,10 +218,6 @@ int markovTools::acceptStepLnL(double newL){
     }
   }
 
-//  if (iaccept) cout<<"accepted!"<<endl;
-//  else{
-//   cout<<"not accepted"<<endl;
-//  }
   iStep++; //< increment global step  count
   if ((iStep%100)==0) cout<<"step: "<<iStep<<endl;
 
@@ -322,11 +319,8 @@ void markovTools::proposeStep(){
   for (int i=0;i<nPars;i++){
     oldPars[i] = atmPars->getParameter(i);
     if (atmPars->fixPar[i]!=1){
-//      cout<<"par "<<i<<": "<<oldPars[i];
       double random = randy->Gaus(oldPars[i],atmPars->parUnc[i]*tuneParameter);
-      //cout<<"random: "<<random<<endl;
       atmPars->setParameter(i,random);
- //     cout<<"->  "<<atmPars->getParameter(i)<<endl;;
     }
   }
 #else
@@ -349,11 +343,30 @@ void markovTools::Init(int npars){
 
   //current step counter
   iStep=0;
-  
+
+  //set fix arrays etc
+  for (int ipar=0;ipar<nPars;ipar++){
+    setParVar(ipar,atmPars->parUnc[ipar]); //< set parameter variance
+    setFixPar(ipar,atmPars->fixPar[ipar]); //< set parameter fix flag
+  }
+
+  //count all non-fixed parameters
+  nParsEffective = 0;
+  for (int i=0; i<nPars; i++){
+    if (atmPars->fixPar[i]) continue;
+    else{
+      effectiveIndex[i] = nParsEffective;
+      nominalPars[nParsEffective] = atmPars->parDefaultValue[i]; //< nominal parameter value
+      nParsEffective++;
+    }
+  }
+
   //branch setup
-  pathTree->Branch("npars",&nPars,"npars/I");
+  pathTree->Branch("npars",&nParsEffective,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
-  pathTree->Branch("par",oldPars,"par[500]/D");
+  pathTree->Branch("par",effectivePars,"par[500]/D");
+  pathTree->Branch("parnominal",nominalPars,"parnominal[500]/D");
+
 
   //done
   return;
@@ -380,6 +393,8 @@ markovTools::markovTools(atmFitPars* fitpars){
   fout = new TFile("mcmctree.root","RECREATE"); //< set output file name
   pathTree = new TTree("MCMCpath","MCMCpath"); //< initialize new tree for steps
   atmPars = fitpars;
+  
+  // initialize
   Init(fitpars->nTotPars); 
   return;
 }
