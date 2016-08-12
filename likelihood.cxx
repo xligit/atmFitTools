@@ -128,6 +128,17 @@ double evalLnLScaled(double ndata, double mcmean, double mcsig,double norm=1.,do
 //    return (ndata-mcmean)*(ndata-mcmean)/(2.*mcsig*mcsig);
 //}
 
+
+/////////////////////////////////////////////////////////////////////////
+// factor in MC errors
+double evalGausChi2WithError(double ndata, double mcmean, double mcsig){
+
+  double sigmasq = ndata + (mcsig*mcsig);
+  double diff = (ndata-mcmean);
+  return (diff*diff)/(2.*sigmasq);
+
+}
+
 /////////////////////////////////////////////////////////////////////////
 //Assume scaled Gaussian errors, and mcmean has been normalized
 double evalLnLMyChi2(double ndata, double mcmean, double mcsig, double norm=1.){

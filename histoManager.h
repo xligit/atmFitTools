@@ -94,11 +94,14 @@ class histoManager{
   //getters
   TH1D* getHistogram(int isamp, int ibin, int icomp, int iatt);
   TH1D* getModHistogram(int isamp, int ibin, int icomp, int iatt); //gets histogram modified from atm pars
+  TH1D* getModHistogramFast(int isamp, int ibin, int icomp, int iatt); //gets histogram modified from atm pars
   TH1D* getHistogramData(int isamp, int ibin, int iatt){return hData[isamp][ibin][iatt];}
   hSplines* getSplines(int isamp, int ibin, int icomp, int iatt){return theSplines[isamp][ibin][icomp][iatt];}
   TH1D* getSumHistogram(int isamp, int ibin, int att, int normFlg=1);
   TH1D* getSumHistogramMod(int isamp, int ibin, int att, int normFlg=1);
   TH1D* getSplineModifiedHisto(int isamp, int ibin, int icomp, int iatt);
+  double getSplineModifiedBin(int isamp, int ibin, int icomp, int iatt,int ihistobin);
+  
 #ifdef T2K
   TH1D* getHistogram(int isamp, int ibin, int icomp, int imode, int iatt); // neut 
   TH1D* getNominalHistogram(int isamp, int ibin, int icomp, int imode, int iatt);

@@ -30,10 +30,19 @@ class makeCov{
   /////////////////
   //tree of mcmc steps
   TTree* partree;
+  // tree leaves
+  double par[500];
+  double parnominal[500];
+  int parbin[500];
+  int parcomp[500];
+  int paratt[500];
+  int parsyst[500];
+  int parindex[500];
+  int npar;
 
   ////////////////////////////////////////
   //set parametet tree
-  void setParTree(TTree* tr){partree=tr;}
+  void setParTree(TTree* tr);
 
   ///////////////////////////////////////////
   //set the number of burn in steps to ignore
@@ -78,7 +87,41 @@ class makeCov{
   // print all 1d parameter distributions to a directory
   void printall1D(const char* dir);
 
+  ////////////////////////////////////
+  // print some par info
+  void printParInfo(int ipar);
+
 };
+
+void makeCov::printParInfo(int ipar){
+
+     cout<<"par bin: "<<parbin[ipar]<<endl;
+     cout<<"par comp: "<<parcomp[ipar]<<endl;
+     cout<<"par att: "<<paratt[ipar]<<endl;
+
+     return;
+}
+
+
+void makeCov::setParTree(TTree* tr){
+  //setup mcmc trees
+  partree = tr;
+  partree->SetBranchAddress("par",par);
+  partree->SetBranchAddress("npars",&npar);
+  partree->SetBranchAddress("parnominal",parnominal);
+  partree->SetBranchAddress("parbin",parbin);
+  partree->SetBranchAddress("paratt",paratt);
+  partree->SetBranchAddress("parcomp",parcomp);
+  partree->SetBranchAddress("parindex",parindex);
+
+  partree->GetEntry(0); //fills npar
+  cout<<"Total # of parameters: "<<npar<<endl;
+  cout<<"Total # of steps: "<<partree->GetEntries()<<endl;
+  cout<<"Burn-in: "<<nburn<<endl;
+
+  return;
+
+}
 
 void makeCov::printall1D(const char* dir){
 
@@ -90,7 +133,7 @@ void makeCov::printall1D(const char* dir){
   int npts = partree->GetEntries();
 
   //setup mcmc trees
-  double par[500];
+/*  double par[500];
   double parnominal[500];
   int npar;
   partree->SetBranchAddress("par",par);
@@ -100,7 +143,7 @@ void makeCov::printall1D(const char* dir){
   cout<<"Total # of parameters: "<<npar<<endl;
   cout<<"Total # of steps: "<<partree->GetEntries()<<endl;
   cout<<"Burn-in: "<<nburn<<endl;
-
+*/
   // canvas setup
   TCanvas* cc = new TCanvas("cc","cc",800,700);
   //partree->Draw("par[0]");
@@ -147,6 +190,7 @@ void makeCov::buildMatrix(){
 
 
     //setup mcmc trees
+  /*
   double par[500];
   double parnominal[500];
   int npar;
@@ -157,6 +201,7 @@ void makeCov::buildMatrix(){
   cout<<"Total # of parameters: "<<npar<<endl;
   cout<<"Total # of steps: "<<partree->GetEntries()<<endl;
   cout<<"Burn-in: "<<nburn<<endl;
+  */
 
   //create matrix templates
   cov = new TH2F("cov","cov",npar,0.,(double)npar,npar,0.,(double)npar);
@@ -216,6 +261,7 @@ void makeCov::buildMatrix(){
   // set default parameter arrays
 //  atmFitPars* fitpars = new atmFitPars(runparfile.Data());
 //  nsyspar = fitpars->nSysPars;
+   nsyspar=0;
 //  for (int ipar=0; ipar<npartot; ipar++){
 //    pardefault[ipar] = fitpars->getParameter(ipar);
 //  }

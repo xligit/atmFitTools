@@ -29,7 +29,7 @@ class markovTools{
    ///////////////////
    //constructors
    markovTools(int npars);
-   markovTools(atmFitPars* atmpars);
+   markovTools(atmFitPars* atmpars, const char* outfilename="");;
    void Init(int pars);
 
    ///////////////////////////
@@ -40,13 +40,20 @@ class markovTools{
    double effectivePars[NMCMCPARS]; //< array of non-fixed parameters
    double nominalPars[NMCMCPARS]; //< array of nominal parameters
    int  effectiveIndex[NMCMCPARS]; //< indiciies of non-fixed parameters
+   int  parBin[NMCMCPARS]; //< bin of given effective parameter
+   int  parIndex[NMCMCPARS]; //< atmFitPars index effective parameter
+   int  parComp[NMCMCPARS]; //< MC component of given effective parameter
+   int  parAtt[NMCMCPARS]; //< attribute modified by given effective parameter
+   int  parIsSyst[NMCMCPARS]; //< flag = 1 if parameter is systematic (flux or xsec) parameter
    int iStep;  //< counter for total step number
    double oldPars[NMCMCPARS]; //< array of parameters from previous step
    int fixPar[NMCMCPARS]; //< array of fix flags for each parameter
    double oldL; //< likelihood value of previous step
    double tuneParameter; //< tunes the size of MCMC steps
    double varPar[NMCMCPARS]; //< stores parameter standard deviations
+   // output tree
    TTree* pathTree;
+
    atmFitPars* atmPars;
 
    /////////////////////////
@@ -55,6 +62,10 @@ class markovTools{
    void setPar(int ipar,double value){oldPars[ipar]=value;}
    void setL(double value){oldL=value; cout<<"Lset: "<<value<<endl;}
    void setParVar(int ipar,double value); //< sets parameter standard deviations
+
+   ////////////////////////
+   //tree setup`
+   void setupPathTree();
 
    /////////////////////////
    //MCMC Functions
@@ -79,6 +90,12 @@ class markovTools{
 
 
 };
+
+void markovTools::setupPathTree(){
+
+
+
+}
 
 /*
 void markovTools::setMeans(histoManager* hmanager){
@@ -338,6 +355,9 @@ void markovTools::proposeStep(){
 //initialization
 void markovTools::Init(int npars){
 
+  // output tree with parameters
+  pathTree = new TTree("MCMCpath","MCMCpath"); //< initialize new tree for steps
+
   // set total number of parameters
   nPars = npars;
 
@@ -356,7 +376,17 @@ void markovTools::Init(int npars){
     if (atmPars->fixPar[i]) continue;
     else{
       effectiveIndex[i] = nParsEffective;
+      parIndex[nParsEffective] = i;
       nominalPars[nParsEffective] = atmPars->parDefaultValue[i]; //< nominal parameter value
+      parBin[nParsEffective] = atmPars->getParBin(i);
+      parComp[nParsEffective] = atmPars->getParComp(i);
+      parAtt[nParsEffective] = atmPars->getParAtt(i);
+      if (parBin[nParsEffective]>0){
+        parIsSyst[nParsEffective] = 0; //< assume systematic unless changed in next block
+      }
+      else{
+        parIsSyst[nParsEffective] = 1; //< assume systematic unless changed in next block
+      }
       nParsEffective++;
     }
   }
@@ -366,6 +396,11 @@ void markovTools::Init(int npars){
   pathTree->Branch("step",&iStep,"step/I");
   pathTree->Branch("par",effectivePars,"par[500]/D");
   pathTree->Branch("parnominal",nominalPars,"parnominal[500]/D");
+  pathTree->Branch("parbin",parBin,"parbin[500]/I");
+  pathTree->Branch("parcomp",parComp,"parcomp[500]/I");
+  pathTree->Branch("paratt",parAtt,"paratt[500]/I");
+  pathTree->Branch("parindex",effectiveIndex,"parindex[500]/I");
+  pathTree->Branch("parsyst",parIsSyst,"parsyst[500]/I");
 
 
   //done
@@ -373,7 +408,7 @@ void markovTools::Init(int npars){
 }
 
 /////////////////////////////////////////////
-//constructor
+//constructor (old)
 markovTools::markovTools(int npars){
   fout = new TFile("mcmctree.root","RECREATE"); //< set output file name
   pathTree = new TTree("MCMCpath","MCMCpath"); //< initialize new tree for steps
@@ -389,8 +424,15 @@ markovTools::markovTools(int npars){
 
 //////////////////////////////////////////////////////////////////////////////////////
 //construct from atmFitPars (this is constructor used in histoCompare so it must work) 
-markovTools::markovTools(atmFitPars* fitpars){
-  fout = new TFile("mcmctree.root","RECREATE"); //< set output file name
+markovTools::markovTools(atmFitPars* fitpars, const char* outfilename){
+  TString foutname = outfilename;
+  if (!foutname.CompareTo("")){
+    fout = new TFile("mcmctree.root","RECREATE"); //< set output file name
+  }
+  else{
+    fout = new TFile(foutname.Data(),"RECREATE");
+  }
+
   pathTree = new TTree("MCMCpath","MCMCpath"); //< initialize new tree for steps
   atmPars = fitpars;
   

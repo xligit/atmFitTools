@@ -24,6 +24,81 @@ double atmFitPars::getSysParameter(int isys){
   return pars[theindex];
 }
 
+/////////////////////////////////////////////////
+int atmFitPars::getParBin(int ipar){
+
+  int value = -1;
+
+  //get more information for effective parameters
+  for (int ibin=0; ibin<nBins; ibin++){
+    for (int icomp=0; icomp<nComponents; icomp++){
+      for (int iatt=0; iatt<nAttributes; iatt++){
+        for (int imod=0; imod<2; imod++){
+          int parindex = getParIndex(ibin,icomp,iatt,imod);
+          if (parindex==ipar){
+            value = ibin;
+            return value;
+          }
+        }
+      }
+    }
+  }
+
+  return value;
+
+}
+
+/////////////////////////////////////////////////
+int atmFitPars::getParComp(int ipar){
+
+  int value = -1;
+
+  //get more information for effective parameters
+  for (int ibin=0; ibin<nBins; ibin++){
+    for (int icomp=0; icomp<nComponents; icomp++){
+      for (int iatt=0; iatt<nAttributes; iatt++){
+        for (int imod=0; imod<2; imod++){
+          int parindex = getParIndex(ibin,icomp,iatt,imod);
+          if (parindex==ipar){
+            value = icomp;
+            return value;
+          }
+        }
+      }
+    }
+  }
+
+  return value;
+
+}
+
+/////////////////////////////////////////////////
+int atmFitPars::getParAtt(int ipar){
+
+  int value = -1;
+
+  //get more information for effective parameters
+  for (int ibin=0; ibin<nBins; ibin++){
+    for (int icomp=0; icomp<nComponents; icomp++){
+      for (int iatt=0; iatt<nAttributes; iatt++){
+        for (int imod=0; imod<2; imod++){
+          int parindex = getParIndex(ibin,icomp,iatt,imod);
+          if (parindex==ipar){
+            value = iatt;
+            return value;
+          }
+        }
+      }
+    }
+  }
+
+  return value;
+
+}
+
+
+
+
 //////////////////////////////////////////////////
 //set parameters back to defaults
 void atmFitPars::resetDefaults(){

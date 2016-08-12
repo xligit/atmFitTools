@@ -647,6 +647,11 @@ int preProcess::preProcessIt(){
     vis->fillVisVar(); //get visible ring information
     fillAttributes(fq);
     ncomponent=getComponent();
+    if (fakeShiftFlg){
+      if (ncomponent==0){
+        attributeMap["fqelike"] = attributeMap["fqelike"] + 150.;
+      }
+    }
     nsample=getSample();
     evtweight=getWeight();
     trout->Fill();
@@ -705,11 +710,7 @@ void preProcess::fillAttributeMap(fqEvent* fqevent){
 
   // PID e vs. mu ratio of first subevent
   attributeMap["fqelike"] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
-  if (fakeShiftFlg){
-    if (ncomponent==0){
-      attributeMap["fqelike"] = attributeMap["fqelike"] + 150.;
-    }
-  }
+
 
   // Ring Counting (RC) parameter
   int ibest = getBest2RFitID();

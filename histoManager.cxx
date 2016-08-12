@@ -159,6 +159,27 @@ TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt, int normFlg){
   return hSumHisto[isamp][ibin][iatt];
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Returns the spline-modified contents of the specified histogram bin
+double histoManager::getSplineModifiedBin(int isamp, int ibin, int icomp, int iatt, int ihistobin){
+
+ // originial bin contents
+ double bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(ihistobin);
+
+ // sum of weights from splines
+ double weightsum=0.;
+ for (int isyspar=0;isyspar<fitPars->nSysPars;isyspar++){
+    weightsum+=getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(ihistobin,isyspar,fitPars->sysPar[isyspar]);
+  }
+  //this formula gives the total weight to assign to this bin 
+  weightsum = weightsum -(double)fitPars->nSysPars + (double)fitPars->nNormPars + 1.; 
+  bincontent*=weightsum;
+ 
+  //
+  return  bincontent;
+
+}
+
 /////////////////////////////////////////////
 //returns the given histogram after it has been
 //modified by evaluating the spine weights
@@ -236,6 +257,99 @@ TH1D* histoManager::getSplineModifiedHisto(int isamp, int ibin, int icomp, int i
 
 #endif
 
+
+//////////////////////////////////////////////////////////////////////////////
+// Returns the modified histogram based on the parameters in atmfitpars
+TH1D* histoManager::getModHistogramFast(int isamp, int ibin, int icomp, int iatt){
+  
+  //number of bins in this histo
+  int nhistobins = hMC[isamp][ibin][icomp][iatt]->GetNbinsX();
+
+  //reset this histogram to erase any previous modifications
+  hMCModified[isamp][ibin][icomp][iatt]->Reset();
+
+  //bin width
+  double binw = hMC[isamp][ibin][icomp][iatt]->GetBinWidth(1);
+
+  //parameters for calculations
+  double binedge;
+  double sum;
+  double binerr;
+  double weight;
+  double xmin;
+  double xmax;
+  double ymin;
+  double ymax;
+  double sumw;
+  double binc;
+  double bias = fitPars->getHistoParameter(ibin,icomp,iatt,1);
+//  double norm = fitPars->getNormParameter(isamp,ibin)
+
+  //loop over bins and modify contents
+  for (int newbin=1;newbin<=nhistobins;newbin++){
+    sum = 0.;
+    sumw = 0;
+    binerr=0.;
+    binedge = hMCModified[isamp][ibin][icomp][iatt]->GetBinLowEdge(newbin);
+    ymin = binedge - bias;
+    ymax = ymin + binw;
+    for (int oldbin=1;oldbin<=nhistobins;oldbin++){
+      xmin = hMCModified[isamp][ibin][icomp][iatt]->GetBinLowEdge(oldbin);
+      xmax = (xmin+binw);
+      weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
+      if (useSplineFlg){
+        binc = getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin);
+      }
+      else{
+        binc = hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin);
+      }
+      sum+=(weight*binc);
+      binerr += weight*weight*binc;
+      sumw += weight;
+    }
+    hMCModified[isamp][ibin][icomp][iatt]->SetBinContent(newbin,sum);
+    hMCModified[isamp][ibin][icomp][iatt]->SetBinError(newbin,TMath::Sqrt(binerr));
+  }
+
+  
+
+  /*
+  //apply splines if using them
+  if (useSplineFlg){
+    //hMCModified will now point to spline modified histogram
+    getSplineModifiedHisto(isamp, ibin, icomp, iatt);
+  }
+  else{
+    //just set bin contents equal to original histogram if not using splines
+    for (int i=1;i<=nhistobins;i++){
+      bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(i);
+      binContents[i]=bincontent;
+      hMCModified[isamp][ibin][icomp][iatt]->SetBinContent(i,bincontent);
+      hMCModified[isamp][ibin][icomp][iatt]->SetBinError(i,hMC[isamp][ibin][icomp][iatt]->GetBinError(i));
+    }
+  }
+  // do nothing if histogram has hardly any events
+  if (hMC[isamp][ibin][icomp][iatt]->GetEntries()<10) return hMC[isamp][ibin][icomp][iatt];
+  // otherwise, modifiy this histogram
+                          binContents, 
+                          fitPars->getHistoParameter(ibin,icomp,iatt,0),
+                          hMCMean[isamp][ibin][icomp][iatt],
+                          fitPars->getHistoParameter(ibin,icomp,iatt,1),
+			                    fitPars->getNormParameter(isamp,ibin) );
+  
+  smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),
+                        binContents, 
+                        fitPars->getHistoParameter(ibin,icomp,iatt,1),
+			                  fitPars->getNormParameter(isamp,ibin) );
+
+  */ 
+  return hMCModified[isamp][ibin][icomp][iatt];
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+// Returns the modified histogram based on the parameters in atmfitpars
 TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   
   //number of bins in this histo
@@ -262,13 +376,6 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   // do nothing if histogram has hardly any events
   if (hMC[isamp][ibin][icomp][iatt]->GetEntries()<10) return hMC[isamp][ibin][icomp][iatt];
   // otherwise, modifiy this histogram
-/*  smearThisHistoFastMean( (*hMCModified[isamp][ibin][icomp][iatt]),
-                          binContents, 
-                          fitPars->getHistoParameter(ibin,icomp,iatt,0),
-                          hMCMean[isamp][ibin][icomp][iatt],
-                          fitPars->getHistoParameter(ibin,icomp,iatt,1),
-			                    fitPars->getNormParameter(isamp,ibin) );
-  */
   smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),
                         binContents, 
                         fitPars->getHistoParameter(ibin,icomp,iatt,1),

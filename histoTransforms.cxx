@@ -501,7 +501,7 @@ void smearThisHistoFast(TH1D &hh, double* hcontent, double bias, double normscal
       sumw += weight;
     }
     hh.SetBinContent(newbin,sum);
-  //  hh.SetBinError(newbin,TMath::Sqrt(binerr));
+    hh.SetBinError(newbin,TMath::Sqrt(binerr));
   }
   return;
 }

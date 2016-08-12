@@ -216,54 +216,7 @@ void histoCompare::runMCMC(int nsteps){
   return;
 }
 
-/*
-double histoCompare::getErrHi(int ibin,int icomp,int iatt,int imod){
-  if (fixPar[ibin][icomp][iatt][imod]==1) return 0.;
-  double thresh = 1.0;
-  double Ldiff = 0.;
-  double Lbest = getTotLnL();
-  double parbest = Par[ibin][icomp][iatt][imod];
-  double parval = 0.;
-  double dpar = 1.;
-  double loerr;
-  int ntry = 0;
-  int ntrymax=1000;
-  if (imod==0) dpar = 0.005;
-  if (imod==1) dpar = 10.;
-  //course search
-  while ((Ldiff<1)&&(ntry<ntrymax)){
-    Par[ibin][icomp][iatt][imod]+=dpar; //modify parameter
-    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-  //  cout<<"Ldiff: "<<Ldiff<<endl;
-    ntry++;
-  }
- // cout<<"ntry: "<<ntry<<endl;
-  Par[ibin][icomp][iatt][imod]-=dpar;
-  Ldiff = 0;
-  dpar*=0.2;
-  ntry=0;
-  while ((Ldiff<1)&&(ntry<ntrymax)){
-    Par[ibin][icomp][iatt][imod]+=dpar; //modify parameter
-    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-  //  cout<<"Ldiff: "<<Ldiff<<endl;
-    ntry++;
-  }
-  Par[ibin][icomp][iatt][imod]-=dpar;
-  Ldiff = 0;
-  dpar*=0.1;
-  ntry=0;
-  while ((Ldiff<1)&&(ntry<ntrymax)){
-    Par[ibin][icomp][iatt][imod]+=dpar; //modify parameter
-    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
-  //  cout<<"Ldiff: "<<Ldiff<<endl;
-    ntry++;
-  }
 
-  loerr = Par[ibin][icomp][iatt][imod]-parbest;
-  Par[ibin][icomp][iatt][imod] = parbest;
-  return loerr; 
-}
-*/
 
 void histoCompare::saveFitPars(const char* filename){
   thePars->savePars(filename);
@@ -281,7 +234,7 @@ double histoCompare::getErrHi(int ipar){
   double dpar = thePars->parUnc[ipar]/10.;
   double hierr;
   int ntry = 0;
-  int ntrymax=10000;
+  int ntrymax=5000;
   //coarse search
   while (Ldiff<Lthresh){
   //  cout<<"oldpar: "<<parval<<endl;
@@ -340,7 +293,7 @@ double histoCompare::getErrLo(int ipar){
 //  cout<<"dpar: "<<dpar<<endl;
   double loerr;
   int ntry = 0;
-  int ntrymax=10000;
+  int ntrymax=5000;
   //coarse search
   while (Ldiff<Lthresh){
     parval-=dpar;
@@ -1129,7 +1082,8 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2){
 
     if (c2<7) continue;
      
-    lnL+=evalLnL(c2,c1,norm); //< tn186 likelihood definition
+//    lnL+=evalLnL(c2,c1,norm); //< tn186 likelihood definition
+    lnL+=evalGausChi2WithError(c2,c1,errmc); //< tn186 likelihood definition
 
 }
   return lnL;
@@ -1287,6 +1241,9 @@ histoCompare::histoCompare(const char* parfile, bool sep)
   thePars = new atmFitPars(parfile);
   hManager->setFitPars(thePars);
   int nsyspars = thePars->nSysPars;
+  if (flgFixAllSmearPars){
+    thePars->fixAllSmearPars();
+  }
 
   
   //read in splines if you're into that

@@ -76,7 +76,12 @@ class atmFitPars{
   //methods;
   void setNorm(double x){normFactor=x;}
   void initPars(const char* systype=""); //< sets parameters to initial values
+  // index management//////////////////////////////////////////////////////////////////////////////
   int getParIndex(int ibin, int icomp, int iatt, int imod){return parIndex[ibin][icomp][iatt][imod];}
+  int getParBin(int ipar);
+  int getParComp(int ipar);
+  int getParAtt(int ipar);
+  /////////////////////////////////////////////////////////////////////////////////////////////////
   double getParameter(int ipar){return pars[ipar];}
   double getHistoParameter(int ibin, int icomp, int iatt, int imod);
   double getSysParameter(int isys);
@@ -96,6 +101,7 @@ class atmFitPars{
   int compOfPar[4000];
   int attOfPar[4000];
   int typeOfPar[4000];
+
 #ifdef T2K
   void proposeStep();
   void acceptStep();
