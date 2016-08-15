@@ -464,9 +464,54 @@ void compareEvtByEvt(int nevts, double mean0, double sig0,double scale, double b
 }
 
 
+//smear it faster without mean
+void smearThisHistoFast(TH1D &hh, double* hcontent, double spread,  double bias, double normscale=1.){
+
+  int nbins=hh.GetNbinsX();
+ // double oldintegral = hh.Integral();
+  double binw = hh.GetBinWidth(1);
+
+  //parameters for calculations
+  double binedge;
+  double sum;
+  double smear = 1./spread;
+  double binerr;
+  double weight;
+  double xmin;
+  double xmax;
+  double ymin;
+  double ymax;
+  double sumw;
+
+  //loop over bins and modify contents
+  for (int newbin=1;newbin<=nbins;newbin++){
+    sum = 0.;
+    sumw = 0;
+    binerr=0.;
+    binedge = hh.GetBinLowEdge(newbin);
+//    ymin = binedge - bias;
+//    ymax = ymin + binw;
+    ymin = ((binedge-bias)*smear);
+    ymax = ymin + (binw*smear);
+    for (int oldbin=1;oldbin<=nbins;oldbin++){
+      xmin = hh.GetBinLowEdge(oldbin);
+      xmax = (xmin+binw);
+      weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
+      double binc = hcontent[oldbin];
+      sum+=(weight*binc);
+      binerr += weight*weight*binc;
+      sumw += weight;
+    }
+    hh.SetBinContent(newbin,sum);
+    hh.SetBinError(newbin,TMath::Sqrt(binerr));
+  }
+  return;
+}
+
+
 
 //smear it faster without mean
-void smearThisHistoFast(TH1D &hh, double* hcontent, double bias, double normscale=1.){
+void smearThisHistoFastBias(TH1D &hh, double* hcontent, double bias, double normscale=1.){
 
   int nbins=hh.GetNbinsX();
  // double oldintegral = hh.Integral();
@@ -540,7 +585,7 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
   double ymax;
   double smear = 1./spread;
   //double mean = hh.GetMean() + (binw/2.);
-  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
+//  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
   double sumw2;
   double sumw;
 
@@ -606,7 +651,7 @@ TH1D* testsmearmean(double bias, double smear, int nev, const char* name = "test
 }
 
 
-TH1D* testsmear(double bias, int nev, const char* name = "testsmear.png"){
+TH1D* testsmear(double smear, double bias, int nev, const char* name = "testsmear.png"){
 
   //canvas
   TCanvas* cc = new TCanvas("cc","cc",800,700);
@@ -627,7 +672,7 @@ TH1D* testsmear(double bias, int nev, const char* name = "testsmear.png"){
   }
 
   //smear it
-  smearThisHistoFast(*hh, hcont,bias, 1);
+  smearThisHistoFast(*hh, hcont,smear, bias, 1);
 
   hh->Draw("sameh");
 

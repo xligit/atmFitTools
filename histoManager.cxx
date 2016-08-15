@@ -378,6 +378,7 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   // otherwise, modifiy this histogram
   smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),
                         binContents, 
+                        fitPars->getHistoParameter(ibin,icomp,iatt,0),
                         fitPars->getHistoParameter(ibin,icomp,iatt,1),
 			                  fitPars->getNormParameter(isamp,ibin) );
 
@@ -406,9 +407,9 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int imode, i
       hMCNeutModified[isamp][ibin][icomp][imode][iatt]->SetBinError(i,hMCNeut[isamp][ibin][icomp][imode][iatt]->GetBinError(i));
     }
   }
-  smearThisHistoFast( (*hMCNeutModified[isamp][ibin][icomp][imode][iatt]), binContents, fitPars->histoPar[ibin][icomp][iatt][1]);
+  //smearThisHistoFast( (*hMCNeutModified[isamp][ibin][icomp][imode][iatt]), binContents, fitPars->histoPar[ibin][icomp][iatt][1]);
 
-//  smearThisHistoFast( (*hMCNeutModified[isamp][ibin][icomp][imode][iatt]), binContents, fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
+  smearThisHistoFast( (*hMCNeutModified[isamp][ibin][icomp][imode][iatt]), binContents, fitPars->histoPar[ibin][icomp][iatt][0], fitPars->histoPar[ibin][icomp][iatt][1]);
 
   return hMCNeutModified[isamp][ibin][icomp][imode][iatt];
 }
