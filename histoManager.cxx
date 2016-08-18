@@ -376,12 +376,18 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   // do nothing if histogram has hardly any events
   if (hMC[isamp][ibin][icomp][iatt]->GetEntries()<10) return hMC[isamp][ibin][icomp][iatt];
   // otherwise, modifiy this histogram
-  smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),
+//  smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),
+//                        binContents, 
+//                        fitPars->getHistoParameter(ibin,icomp,iatt,0),
+//                        fitPars->getHistoParameter(ibin,icomp,iatt,1),
+//			                  fitPars->getNormParameter(isamp,ibin) );
+  // otherwise, modifiy this histogram with mean
+  smearThisHistoFastMean( (*hMCModified[isamp][ibin][icomp][iatt]),
                         binContents, 
                         fitPars->getHistoParameter(ibin,icomp,iatt,0),
+                        hMCMean[isamp][ibin][icomp][iatt],
                         fitPars->getHistoParameter(ibin,icomp,iatt,1),
 			                  fitPars->getNormParameter(isamp,ibin) );
-
   
   return hMCModified[isamp][ibin][icomp][iatt];
 }

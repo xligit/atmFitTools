@@ -1074,16 +1074,16 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2){
   ///////////////////////////////////////////////////
   //assume poisson errors
  // for (int ibin=10;ibin<=(10);ibin++){
-
-  for (int ibin=3;ibin<=(h1->GetNbinsX()-3);ibin++){
+  int nedgebins= 5; //< need to ignore some edge bins
+  for (int ibin=nedgebins;ibin<=(h1->GetNbinsX()-nedgebins);ibin++){
     c1 = h1->GetBinContent(ibin); //MC
     c2 = h2->GetBinContent(ibin); //data
     errmc = h1->GetBinError(ibin);
 
     if (c2<7) continue;
      
-//    lnL+=evalLnL(c2,c1,norm); //< tn186 likelihood definition
-    lnL+=evalGausChi2WithError(c2,c1,errmc); //< tn186 likelihood definition
+    lnL+=evalLnL(c2,c1,norm); //< tn186 likelihood definition
+//    lnL+=evalGausChi2WithError(c2,c1,errmc); //< tn186 likelihood definition
 
 }
   return lnL;

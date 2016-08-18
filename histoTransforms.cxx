@@ -584,8 +584,8 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
   double ymin;
   double ymax;
   double smear = 1./spread;
-  //double mean = hh.GetMean() + (binw/2.);
-//  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
+//  double mean = hh.GetMean() + (binw/2.);
+  double shift = -1*(mean - (smear*mean)); //corrects for bias from smearing
   double sumw2;
   double sumw;
 
@@ -596,7 +596,7 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
     sumw2 = 0;
     binerr=0.;
     binedge = hh.GetBinLowEdge(newbin);
-    ymin = ((binedge-bias)*smear);
+    ymin = ((binedge-bias)*smear) - shift;
     ymax = ymin + (binw*smear);
 //    ymin = (binedge-bias)*
     for (int oldbin=1;oldbin<=nbins;oldbin++){

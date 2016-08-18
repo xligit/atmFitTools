@@ -145,6 +145,16 @@ void atmFitPars::resetDefaults(){
   return;
 }
 
+//////////////////////////////////////////////////
+//Set all fix flags to some value
+void atmFitPars::fixAllPars(int isfixed){
+
+  for (int ipar=0; ipar<nTotPars; ipar++){
+    fixPar[ipar] = isfixed;
+  }
+
+  return;
+}
 
 //////////////////////////////////////////////////
 //Set only bias and systematic pars to float in fit
