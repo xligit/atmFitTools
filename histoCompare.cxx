@@ -1055,6 +1055,52 @@ double histoCompare::getSumSq(TH1D* h1, TH1D* h2){
   return sumsq;
 }
 
+
+TH2D* histoCompare::show2DLnL(int parx, double xmin, double xmax, int pary, double ymin, double ymax, int npts){
+
+  // what are the current par values? reset to these later
+  double parxcurrent = thePars->getParameter(parx);
+  double parycurrent = thePars->getParameter(pary);
+  double LnLcurrent = getTotLnL();;
+
+  // make a histogram
+  TH2D* hL = new TH2D("hL","hL",npts,xmin,xmax,npts,ymin,ymax);
+
+  // usefull for finding bin centers
+  double xwidth = hL->GetXaxis()->GetBinWidth(1);
+  double ywidth = hL->GetYaxis()->GetBinWidth(1);
+
+  double minL = 1e6;
+  double maxL = -1e5;
+
+  // fill histo
+  for (int ibin=1; ibin<npts; ibin++){
+    for (int jbin=1; jbin<npts; jbin++){
+      double xval = hL->GetXaxis()->GetBinLowEdge(ibin) + (xwidth/2.);
+      double yval = hL->GetYaxis()->GetBinLowEdge(jbin) + (xwidth/2.);
+      thePars->setParameter(parx,xval);
+      thePars->setParameter(pary,yval);
+      double LnLval = getTotLnL();
+      double diff = LnLval - LnLcurrent;
+      if ((TMath::Abs(diff)>10) && (diff>0.)){ 
+//        hL->SetBinContent(ibin,jbin,-1e5);
+        continue;
+      }
+      if (LnLval>maxL) maxL = LnLval;
+      if (LnLval<minL) minL = LnLval;
+      hL->SetBinContent(ibin,jbin,LnLval);
+    }
+  }
+  hL->GetZaxis()->SetRangeUser(minL,maxL);
+  hL->Draw("colz");
+  
+  thePars->setParameter(parx, parxcurrent);
+  thePars->setParameter(pary, parycurrent);
+
+  return hL;
+}
+
+
 ////////////////////////////////////////////////////////////////////
 //evalute log-likelihood between two histograms
 double histoCompare::getLnL(TH1D* h1, TH1D* h2){
