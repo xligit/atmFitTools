@@ -712,7 +712,6 @@ void atmFitPars::initPars(const char* systype){
   // end systemaitc parmeter initializations
   /////////////////////////////////////////////////
 
-
   ////////////////////////////////////////////
   // fix total number of parameters and print values
   nTotPars = index;
@@ -721,6 +720,44 @@ void atmFitPars::initPars(const char* systype){
     cout<<"par "<<kpar<<" value: "<<pars[kpar]<<endl;
   }
 #endif
+
+
+
+
+
+  ///////////////////////////////////////////////
+  // initialize parameter prior sigmas (-1 -> no prior)
+  for (int ipar=0; ipar<nTotPars; ipar++){
+    parPriorGausSig[ipar] = -1.;
+  }
+  ///////////////////////////////////////////////
+
+
+  return;
+}
+
+////////////////////////////////////////////////////
+// Evaluate neg log likelihood of priors
+double atmFitPars::calcLogPriors(){
+
+  double ngLnL = 0.;
+  for (int ipar=0; ipar<nTotPars; ipar++){
+    if (parPriorGausSig[ipar]<0.) continue;
+    else{
+      double pull = pars[ipar] - parDefaultValue[ipar];
+      pull/=parPriorGausSig[ipar];
+      ngLnL += pull*pull;
+    }
+  }
+
+  return ngLnL;
+}
+
+
+/////////////////////////////////////////////////////
+// sets the sigma of a gaussian prior. 
+void atmFitPars::setGausPrior(int ipar, double sigma){
+  parPriorGausSig[ipar] = sigma;
   return;
 }
 

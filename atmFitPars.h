@@ -54,6 +54,7 @@ class atmFitPars{
   double sysParDefault[NSYSPARMAX];
   double sysParUnc[NSYSPARMAX];
   double pars[4000];
+  double parPriorGausSig[4000];
   TString parName[4000];
   double parDefaultValue[4000];
   double parUnc[4000];
@@ -70,7 +71,6 @@ class atmFitPars{
   double sysParLow[NSYSPARMAX];
   std::string sysParName[NSYSPARMAX];
   double parsProp[4000];
-  //////////////////////////////////////////////////////////////
 
   //////////////////////////////////////////////////////////////
   //methods;
@@ -97,6 +97,9 @@ class atmFitPars{
   void setRandSysPar(); //sets systematic parameters to random values
   int  checkFixFlg(int ibin,int icomp,int iatt, int imod);
   void resetDefaults();
+  //priors
+  void setGausPrior(int ipar, double sigma); //< sets a gaussian prior for a parameter
+  double calcLogPriors(); //< calculates log of parameter prob.
   //void printParValues();
   int binOfPar[4000];
   int compOfPar[4000];

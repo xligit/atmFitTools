@@ -67,14 +67,16 @@ class histoCompare{
 
  
   //
-  //post-fit toolts
+  //post-fit tools and plotting
   void profileL(int ibin, int icomp, int iatt, int imod, double range, int npts=100);
   void profileL(int ipar,double range, int npts=100,int sameflg=0);
   void showFitHisto(int isamp,int ibin,int icomp,int iatt);
   void showFitEffect(int isamp,int ibin,int icomp,int iatt);
   void showFitResult(int isamp,int ibin,int iatt);
   void showFitPars(int ibin,int iatt,int imod);
+  void setPar(int ipar, double value){thePars->setParameter(ipar,value);}
   void showModHiso(int isamp,int ibin, int icomp, int iatt, double smear, double bias);
+  TH2D* show2DLnL(int parx, double xmin, double xmax, int pary, double ymin, double ymax, int npts=100);
   void runMCMC(int nsteps);
  // double getErrLo(int ibin,int icomp,int iatt,int imod);
   double getErrLo(int isyst);
