@@ -75,25 +75,53 @@ void histoCompare::timetest(int ntry){
   return;
 }
 
+
+void histoCompare::tuneDEMCMC(int ncycles,int nsteps, double goal){
+ 
+  double result = 0.;
+  markovTools* mcmc = new markovTools(thePars); //< create markovTools object
+  mcmc->setTuneParameter(tunePar);
+  mcmc->setDiffChain(diffChainFileName.Data());
+
+  //set initial state
+  result = getTotLnL();
+  mcmc->setL(result);//< sets the initial likelihood
+  double Linit = result;
+
+  //run tuning
+  for (int icycle=0;icycle<ncycles;icycle++){
+    double xaccepted=0.;
+    int   istep=0;
+    while (istep<nsteps){
+      cout<<"----------"<<"step : "<<istep<<"---------------"<<endl;;
+      mcmc->proposeDifferentialStep(); //< propose a new step using differential mcmc
+      result = getTotLnL();
+      cout<<"hc: Likelihood "<<Linit<<" -> "<<result<<" diff: "<<result-Linit<<endl;
+      if (mcmc->acceptStepLnL(result)){ //< check if new step is accepted
+        xaccepted++; 
+      }
+      istep = mcmc->iStep;
+    }
+
+    double rate = xaccepted/(double)nsteps;
+    cout<<"acceptance rate: "<<rate<<endl;
+    cout<<"tune parameter: "<<tunePar<<endl;
+    if ((rate>22.0)&&(rate<30.0)) return;
+    tunePar*=(rate/goal);
+    cout<<"new tune parameter: "<<tunePar<<endl;;
+  }
+  return; 
+}
+
+
+
 void histoCompare::tuneMCMC(int ncycles,int nsteps,double goal){
  
-//  //setup mc mcmctools
-//  const int npars = thePars->nTotPars; //< total number of parameters in fit
-//  double par[npars]; //< container for parameters
-//  int parindex = 0;
   double result = 0.;
 // markovTools* mc = new markovTools(npars); //< create markovTools object
   markovTools* mcmc = new markovTools(thePars); //< create markovTools object
   mcmc->setTuneParameter(tunePar);
 
-
-  // CAN REMOVE THIS BLOC? DONE IN MCMCTOOLS INIT()?
-  //fill parameter array and set uncertainties
-//  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
-   // par[ipar]=thePars->getParameter(ipar); //< parameter array
-  //  mcmc->setParVar(ipar,thePars->parUnc[ipar]); //< set parameter variance
-  //  mcmc->setFixPar(ipar,thePars->fixPar[ipar]); //< set parameter fix flag
- // }
 
   //set initial state
   result = getTotLnL();
@@ -172,6 +200,86 @@ void histoCompare::tuneMCMCOld(int ncycles,int nsteps,double goal){
   }
   return; 
 }
+
+///////////////////////////////////////////////
+//Run a MCMC of length nsteps
+void histoCompare::runDiffMCMC(int nsteps){
+
+  ///////////////////////////////////////
+  //setup mcmc tools
+  markovTools* mc = new markovTools(thePars);
+  mc->setTuneParameter(tunePar);
+
+  ///////////////////////////////////////////////
+  //fill parameter array and set uncertainties
+  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
+    mc->setParVar(ipar,thePars->parUnc[ipar]);
+  }
+  
+  ///////////////////////////////////////////////////
+  //set initial state
+  double result = getTotLnL();
+  mc->setL(result);//< sets the initial likelihood
+
+  //loop through steps
+  int currentstep=0;
+  while (currentstep<nsteps){
+    currentstep = mc->iStep;
+    //mc->proposeStep(par); //< fills par[] with proposed params
+    mc->proposeStep();
+    //getTotLnL1D(result, npars,par);   
+    result = getTotLnL();
+    //mc->acceptStepLnL(result,par); //< if step is accepted, istep++, and written to histo
+    mc->acceptStepLnLDiff(result);
+  }
+
+  ///////////////////////
+  //save results
+  mc->savePath();
+
+  //////////////////////////
+  return;
+}
+
+
+///////////////////////////////////////////////
+//Run a MCMC of length nsteps
+void histoCompare::runDEMCMC(int nsteps){
+
+  ///////////////////////////////////////
+  //setup mcmc tools
+  markovTools* mc = new markovTools(thePars);
+  mc->setTuneParameter(tunePar);
+  mc->setDiffChain(diffChainFileName.Data());
+
+  ///////////////////////////////////////////////
+  //fill parameter array and set uncertainties
+  for (int ipar=0;ipar<thePars->nTotPars;ipar++){
+    mc->setParVar(ipar,thePars->parUnc[ipar]);
+  }
+  
+  ///////////////////////////////////////////////////
+  //set initial state
+  double result = getTotLnL();
+  mc->setL(result);//< sets the initial likelihood
+
+  //loop through steps
+  int currentstep=0;
+  while (currentstep<nsteps){
+    currentstep = mc->iStep;
+    mc->proposeDifferentialStep();
+    result = getTotLnL();
+    mc->acceptStepLnL(result);
+  }
+
+  ///////////////////////
+  //save results
+  mc->savePath();
+
+  //////////////////////////
+  return;
+}
+
 
 
 

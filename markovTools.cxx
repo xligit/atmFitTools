@@ -35,6 +35,9 @@ class markovTools{
    ///////////////////////////
    //variables
    TFile* fout; //< output file
+   TFile* fDiffChain;
+   int nDiffSteps; //< number of events in diffChain
+   TTree* diffChain;
    int nPars;  //< totla number of parameters
    int nParsEffective; //< total number of non-fixed parameters;
    double effectivePars[NMCMCPARS]; //< array of non-fixed parameters
@@ -51,6 +54,8 @@ class markovTools{
    double oldL; //< likelihood value of previous step
    double tuneParameter; //< tunes the size of MCMC steps
    double varPar[NMCMCPARS]; //< stores parameter standard deviations
+   double parDiff[NMCMCPARS]; //< saves the difference between mcmc steps
+
    // output tree
    TTree* pathTree;
 
@@ -62,6 +67,7 @@ class markovTools{
    void setPar(int ipar,double value){oldPars[ipar]=value;}
    void setL(double value){oldL=value; cout<<"Lset: "<<value<<endl;}
    void setParVar(int ipar,double value); //< sets parameter standard deviations
+   void setDiffChain(const char* fname); //< sets up the differential tree for DEMCMC
 
    ////////////////////////
    //tree setup`
@@ -71,8 +77,10 @@ class markovTools{
    //MCMC Functions
    void proposeStep(double* par);  //< proposes a new step from the given parameter set
    void proposeStep(); //< propose a step from the parameters in atmFitPars
+   void proposeDifferentialStep(); //< use differential chain to propose a step
    int  acceptStepLnL(double newL); //< decide if step is accepted given new LnL
-   int acceptStep(double newL,double* par); 
+   int  acceptStepLnLDiff(double newL); //< decide if step is accepted given new LnL
+   int acceptStep(double newL,double* par);  
    int acceptStepLnL(double newL,double* par);
 
    /////////////////////////
@@ -90,6 +98,23 @@ class markovTools{
 
 
 };
+
+
+
+void markovTools::setDiffChain(const char* fname){
+
+  // setup chain of par differences
+  fDiffChain = new TFile(fname);
+  diffChain = (TTree*)fDiffChain->Get("MCMCdiff"); 
+  diffChain->SetBranchStatus("*",0);
+  diffChain->SetBranchStatus("pardiff",1);
+  diffChain->SetBranchAddress("pardiff",parDiff);
+  nDiffSteps = diffChain->GetEntries();
+  cout<<"markovTools::setDiffChain(): Added chain of "<<nDiffSteps<<" differential steps "<<endl;
+  
+  fout->cd();
+  return;
+}
 
 void markovTools::setupPathTree(){
 
@@ -200,6 +225,56 @@ void markovTools::test(int ntry){
   pathTree->SaveAs("pathTree.root");
   return;
 }
+
+
+/////////////////////////////////////////////
+//decide if new parameters shoudl be accepted
+int markovTools::acceptStepLnLDiff(double newL){
+
+  
+  // get likelihood difference
+  double alpha = (oldL-newL); //< get difference in LnL
+  double rand = randy->Rndm(); //< throw a random number
+  int iaccept = 0; //< acceptance flag
+
+  /////////////////////////////
+  //chekc if we should accept
+  if (alpha>TMath::Log(rand)){
+    //accepted! new pars are now old
+    for (int i=0;i<nPars;i++){
+       // calculate parameter differences
+       if (fixPar[i]!=1){
+         parDiff[effectiveIndex[i]] = atmPars->getParameter(i) - oldPars[i];
+       }
+    }
+    for (int i=0;i<nPars;i++){
+      oldPars[i]=atmPars->getParameter(i);
+      // fill array of all effective (non-fixed) parameter values
+      if (fixPar[i]!=1){
+        effectivePars[effectiveIndex[i]] = atmPars->getParameter(i); 
+      }
+      oldL = newL;
+    }
+#ifdef T2K
+    atmPars->acceptStep();
+#endif
+    pathTree->Fill();
+    iaccept = 1;
+  } 
+  else{
+    for (int i=0;i<nPars;i++){
+      //rejected, reset to old parameters
+      atmPars->setParameter(i,oldPars[i]);
+    }
+  }
+
+  iStep++; //< increment global step  count
+  if ((iStep%100)==0) cout<<"step: "<<iStep<<endl;
+
+  /////////////////////////////
+  return iaccept;
+}
+
 
 /////////////////////////////////////////////
 //decide if new parameters shoudl be accepted
@@ -331,6 +406,42 @@ void markovTools::proposeStep(double* par){
 /////////////////////////////////////////////////
 //takes a poiter to atmFitPars and suggests new parameters
 //
+void markovTools::proposeDifferentialStep(){  
+
+  // get a random point in the differential chain;
+  int randpoint = randy->Integer(nDiffSteps);
+//  cout<<"random point: "<<randpoint<<endl;
+  diffChain->GetEntry(randpoint);
+
+  // determins how much randomness to add
+  double perturb = 0.02;
+
+#ifndef T2K
+  for (int i=0;i<nPars;i++){
+    oldPars[i] = atmPars->getParameter(i);
+    // if parameter is not fixed, suggest a new value
+    if (atmPars->fixPar[i]!=1){
+      double epsilon = randy->Gaus(0.,varPar[i]*perturb);
+      double newvalue = oldPars[i] + (parDiff[i]*tuneParameter) + perturb*randy->Gaus(0.,varPar[i]);
+//      cout<<"par "<<i<<": "<<oldPars[i]<<" -> "<<newvalue<<endl;
+      atmPars->setParameter(i,newvalue);
+    }
+  }
+
+#else
+  // need to add differential step here
+  atmPars->proposeStep();
+  for (int i = 0; i < nPars; ++i) {
+    oldPars[i] = atmPars->getParameter(i);
+  }
+#endif
+  return;
+}
+
+
+/////////////////////////////////////////////////
+//takes a poiter to atmFitPars and suggests new parameters
+//
 void markovTools::proposeStep(){  
 #ifndef T2K
   for (int i=0;i<nPars;i++){
@@ -395,6 +506,7 @@ void markovTools::Init(int npars){
   pathTree->Branch("npars",&nParsEffective,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
   pathTree->Branch("par",effectivePars,"par[500]/D");
+  pathTree->Branch("pardiff",parDiff,"pardiff[500]/D");
   pathTree->Branch("parnominal",nominalPars,"parnominal[500]/D");
   pathTree->Branch("parbin",parBin,"parbin[500]/I");
   pathTree->Branch("parcomp",parComp,"parcomp[500]/I");

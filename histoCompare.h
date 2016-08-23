@@ -53,6 +53,7 @@ class histoCompare{
  // double errParHi[NBINMAX][NCOMPMAX][NATTMAX][2];
   double errParLo[1000];
   double errParHi[1000];
+  TString diffChainFileName;
 
   TString parName[NBINMAX][NCOMPMAX][NATTMAX][2];
   TString binName[NBINMAX];
@@ -78,6 +79,8 @@ class histoCompare{
   void showModHiso(int isamp,int ibin, int icomp, int iatt, double smear, double bias);
   TH2D* show2DLnL(int parx, double xmin, double xmax, int pary, double ymin, double ymax, int npts=100);
   void runMCMC(int nsteps);
+  void runDEMCMC(int nstep);
+  void runDiffMCMC(int nsteps); //< fill with differential steps
  // double getErrLo(int ibin,int icomp,int iatt,int imod);
   double getErrLo(int isyst);
   double getErrHi(int isyst);
@@ -137,6 +140,7 @@ class histoCompare{
   void saveFitPars(const char* filename); //< write parameters and outputs to a file
   void readFitPars(const char* filename); //< read parameters from a file
   void tuneMCMC(int ncyles=1,int nsteps=150,double goal=0.25);
+  void tuneDEMCMC(int ncyles=1,int nsteps=150,double goal=0.25);
   void tuneMCMCOld(int ncyles=1,int nsteps=150,double goal=0.25);
   void calcRoughParErr();
   //staticthis for fits
