@@ -1120,7 +1120,16 @@ double histoCompare::getTotLnL(){
     pull/=thePars->sysParUnc[isys];
     
     totL+=(0.5)*(pull*pull);
+
+
   }
+
+  // If using gaussion priors on bias and smear parameters, evelauate the likelihood here.
+  // This is done by calling an atmfit pars method that will sum the contributions 
+  if (flgUsePriorsInFit){
+    totL += thePars->calcLogPriors();
+  }
+
 #else
   for (int isys=0;isys < 2;isys++){
     pull = thePars->sysPar[isys]-1.;
@@ -1379,6 +1388,9 @@ histoCompare::histoCompare(const char* parfile, bool sep)
 
   //Use smear parameters or no?
   flgFixAllSmearPars = runPars->flgFixAllSmearPars;
+
+  //Should we use priors in this fit?
+  flgUsePriorsInFit = runPars->flgUsePriorsInFit;
 
   //MCMC nsteps;
   MCMCNSteps = runPars->MCMCNSteps;

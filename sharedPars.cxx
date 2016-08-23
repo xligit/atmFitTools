@@ -107,6 +107,7 @@ class sharedPars{
   int NDataEvents;
   int flgUseNormPars;
   int flgFixAllSmearPars;
+  int flgUsePriorsInFit;
  
 };
 
@@ -132,6 +133,7 @@ void sharedPars::readParsFromFile(){
   kr->readFile();
 
   //set parameters to values
+  flgUsePriorsInFit = kr->getKeyI("flgUsePriorsInFit");
   useSplinesFlg = kr->getKeyI("useSplinesFlg");
   MCMCNSteps= kr->getKeyI("MCMCNSteps");
   MCMCTunePar = kr->getKeyD("MCMCTunePar");

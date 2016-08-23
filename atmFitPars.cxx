@@ -745,8 +745,8 @@ double atmFitPars::calcLogPriors(){
     if (parPriorGausSig[ipar]<0.) continue;
     else{
       double pull = pars[ipar] - parDefaultValue[ipar];
-      pull/=parPriorGausSig[ipar];
-      ngLnL += pull*pull;
+      pull/=(parPriorGausSig[ipar]);
+      ngLnL += 0.5*pull*pull;
     }
   }
 

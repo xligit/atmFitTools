@@ -122,7 +122,8 @@ class histoCompare{
   //////////////////////////////////////////////////////////
   //flags
   int flgFixAllSmearPars;
- 
+  int flgUsePriorsInFit; 
+
   //likelihood evaluateions
   double getSumSq(TH1D* h1, TH1D* h2);
   double getLnL(TH1D* h1, TH1D* h2);
