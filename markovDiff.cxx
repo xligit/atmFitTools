@@ -7,6 +7,7 @@
 #include <iostream>
 #include "TFile.h"
 
+#define NMCMCPARS 200
 
 using namespace std;
 
@@ -22,10 +23,10 @@ class markovDiff{
   TTree* mcmcpars;
   TTree* diffpars;
   int nburn;
-  double par[500];
-  double par1[500];
-  double par2[500];
-  double pardiff[500];
+  double par[NMCMCPARS];
+  double par1[NMCMCPARS];
+  double par2[NMCMCPARS];
+  double pardiff[NMCMCPARS];
   int npars;
 
   // methods
@@ -39,9 +40,9 @@ void markovDiff::setouttree(){
   outfile = new TFile("mcmcdiff.root","RECREATE");
   diffpars = new TTree("MCMCdiff","MCMCdiff");
   diffpars->Branch("npars",&npars,"npars/I");
-  diffpars->Branch("par1",par1,"par1[500]/D");
-  diffpars->Branch("par2",par1,"par2[500]/D");
-  diffpars->Branch("pardiff",pardiff,"pardiff[500]/D");
+  diffpars->Branch("par1",par1,"par1[200]/D");
+  diffpars->Branch("par2",par1,"par2[200]/D");
+  diffpars->Branch("pardiff",pardiff,"pardiff[200]/D");
   return;
 }
 

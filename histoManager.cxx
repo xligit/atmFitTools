@@ -294,6 +294,8 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   double ww0 = 3.98942e-01;
   double ww1 = 5.39909e-02;
   double ww2 = 1.33830e-04;
+  ww2 = 0.;
+  ww1 = 0.;
 
 //  double ww0 = 3.98942e-01;
 //  double ww1 = 0.;
@@ -303,7 +305,23 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   double wwsum = ww0 + ww1 + ww2;
   double contsum=0.;
   double wcontsum=0.;
-
+  // keep a list of bin contents
+  deque<double> content_list;
+  // initialize list
+  if (!useSplineFlg){
+    content_list.push_back(0.);
+    content_list.push_back(0.);
+    content_list.push_back(hMC[isamp][ibin][icomp][iatt]->GetBinContent(1));
+    content_list.push_back(hMC[isamp][ibin][icomp][iatt]->GetBinContent(2));
+    content_list.push_back(hMC[isamp][ibin][icomp][iatt]->GetBinContent(3));
+  }
+  else{
+    content_list.push_back(0.);
+    content_list.push_back(0.);
+    content_list.push_back(getSplineModifiedBin(isamp,ibin,icomp,iatt,1));
+    content_list.push_back(getSplineModifiedBin(isamp,ibin,icomp,iatt,2));
+    content_list.push_back(getSplineModifiedBin(isamp,ibin,icomp,iatt,3));
+  }
   //loop over bins and modify contents
   for (int newbin=1;newbin<=nhistobins;newbin++){
     sum = 0.;
@@ -316,66 +334,33 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
       xmin = hMCModified[isamp][ibin][icomp][iatt]->GetBinLowEdge(oldbin);
       xmax = (xmin+binw);
       weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
-      if (useSplineFlg){
-        binc =  ww0*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin);
-        contsum+=(binc/ww0);
-        binc += ww1*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin-1);
-        binc += ww1*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin+1);
-        binc += ww2*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin-2);
-        binc += ww2*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin+2);
-        binc/=(wwsum);
-        wcontsum+=binc;
+      // calculate smoothed bin contents
+      binc =  ww0*content_list.at(2);
+      contsum+=(binc/ww0);
+      binc += ww1*content_list.at(3);
+      binc += ww1*content_list.at(1);
+      binc += ww2*content_list.at(4);
+      binc += ww2*content_list.at(0);
+      binc/=(wwsum);
+      wcontsum+=binc;
+      //update list
+      content_list.pop_front();
+      if ((oldbin+3)>nhistobins) content_list.push_back(0.);
+      else if (useSplineFlg){
+        content_list.push_back(getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin+3));
       }
       else{
-        binc =  ww0*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin);
-        contsum+=(binc/ww0);
-        binc += ww1*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin+1);
-        binc += ww1*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin-1);
-        binc += ww2*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin-2);
-        binc += ww2*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin+2);
-        binc/=(wwsum);
-        wcontsum+=binc;
-      }
-      sum+=(weight*binc);
+        content_list.push_back(hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin+3));
+      }      
+      sum+=weight*binc;
       binerr += weight*weight*binc;
-      sumw += weight;
     }
     hMCModified[isamp][ibin][icomp][iatt]->SetBinContent(newbin,sum);
     hMCModified[isamp][ibin][icomp][iatt]->SetBinError(newbin,TMath::Sqrt(binerr));
   }
 
-//  hMCModified[isamp][ibin][icomp][iatt]->Scale(contsum/wcontsum);
+  hMCModified[isamp][ibin][icomp][iatt]->Scale(fitPars->getNormParameter(isamp,ibin)*contsum/wcontsum);
 
-  /*
-  //apply splines if using them
-  if (useSplineFlg){
-    //hMCModified will now point to spline modified histogram
-    getSplineModifiedHisto(isamp, ibin, icomp, iatt);
-  }
-  else{
-    //just set bin contents equal to original histogram if not using splines
-    for (int i=1;i<=nhistobins;i++){
-      bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(i);
-      binContents[i]=bincontent;
-      hMCModified[isamp][ibin][icomp][iatt]->SetBinContent(i,bincontent);
-      hMCModified[isamp][ibin][icomp][iatt]->SetBinError(i,hMC[isamp][ibin][icomp][iatt]->GetBinError(i));
-    }
-  }
-  // do nothing if histogram has hardly any events
-  if (hMC[isamp][ibin][icomp][iatt]->GetEntries()<10) return hMC[isamp][ibin][icomp][iatt];
-  // otherwise, modifiy this histogram
-                          binContents, 
-                          fitPars->getHistoParameter(ibin,icomp,iatt,0),
-                          hMCMean[isamp][ibin][icomp][iatt],
-                          fitPars->getHistoParameter(ibin,icomp,iatt,1),
-			                    fitPars->getNormParameter(isamp,ibin) );
-  
-  smearThisHistoFast( (*hMCModified[isamp][ibin][icomp][iatt]),
-                        binContents, 
-                        fitPars->getHistoParameter(ibin,icomp,iatt,1),
-			                  fitPars->getNormParameter(isamp,ibin) );
-
-  */ 
   return hMCModified[isamp][ibin][icomp][iatt];
 }
 

@@ -8,7 +8,7 @@
 #include "TFile.h"
 #include "atmFitPars.cxx"
 
-#define NMCMCPARS 500
+#define NMCMCPARS 200
 
 using namespace std;
 
@@ -506,14 +506,14 @@ void markovTools::Init(int npars){
   //branch setup
   pathTree->Branch("npars",&nParsEffective,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
-  pathTree->Branch("par",effectivePars,"par[500]/D");
-  pathTree->Branch("pardiff",parDiff,"pardiff[500]/D");
-  pathTree->Branch("parnominal",nominalPars,"parnominal[500]/D");
-  pathTree->Branch("parbin",parBin,"parbin[500]/I");
-  pathTree->Branch("parcomp",parComp,"parcomp[500]/I");
-  pathTree->Branch("paratt",parAtt,"paratt[500]/I");
-  pathTree->Branch("parindex",effectiveIndex,"parindex[500]/I");
-  pathTree->Branch("parsyst",parIsSyst,"parsyst[500]/I");
+  pathTree->Branch("par",effectivePars,"par[200]/D");
+  pathTree->Branch("pardiff",parDiff,"pardiff[200]/D");
+  pathTree->Branch("parnominal",nominalPars,"parnominal[200]/D");
+  pathTree->Branch("parbin",parBin,"parbin[200]/I");
+  pathTree->Branch("parcomp",parComp,"parcomp[200]/I");
+  pathTree->Branch("paratt",parAtt,"paratt[200]/I");
+  pathTree->Branch("parindex",effectiveIndex,"parindex[200]/I");
+  pathTree->Branch("parsyst",parIsSyst,"parsyst[200]/I");
 
 
   //done
@@ -532,7 +532,7 @@ markovTools::markovTools(int npars){
   //branch setup
   pathTree->Branch("npars",&nPars,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
-  pathTree->Branch("par",oldPars,"par[500]/D");
+  pathTree->Branch("par",oldPars,"par[200]/D");;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

@@ -7,6 +7,7 @@
 #include "TChain.h"
 #include "TTree.h"
 #include <iostream>
+#include <deque>
 #include "THStack.h"
 #include "TLegend.h"
 #include "hSplines.cxx"

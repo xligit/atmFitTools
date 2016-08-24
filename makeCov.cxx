@@ -91,7 +91,20 @@ class makeCov{
   // print some par info
   void printParInfo(int ipar);
 
+  ///////////////////////////////////
+  // print errors
+  void printParErrors();
 };
+
+void makeCov::printParErrors(){
+  for (int ipar=0; ipar<ntotpar; ipar++){
+    double fiterr = parsigma[ipar];
+    double shifterr = TMath::Abs(parmean[ipar] - pardefault[ipar]);
+    cout<<"Par "<<ipar<<" Error: "<<fiterr+shifterr;
+    cout<<" ("<<shifterr<<" shift and "<<fiterr<<" fit)"<<endl;
+  }
+  return;
+}
 
 void makeCov::printParInfo(int ipar){
 
