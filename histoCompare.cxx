@@ -1245,8 +1245,8 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2){
 
     if (c2<7) continue;
      
-    lnL+=evalLnL(c2,c1,norm); //< tn186 likelihood definition
-//    lnL+=evalGausChi2WithError(c2,c1,errmc); //< tn186 likelihood definition
+//    lnL+=evalLnL(c2,c1,norm); //< tn186 likelihood definition
+    lnL+=evalGausChi2WithError(c2,c1,errmc); //< tn186 likelihood definition
 
 }
   return lnL;

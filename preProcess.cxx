@@ -644,7 +644,8 @@ int preProcess::preProcessIt(){
     //apply cuts
     if (!passCuts()) continue;
     naccepted++;
-    vis->fillVisVar(); //get visible ring information
+    // hybrid pi0s don't have the right banks for VR counting
+    if (MCComponents!=3) vis->fillVisVar(); //get visible ring information
     fillAttributes(fq);
     ncomponent=getComponent();
     if (fakeShiftFlg){

@@ -566,7 +566,7 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
 //  TH1D* htmp = (TH1D*)hh.Clone("htmp");
 
   //apply custom smooth function if statistics are low
-  // if (hh.GetEntries()<10000.) mySmooth(htmp);
+  // if (hh.GetEntries()<10000.) mySmooth(h);
 
   //get some useful histogram parameters
   int nbins=hh.GetNbinsX();
@@ -613,6 +613,7 @@ void smearThisHistoFastMean(TH1D &hh, double* hcontent, double spread, double me
   double newintegral = hh.Integral();
   double scale = oldintegral/newintegral;
   hh.Scale(scale*normscale);
+//  mySmooth(&hh);
   return;
 }
 
