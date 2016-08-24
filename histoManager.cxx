@@ -162,6 +162,9 @@ TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt, int normFlg){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Returns the spline-modified contents of the specified histogram bin
 double histoManager::getSplineModifiedBin(int isamp, int ibin, int icomp, int iatt, int ihistobin){
+ 
+ if (ihistobin<1) return 0.;
+ if (ihistobin>hMC[isamp][ibin][icomp][iatt]->GetNbinsX()) return 0.;
 
  // originial bin contents
  double bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(ihistobin);
@@ -260,7 +263,7 @@ TH1D* histoManager::getSplineModifiedHisto(int isamp, int ibin, int icomp, int i
 
 //////////////////////////////////////////////////////////////////////////////
 // Returns the modified histogram based on the parameters in atmfitpars
-TH1D* histoManager::getModHistogramFast(int isamp, int ibin, int icomp, int iatt){
+TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   
   //number of bins in this histo
   int nhistobins = hMC[isamp][ibin][icomp][iatt]->GetNbinsX();
@@ -283,7 +286,23 @@ TH1D* histoManager::getModHistogramFast(int isamp, int ibin, int icomp, int iatt
   double sumw;
   double binc;
   double bias = fitPars->getHistoParameter(ibin,icomp,iatt,1);
+  double smear = 1./fitPars->getHistoParameter(ibin,icomp,iatt,0);
 //  double norm = fitPars->getNormParameter(isamp,ibin)
+
+
+  // smooth weights
+  double ww0 = 3.98942e-01;
+  double ww1 = 5.39909e-02;
+  double ww2 = 1.33830e-04;
+
+//  double ww0 = 3.98942e-01;
+//  double ww1 = 0.;
+//  double ww2 = 0.;
+
+
+  double wwsum = ww0 + ww1 + ww2;
+  double contsum=0.;
+  double wcontsum=0.;
 
   //loop over bins and modify contents
   for (int newbin=1;newbin<=nhistobins;newbin++){
@@ -291,17 +310,31 @@ TH1D* histoManager::getModHistogramFast(int isamp, int ibin, int icomp, int iatt
     sumw = 0;
     binerr=0.;
     binedge = hMCModified[isamp][ibin][icomp][iatt]->GetBinLowEdge(newbin);
-    ymin = binedge - bias;
+    ymin = (binedge - bias)*smear;
     ymax = ymin + binw;
     for (int oldbin=1;oldbin<=nhistobins;oldbin++){
       xmin = hMCModified[isamp][ibin][icomp][iatt]->GetBinLowEdge(oldbin);
       xmax = (xmin+binw);
       weight =  B(xmax,ymin,ymax)-B(xmin,ymin,ymax);
       if (useSplineFlg){
-        binc = getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin);
+        binc =  ww0*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin);
+        contsum+=(binc/ww0);
+        binc += ww1*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin-1);
+        binc += ww1*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin+1);
+        binc += ww2*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin-2);
+        binc += ww2*getSplineModifiedBin(isamp,ibin,icomp,iatt,oldbin+2);
+        binc/=(wwsum);
+        wcontsum+=binc;
       }
       else{
-        binc = hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin);
+        binc =  ww0*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin);
+        contsum+=(binc/ww0);
+        binc += ww1*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin+1);
+        binc += ww1*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin-1);
+        binc += ww2*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin-2);
+        binc += ww2*hMC[isamp][ibin][icomp][iatt]->GetBinContent(oldbin+2);
+        binc/=(wwsum);
+        wcontsum+=binc;
       }
       sum+=(weight*binc);
       binerr += weight*weight*binc;
@@ -311,7 +344,7 @@ TH1D* histoManager::getModHistogramFast(int isamp, int ibin, int icomp, int iatt
     hMCModified[isamp][ibin][icomp][iatt]->SetBinError(newbin,TMath::Sqrt(binerr));
   }
 
-  
+//  hMCModified[isamp][ibin][icomp][iatt]->Scale(contsum/wcontsum);
 
   /*
   //apply splines if using them
@@ -350,7 +383,7 @@ TH1D* histoManager::getModHistogramFast(int isamp, int ibin, int icomp, int iatt
 
 //////////////////////////////////////////////////////////////////////////////
 // Returns the modified histogram based on the parameters in atmfitpars
-TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
+TH1D* histoManager::getModHistogramSlow(int isamp, int ibin, int icomp, int iatt){
   
   //number of bins in this histo
   int nhistobins = hMC[isamp][ibin][icomp][iatt]->GetNbinsX();

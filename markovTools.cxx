@@ -229,6 +229,7 @@ void markovTools::test(int ntry){
 
 /////////////////////////////////////////////
 //decide if new parameters shoudl be accepted
+//and write differential chain
 int markovTools::acceptStepLnLDiff(double newL){
 
   

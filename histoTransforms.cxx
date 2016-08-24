@@ -41,6 +41,53 @@ double getNoiseFactor(TH1D* hh){
 
 ///////////////////////////////////////////////////////////////////////////////////
 //Custom smoothing method
+void mySmooth2(TH1D* hh,double factor=3.0){
+
+  //////////////////////////////
+  //get adjecent bin weights
+  
+  // use Gaussian weights
+  double sigma = factor*getNoiseFactor(hh); //< set sigma using noise
+  if (sigma==0) return; //no events in histogram
+  sigma = 1.0;
+//  double w2 = TMath::Gaus(2,0,sigma,1);
+//  double w1 = TMath::Gaus(1,0,sigma,1);
+//  double w0 = TMath::Gaus(0,0,sigma,1);
+
+  double w2 = TMath::Gaus(4,0,sigma,1);
+  double w1 = TMath::Gaus(2,0,sigma,1);
+  double w0 = TMath::Gaus(0,0,sigma,1);
+
+
+  ////////////////////////////////
+  //clone in original histogram
+  TH1D* htmp = (TH1D*)hh->Clone("tmphistosmooth");
+
+  ///////////////////////////////////////////////
+  //set new histogram contents from adjecent bins
+  double newcontent;
+  for (int ibin=0;ibin<hh->GetNbinsX();ibin++){
+    newcontent = 0.;
+    newcontent+=(htmp->GetBinContent(ibin-2)*w2);
+    newcontent+=(htmp->GetBinContent(ibin-1)*w1);
+    newcontent+=(htmp->GetBinContent(ibin)*w0);
+    newcontent+=(htmp->GetBinContent(ibin+1)*w1);
+    newcontent+=(htmp->GetBinContent(ibin+2)*w2);
+    hh->SetBinContent(ibin,newcontent);
+    hh->SetBinError(ibin,TMath::Sqrt(newcontent));
+  }
+
+  //normalize histogram
+  double normscale = htmp->Integral()/hh->Integral();
+  hh->Scale(normscale); 
+  htmp->Delete(); 
+  return; 
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+//Custom smoothing method
 void mySmooth(TH1D* hh,double factor=3.0){
 
   //////////////////////////////
