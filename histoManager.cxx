@@ -80,8 +80,12 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
   hSumHistoMod[isamp][ibin][iatt]->Reset();
 
   //////////////////////////////////////////
-  //make sure this is set to properly account for errors
-//  hSumHistoMod[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
+  // set log likelihood to zero
+  histoLogL=0.;
+
+  //////////////////////////////////////////
+  // number of edge bins to ignore
+  int nbinbuffer = 5;
 
   ///////////////////////////////////////////
   //add bin contents from all histograms
@@ -91,17 +95,26 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
       for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
       	double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
        	content+=tmppointer->GetBinContent(jbin);
-	      double err1 = tmppointer->GetBinError(jbin);
-      	double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
+	 //     double err1 = tmppointer->GetBinError(jbin);
+   //   	double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
       	hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,content);
-      	hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
+    //  	hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
+        // calculate likelihood after last component has been added
+        if (icomp==(nComponents-1)){
+          if ((jbin>nbinbuffer) && jbin<(tmppointer->GetNbinsX()-nbinbuffer)){
+            histoLogL+=evalLnL(hData[isamp][ibin][iatt]->GetBinContent(jbin),
+                               normFactor*hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin));
+          }
+        }
       }        
     }
+
   }
 #ifdef T2K
   else {
     for (int icomp=0;icomp<nComponents;icomp++){
       for (int imode=0;imode<nModes;++imode) {
+        // get the modified histogram
       	TH1D* tmppointer=getModHistogram(isamp,ibin,icomp,imode,iatt);
       	for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
       	  double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
@@ -114,23 +127,20 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
       	  //std::cout<<"comp "<<icomp<<", mode "<<imode<<", jbin "<<jbin<<", "<<hSumHistoMod[isamp][ibin][iatt]->Integral()<<std::endl;
 	      } 
       }
+      // calculate likelihood after last component has been added
+      if (icomp==(nComponents-1)){
+        if ((jbin>nbinbuffer) && jbin<(tmppointer->GetNbinsX()-nbinbuffer)){
+          histoLogL+=evalLnL(hData[isamp][ibin][iatt]->GetBinContent(jbin),
+                               normFactor*hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin));
+        }
+      }
     }
   }
 #endif
+
   ////////////////////////////////////
   //return pointer to modified sum of componenets
   if (normFlg) hSumHistoMod[isamp][ibin][iatt]->Scale(normFactor); //< normalize the histo
-
-  //calculate errors
-//    for (int jbin=1;jbin<=hSumHistoMod[isamp][ibin][iatt]->GetNbinsX();jbin++){
-//      double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
-//      double err = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
-//      if (content>0.) hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,(err/content)); //<average scaling factors
-//      else{
-//        hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,0.);
-//      }
-//    }  
- 
 
 
   return hSumHistoMod[isamp][ibin][iatt];
@@ -294,19 +304,13 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   double ww0 = 3.98942e-01;
   double ww1 = 5.39909e-02;
   double ww2 = 1.33830e-04;
-  ww2 = 0.;
-  ww1 = 0.;
-
-//  double ww0 = 3.98942e-01;
-//  double ww1 = 0.;
-//  double ww2 = 0.;
-
-
   double wwsum = ww0 + ww1 + ww2;
   double contsum=0.;
   double wcontsum=0.;
+
   // keep a list of bin contents
   deque<double> content_list;
+
   // initialize list
   if (!useSplineFlg){
     content_list.push_back(0.);

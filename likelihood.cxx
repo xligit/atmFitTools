@@ -1,4 +1,7 @@
+#ifndef LIKELIHOOD_CXX
+#define LIKELIHOOD_CXX
 #include "TMath.h"
+
 #include "TH1D.h"
 #include "TGraph.h"
 
@@ -246,4 +249,4 @@ void plotL(double ndata = 4, double nmc = 4, int npts=100){
   return;
 }
 
-
+#endif

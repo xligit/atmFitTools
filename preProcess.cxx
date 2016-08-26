@@ -458,8 +458,8 @@ int preProcess::passCuts(){
     if (tdecay<InGateMin) return 0;
   }
 
-  ////////////////////////
-  // optional masking cut
+  /////////////////////////////////////////////
+  // optional masking cut for hybrid pi0 spikes
   if (flgUseSpikeMask>0){
      if (!passMask(hmask,fq1rwall[0][2])) return 0;
   }

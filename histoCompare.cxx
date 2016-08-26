@@ -1079,31 +1079,89 @@ void histoCompare::getTotLnL1D(double& result,int npar, double par[]){
   result = getTotLnL();
 }
 
+
+
 ////////////////////////////////////////////////
 //Compute the total log liklihood by comparing all histograms
+///*
 double histoCompare::getTotLnL(){
-;;
+
   double totL = 0.;
+
+
   ////////////////////////////////////////
   //contribution from histogram comparison  
   for (int isamp=0;isamp<nSamp;isamp++){
     for (int ibin=0;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
-	//    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
-	//    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
-	TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
-	//   TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
-	TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.
+       	TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.
+      	TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
+       // double partialLnL = hManager->histoLogL;
+	      double partialLnL = getLnL(hPrediction,hDataTmp);
+	      totL+=partialLnL;
+      }
+    }
+  }
+
+  //////////////////////////////////////////////
+  //contribution from flux/xsec priors
+  double pull;
+#ifndef T2K
+  for (int isys=0;isys<thePars->nSysPars;isys++){
+    pull = thePars->getSysParameter(isys)-1.;
+    pull/=thePars->sysParUnc[isys];
+    totL+=(0.5)*(pull*pull);
+  }
+
+#else
+  for (int isys=0;isys < 2;isys++){
+    pull = thePars->sysPar[isys]-1.;
+    pull/=thePars->sysParUnc[isys];
+    totL+=(0.5)*(pull*pull);
+  }
+  totL += thePars->cov->getLikelihood();
+#endif
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  //Contribution from bias and smear priors
+  // If using gaussion priors on bias and smear parameters, evelauate the likelihood here.
+  // This is done by calling an atmfit pars method that will sum the contributions 
+  if (flgUsePriorsInFit){
+    totL += thePars->calcLogPriors();
+  }
+
+
+
+  return totL;
+  
+}
+//*/
+
+/*
+////////////////////////////////////////////////
+//Compute the total log liklihood by comparing all histograms
+double histoCompare::getTotLnL(){
+
+  double totL = 0.;
+
+
+  ////////////////////////////////////////
+  //contribution from histogram comparison  
+  for (int isamp=0;isamp<nSamp;isamp++){
+    for (int ibin=0;ibin<nBin;ibin++){
+      for (int iatt=0;iatt<nAtt;iatt++){
+      	//    TH1D* hData = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt)->Rebin(1,"hdata_rebinned");
+      	//    TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Rebin(1,"hmc_rebinned");
+      	TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
+      	//   TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0); //< get un-normalized histogram.
+       	TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.
 	
-	//      double hnorm = hDataTmp->Integral()/hPrediction->Integral();
+	//    double hnorm = hDataTmp->Integral()/hPrediction->Integral();
 	
-	//      double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
-	//      cout<<"partialL :"<<partialL<<endl;     
-	double partialLnL = getLnL(hPrediction,hDataTmp);
-	//  cout<<"adding: "<<partialLnL<<" to total. ";
-	//   cout<<"samp: "<<isamp<<" bin: "<<ibin<<" att: "<<iatt<<endl;
-	totL+=partialLnL;
-	//  totL+=getLnL(hPrediction,hDataTmp);
+	//    double partialL =  getLnL(hPrediction,hDataTmp,hnorm);
+	//    cout<<"partialL :"<<partialL<<endl;     
+	      double partialLnL = getLnL(hPrediction,hDataTmp);
+	      totL+=partialLnL;
       }
     }
   }
@@ -1141,6 +1199,7 @@ double histoCompare::getTotLnL(){
   return totL;
   
 }
+*/
 
 double histoCompare::getTotSumSq(){
   double totsumsq = 0.;
@@ -1245,8 +1304,8 @@ double histoCompare::getLnL(TH1D* h1, TH1D* h2){
 
     if (c2<7) continue;
      
-//    lnL+=evalLnL(c2,c1,norm); //< tn186 likelihood definition
-    lnL+=evalGausChi2WithError(c2,c1,errmc); //< tn186 likelihood definition
+    lnL+=evalLnL(c2,c1,norm); //< tn186 likelihood definition
+  //  lnL+=evalGausChi2WithError(c2,c1,errmc); //< tn186 likelihood definition
 
 }
   return lnL;
@@ -1316,6 +1375,22 @@ void histoCompare::readFromFile(const char* filerootname,int nsamp, int nbin, in
   double ndataevents=0;
   double nmcevents=0;
   double events;
+}
+
+
+void histoCompare::makeFakeData(){
+   // sets all modified histograms as data 
+   for (int isamp=0; isamp<nSamp; isamp++){
+     for (int ibin=0; ibin<nBin; ibin++){
+       for (int iatt=0; iatt<nAtt; iatt++){
+         TString hname = hManager->hData[isamp][ibin][iatt]->GetName();
+         hManager->hData[isamp][ibin][iatt] = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,0)
+         ->Clone(hname.Data());
+       }
+     }
+   }
+   hManager->normFactor = 1.0;
+   return;
 }
 
 /////////////////////////////////////////////////////////////////////

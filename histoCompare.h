@@ -124,17 +124,19 @@ class histoCompare{
   int flgFixAllSmearPars;
   int flgUsePriorsInFit; 
 
-  //likelihood evaluateions
+  /////////////////////////////////////////////////////////
+  // make fake data by setting modified histograms as data
+  void makeFakeData();
+
+  //likelihood evaluateions;
   double getSumSq(TH1D* h1, TH1D* h2);
   double getLnL(TH1D* h1, TH1D* h2);
   double getTotSumSq();
   double getTotLnL();
   void  getTotLnL1D(double& result,int npar, double par[]);
-  //for debuggint and play
   void LnLFit();
   void LnLPreFit();
   static void lnLWrapper(int& ndim, double* gout, double& result, double par[], int flg);
-  //static void sumSqWrapper(int& ndim, double* gout, double& result, double par[], int flg);
   void singleParFit(int ipar);
   void sysParFit();
   void timetest(int ntry);
@@ -144,6 +146,7 @@ class histoCompare{
   void tuneDEMCMC(int ncyles=1,int nsteps=150,double goal=0.25);
   void tuneMCMCOld(int ncyles=1,int nsteps=150,double goal=0.25);
   void calcRoughParErr();
+
   //staticthis for fits
   static histoCompare* staticthis;
 };

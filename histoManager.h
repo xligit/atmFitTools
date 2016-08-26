@@ -15,6 +15,7 @@
 #include "histoTransforms.cxx"
 #include "sharedPars.cxx"
 #include "shared.h"
+#include "likelihood.cxx"
 #include "splineParReader.h"
 #ifndef T2K
 #include "fqProcessedEvent.h"
@@ -58,6 +59,7 @@ class histoManager{
   TH1D* hTmp;
   int useSplineFlg;
   double normFactor;
+  double histoLogL;
   hSplines* theSplines[NSAMPMAX][NBINMAX][NCOMPMAX][NATTMAX]; //splines for flux/xsec params
   hSplines* moreSplines[NSAMPMAX][NBINMAX][NCOMPMAX][NMODE][NATTMAX];
   TH1D* hData[NSAMPMAX][NBINMAX][NATTMAX];  //array of all Data histograms
