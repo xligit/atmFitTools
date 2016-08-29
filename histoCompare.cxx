@@ -1096,8 +1096,8 @@ double histoCompare::getTotLnL(){
       for (int iatt=0;iatt<nAtt;iatt++){
        	TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.
       	TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
-       // double partialLnL = hManager->histoLogL;
-	      double partialLnL = getLnL(hPrediction,hDataTmp);
+        double partialLnL = hManager->histoLogL;
+//	      double partialLnL = getLnL(hPrediction,hDataTmp);
 	      totL+=partialLnL;
       }
     }

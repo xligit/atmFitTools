@@ -514,7 +514,7 @@ void markovTools::Init(int npars){
   pathTree->Branch("paratt",parAtt,"paratt[200]/I");
   pathTree->Branch("parindex",effectiveIndex,"parindex[200]/I");
   pathTree->Branch("parsyst",parIsSyst,"parsyst[200]/I");
-  pathTree->Branch("logL",&oldL,"logL");
+  pathTree->Branch("logL",&oldL,"logL/D");
 
 
   //done

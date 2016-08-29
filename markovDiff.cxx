@@ -76,7 +76,6 @@ void markovDiff::fillDiffPars(int npairs){
   // save this difference to the new difference tree
   for (int i=0; i<npairs; i++){
     if ((i%500)==0) cout<<i<<endl;
-     cout<<i<<endl;
     // get a pair of randoms
     int ipoint = randy->Integer(npts); 
     int fpoint = randy->Integer(npts); 
