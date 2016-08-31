@@ -105,9 +105,10 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
     //  	hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
         // calculate likelihood after last component has been added
         if (icomp==(nComponents-1)){
+          double normpar = fitPars->getNormParameter(isamp,ibin);
           if ((jbin>nbinbuffer) && jbin<(tmppointer->GetNbinsX()-nbinbuffer)){
             histoLogL+=evalLnL(hData[isamp][ibin][iatt]->GetBinContent(jbin),
-                               normFactor*hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin));
+                               normFactor*normpar*hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin));
           }
         }
       }        
@@ -330,13 +331,12 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
 
   // convert to to histogram 
   graph2histo(gr,hMCModified[isamp][ibin][icomp][iatt],histonorm);
-  hMCModified[isamp][ibin][icomp][iatt]->Scale(1./(50.*fitPars->getHistoParameter(ibin,icomp,iatt,0)));
+  hMCModified[isamp][ibin][icomp][iatt]->
+            Scale(1./(hMC[isamp][ibin][icomp][iatt]->GetBinWidth(1)*fitPars->getHistoParameter(ibin,icomp,iatt,0)));
+//  hMCModified[isamp][ibin][icomp][iatt]->Scale(normFactor);
   //
   return hMCModified[isamp][ibin][icomp][iatt];
 }
-
-
-
 
 /*
 //////////////////////////////////////////////////////////////////////////////
@@ -437,7 +437,6 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   
 }
 */
-
 
 //////////////////////////////////////////////////////////////////////////////
 // Returns the modified histogram based on the parameters in atmfitpars
