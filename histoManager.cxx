@@ -71,6 +71,10 @@ void histoManager::showSysParVariation(int isamp, int ibin, int icomp, int iatt,
    return;
 }
 
+
+
+
+
 //////////////////////////////////////////////////////////////////////////
 //calculate sum of all modified components to compare to data
 TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFlg){
@@ -85,7 +89,7 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
 
   //////////////////////////////////////////
   // number of edge bins to ignore
-  int nbinbuffer = 5;
+  int nbinbuffer = 8;
 
   ///////////////////////////////////////////
   //add bin contents from all histograms
@@ -270,11 +274,75 @@ TH1D* histoManager::getSplineModifiedHisto(int isamp, int ibin, int icomp, int i
 
 #endif
 
+//////////////////////////////////////////////////////////////////////////////
+// Fills gTmp a modifed GRAPH of the specified histogram
+TGraph* histoManager::getModGraph(int isamp, int ibin, int icomp, int iatt){
 
+  // integral of histogram (sum of bins)
+  gTotIntegral = 0.;
+
+  // get modification parameters
+  double bias = fitPars->getHistoParameter(ibin,icomp,iatt,1);
+  double smear = fitPars->getHistoParameter(ibin,icomp,iatt,0);
+
+  // number of bins in this graph
+  int nbins = hMC[isamp][ibin][icomp][iatt]->GetNbinsX();
+
+  // make graph 
+  TGraph* gr = new TGraph(nbins+1); 
+ 
+  // fill graph
+  double binc = 0;
+  for (int ipt=0; ipt<=nbins; ipt++){
+    
+    // get spline modified contents if necessary
+    if (useSplineFlg){
+      binc = getSplineModifiedBin(isamp,ibin,icomp,iatt,ipt);
+    }
+    else{
+      binc = hMC[isamp][ibin][icomp][iatt]->GetBinContent(ipt);
+    }
+    
+    // add to total integral
+    gTotIntegral+= binc;
+
+    // fill modified graph
+    gr->SetPoint(ipt,
+                 ((smear*hMC[isamp][ibin][icomp][iatt]->GetBinCenter(ipt)) + bias),
+                 binc);
+  }
+
+
+  return gr;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// NEW test method using graphs
+// Returns the modified histogram based on the parameters in atmfitpars
+TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
+
+  // get the modified graph and calculate gTotIntegral
+  TGraph* gr = getModGraph(isamp, ibin, icomp, iatt);
+ 
+  // get norm factor
+//  double histonorm = gTotIntegral;
+  double histonorm = 1.0;
+
+  // convert to to histogram 
+  graph2histo(gr,hMCModified[isamp][ibin][icomp][iatt],histonorm);
+  hMCModified[isamp][ibin][icomp][iatt]->Scale(1./(50.*fitPars->getHistoParameter(ibin,icomp,iatt,0)));
+  //
+  return hMCModified[isamp][ibin][icomp][iatt];
+}
+
+
+
+
+/*
 //////////////////////////////////////////////////////////////////////////////
 // Returns the modified histogram based on the parameters in atmfitpars
 TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
-  
+
   //number of bins in this histo
   int nhistobins = hMC[isamp][ibin][icomp][iatt]->GetNbinsX();
 
@@ -366,8 +434,9 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   hMCModified[isamp][ibin][icomp][iatt]->Scale(fitPars->getNormParameter(isamp,ibin)*contsum/wcontsum);
 
   return hMCModified[isamp][ibin][icomp][iatt];
+  
 }
-
+*/
 
 
 //////////////////////////////////////////////////////////////////////////////

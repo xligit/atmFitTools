@@ -592,6 +592,23 @@ void histoCompare::showModHiso(int isamp,int ibin, int icomp, int iatt, double s
 }
 
 
+void histoCompare::showFitDiff(int isamp,int ibin,int iatt){
+
+  // get (normalized) histogram with parameter modifications
+  hMod = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt)->Clone("hmod");
+
+  // draw MC histograms
+  hMod->SetLineColor(kBlue);
+  // subtract data from modified expectation
+  hMod->Add(hManager->hData[isamp][ibin][iatt],-1.);
+  hMod->Draw("h");
+ 
+  //
+  return;
+}
+
+
+
 void histoCompare::showFitResult(int isamp,int ibin,int iatt){
 
   // get (normalized) histogram with parameter modifications
@@ -1092,6 +1109,7 @@ double histoCompare::getTotLnL(){
   ////////////////////////////////////////
   //contribution from histogram comparison  
   for (int isamp=0;isamp<nSamp;isamp++){
+
     for (int ibin=0;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
        	TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.

@@ -214,6 +214,10 @@ void histoFactory::fillHistos(){
   for (int i=0;i<nevdata;i++){
     dataTree->GetEntry(i);
     for (int iatt=0;iatt<nAttributes;iatt++){
+
+   
+
+
       hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,
                                   fqData->attribute[iatt],fqData->evtweight);
    }

@@ -7,6 +7,7 @@
 #include "time.h"
 #include <iostream>
 #include "TCanvas.h"
+#include "TGraph.h"
 
 #ifndef GLOBAL_RANDOM
 #define GLOBAL_RANDOM
@@ -16,6 +17,75 @@ TRandom2* randy = new TRandom2();
 
 using namespace std;
 
+
+////////////////////////////////////////////////////
+// Apply smearing/bias to graph
+void smearThisGraph(TGraph* gr, double smear, double bias){
+ 
+
+  double* Y = gr->GetY();
+  double* X = gr->GetX();
+  int npts = gr->GetN();
+
+  for (int ipt=0; ipt<npts; ipt++){
+    gr->SetPoint(ipt, (smear*X[ipt] + bias), Y[ipt]); 
+  }
+  
+  
+  return;
+}
+
+////////////////////////////////////////////////////
+// Integrate a graph
+double gIntegral(TGraph* gr, double xmin, double xmax, int sampling=5){
+
+  // step size
+  double dx = (xmax-xmin)/((double)sampling);
+
+  // add areas
+  double area = 0.;
+  double xx   = xmin;
+ 
+  // get X boundaries
+  double* X = gr->GetX();
+  double loBound = X[0];
+  double xdiff = (X[1]-X[0])/2.;
+  double hiBound = X[gr->GetN()-1]+xdiff;
+
+  for (int i=0; i<sampling; i++){
+    // rectangles
+    double xvalue = xx + (dx/2.);
+    // make sure in bounds
+    if ((xvalue<loBound)||(xvalue>hiBound)) continue;
+    //rectangles
+    //area += dx*gr->Eval( xvalue,0,"s" ); 
+    area += dx*gr->Eval( xvalue ); 
+    xx+=dx;
+  }
+
+  return area;
+
+}
+
+////////////////////////////////////////////////////
+// converts graph to histogram
+void graph2histo(TGraph* gr, TH1D* h, double scale = 1.0){
+  
+  // clear bin contents
+  h->Reset();
+
+  // fill bin contents from graph
+  double binw = h->GetBinWidth(1);
+  for (int ibin=1; ibin<=h->GetNbinsX(); ibin++){
+    double xmin = h->GetBinLowEdge(ibin);
+    double xmax = xmin + binw;
+    double area = gIntegral(gr,xmin,xmax);
+    h->SetBinContent(ibin,area);
+  }
+
+  //
+  return;
+}
 
 /////////////////////////////////////////////////////
 //returns a parameter for S/N ratio for a histogram
