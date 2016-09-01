@@ -57,6 +57,9 @@ class histoManager{
   TH1D* hMod;
   TH1D* hSum;
   TH1D* hTmp;
+  TGraph* gTmp;
+  TGraph* gSum;
+  double gTotIntegral;
   int useSplineFlg;
   double normFactor;
   double histoLogL;
@@ -97,6 +100,7 @@ class histoManager{
   //getters
   TH1D* getHistogram(int isamp, int ibin, int icomp, int iatt);
   TH1D* getModHistogram(int isamp, int ibin, int icomp, int iatt); //gets histogram modified from atm pars
+  TGraph* getModGraph(int isamp, int ibin, int icomp, int iatt);
   TH1D* getModHistogramSlow(int isamp, int ibin, int icomp, int iatt); //gets histogram modified from atm pars
   TH1D* getHistogramData(int isamp, int ibin, int iatt){return hData[isamp][ibin][iatt];}
   hSplines* getSplines(int isamp, int ibin, int icomp, int iatt){return theSplines[isamp][ibin][icomp][iatt];}

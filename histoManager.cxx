@@ -89,7 +89,7 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
 
   //////////////////////////////////////////
   // number of edge bins to ignore
-  int nbinbuffer = 8;
+  int nbinbuffer = 4;
 
   ///////////////////////////////////////////
   //add bin contents from all histograms
@@ -99,16 +99,13 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
       for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
       	double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
        	content+=tmppointer->GetBinContent(jbin);
-	 //     double err1 = tmppointer->GetBinError(jbin);
-   //   	double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
-      	hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,content);
-    //  	hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
-        // calculate likelihood after last component has been added
+        double normpar = fitPars->getNormParameter(isamp,ibin);
+      	hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,normpar*content);
         if (icomp==(nComponents-1)){
-          double normpar = fitPars->getNormParameter(isamp,ibin);
+        //  double normpar = fitPars->getNormParameter(isamp,ibin);
           if ((jbin>nbinbuffer) && jbin<(tmppointer->GetNbinsX()-nbinbuffer)){
             histoLogL+=evalLnL(hData[isamp][ibin][iatt]->GetBinContent(jbin),
-                               normFactor*normpar*hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin));
+                               normFactor*hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin));
           }
         }
       }        
@@ -317,6 +314,7 @@ TGraph* histoManager::getModGraph(int isamp, int ibin, int icomp, int iatt){
   return gr;
 }
 
+/*
 //////////////////////////////////////////////////////////////////////////////
 // NEW test method using graphs
 // Returns the modified histogram based on the parameters in atmfitpars
@@ -331,14 +329,17 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
 
   // convert to to histogram 
   graph2histo(gr,hMCModified[isamp][ibin][icomp][iatt],histonorm);
+//  mcbinw = 
   hMCModified[isamp][ibin][icomp][iatt]->
             Scale(1./(hMC[isamp][ibin][icomp][iatt]->GetBinWidth(1)*fitPars->getHistoParameter(ibin,icomp,iatt,0)));
+            //Scale(1./(hMCModified[isamp][ibin][icomp][iatt]->GetBinWidth(1)*fitPars->getHistoParameter(ibin,icomp,iatt,0)));
 //  hMCModified[isamp][ibin][icomp][iatt]->Scale(normFactor);
   //
+  gr->Delete();
   return hMCModified[isamp][ibin][icomp][iatt];
 }
+*/
 
-/*
 //////////////////////////////////////////////////////////////////////////////
 // Returns the modified histogram based on the parameters in atmfitpars
 TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
@@ -436,7 +437,6 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   return hMCModified[isamp][ibin][icomp][iatt];
   
 }
-*/
 
 //////////////////////////////////////////////////////////////////////////////
 // Returns the modified histogram based on the parameters in atmfitpars
@@ -878,42 +878,44 @@ void  histoManager::initHistos(){
   if (!separateNeutMode) {
     for (int isamp=0;isamp<nSamples;isamp++){
       for (int ibin=0;ibin<nBins;ibin++){
-	for (int iatt=0;iatt<nAttributes;iatt++){
-	  TString sumname = hMC[isamp][ibin][0][iatt]->GetName();
-	  sumname.Append("_sum");
-	  hSumHisto[isamp][ibin][iatt] = (TH1D*)hMC[isamp][ibin][0][iatt]->Clone(sumname.Data());
-	  sumname.Append("_modified");
-	  hSumHistoMod[isamp][ibin][iatt] = (TH1D*)hMC[isamp][ibin][0][iatt]->Clone(sumname.Data()); 
-	  for (int icomp=0;icomp<nComponents;icomp++){
-	    hmodname = hMC[isamp][ibin][icomp][iatt]->GetName();
-	    hmodname.Append("_mod");
-	    hMCModified[isamp][ibin][icomp][iatt] = (TH1D*)hMC[isamp][ibin][icomp][iatt]->Clone(hmodname.Data());
-	    hMCModified[isamp][ibin][icomp][iatt]->Reset();
-	  }
-	}
+      	for (int iatt=0;iatt<nAttributes;iatt++){
+      	  TString sumname = hMC[isamp][ibin][0][iatt]->GetName();
+      	  sumname.Append("_sum");
+      	  hSumHisto[isamp][ibin][iatt] = (TH1D*)hData[isamp][ibin][iatt]->Clone(sumname.Data());
+	        sumname.Append("_modified");
+      	  hSumHistoMod[isamp][ibin][iatt] = (TH1D*)hData[isamp][ibin][iatt]->Clone(sumname.Data()); 
+          hSumHistoMod[isamp][ibin][iatt]->Reset();
+	        for (int icomp=0;icomp<nComponents;icomp++){
+	          hmodname = hMC[isamp][ibin][icomp][iatt]->GetName();
+	          hmodname.Append("_mod");
+	          hMCModified[isamp][ibin][icomp][iatt] = (TH1D*)hData[isamp][ibin][iatt]->Clone(hmodname.Data());
+	          hMCModified[isamp][ibin][icomp][iatt]->Reset();
+	       }
+      	}
       }
     }
   }
+
 #ifdef T2K
   else {
     for (int isamp=0;isamp<nSamples;isamp++){
       for (int ibin=0;ibin<nBins;ibin++){
-	for (int iatt=0;iatt<nAttributes;iatt++){
-	  TString sumname = hMCNeut[isamp][ibin][0][0][iatt]->GetName();
-	  sumname.Append("_sum");
-	  hSumHisto[isamp][ibin][iatt] = (TH1D*)hMCNeut[isamp][ibin][0][0][iatt]->Clone(sumname.Data());
-	  sumname.Append("_modified");
-	  hSumHistoMod[isamp][ibin][iatt] = (TH1D*)hMCNeut[isamp][ibin][0][0][iatt]->Clone(sumname.Data()); 
-	  for (int icomp=0;icomp<nComponents;icomp++){
-	    for (int imode = 0; imode < nModes; ++imode) {
-	      hmodname = hMCNeut[isamp][ibin][icomp][imode][iatt]->GetName();
-	      hmodname.Append("_mod");
-	      //std::cout<<hmodname<<std::endl;
-	      hMCNeutModified[isamp][ibin][icomp][imode][iatt] = (TH1D*)hMCNeut[isamp][ibin][icomp][imode][iatt]->Clone(hmodname.Data());
-	      hMCNeutModified[isamp][ibin][icomp][imode][iatt]->Reset();
-	    }
-	  }
-	}
+      	for (int iatt=0;iatt<nAttributes;iatt++){
+      	  TString sumname = hMCNeut[isamp][ibin][0][0][iatt]->GetName();
+       	  sumname.Append("_sum");
+       	  hSumHisto[isamp][ibin][iatt] = (TH1D*)hData[isamp][ibin][iatt]->Clone(sumname.Data());
+	        sumname.Append("_modified");
+	        hSumHistoMod[isamp][ibin][iatt] = (TH1D*)hData[isamp][ibin][iatt]->Clone(sumname.Data()); 
+       	  for (int icomp=0;icomp<nComponents;icomp++){
+	          for (int imode = 0; imode < nModes; ++imode) {
+	            hmodname = hMCNeut[isamp][ibin][icomp][imode][iatt]->GetName();
+	            hmodname.Append("_mod");
+	            //std::cout<<hmodname<<std::endl;
+	            hMCNeutModified[isamp][ibin][icomp][imode][iatt] = (TH1D*)hMC[isamp][ibin][icomp][iatt]->Clone(hmodname.Data());
+	            hMCNeutModified[isamp][ibin][icomp][imode][iatt]->Reset();
+	          }
+	        }
+	      }
       }
     }
   }

@@ -74,6 +74,7 @@ class histoCompare{
   void showFitHisto(int isamp,int ibin,int icomp,int iatt);
   void showFitEffect(int isamp,int ibin,int icomp,int iatt);
   void showFitResult(int isamp,int ibin,int iatt);
+  void showFitDiff(int isamp, int ibin, int iatt);
   void showFitPars(int ibin,int iatt,int imod);
   void setPar(int ipar, double value){thePars->setParameter(ipar,value);}
   void showModHiso(int isamp,int ibin, int icomp, int iatt, double smear, double bias);

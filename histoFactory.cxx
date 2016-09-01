@@ -125,7 +125,7 @@ void histoFactory::init(){
 TH1D* histoFactory::getHistogramData(int iatt, const char* thename){
  
   //setup binning from runtime parameters
-  TString parname = Form("nBinsAtt%d",iatt);
+  TString parname = Form("nBinsDataAtt%d",iatt);
   int nbins = runpars->getParI(parname.Data());
   parname = Form("xMinAtt%d",iatt);
   double xmin = runpars->getParD(parname.Data());
@@ -214,10 +214,6 @@ void histoFactory::fillHistos(){
   for (int i=0;i<nevdata;i++){
     dataTree->GetEntry(i);
     for (int iatt=0;iatt<nAttributes;iatt++){
-
-   
-
-
       hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,
                                   fqData->attribute[iatt],fqData->evtweight);
    }

@@ -620,8 +620,8 @@ void histoCompare::showFitResult(int isamp,int ibin,int iatt){
   // draw MC histograms
   hMod->SetLineColor(kBlue);
   hTmp->SetLineColor(kRed);
-  hTmp->Draw("h");
-  hMod->Draw("sameeh");
+ // hTmp->Draw("h");
+  hMod->Draw("h");
  
   // draw data histograms
   hManager->hData[isamp][ibin][iatt]->SetMarkerStyle(8);
