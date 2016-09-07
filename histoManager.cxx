@@ -314,7 +314,6 @@ TGraph* histoManager::getModGraph(int isamp, int ibin, int icomp, int iatt){
   return gr;
 }
 
-/*
 //////////////////////////////////////////////////////////////////////////////
 // NEW test method using graphs
 // Returns the modified histogram based on the parameters in atmfitpars
@@ -338,8 +337,8 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   gr->Delete();
   return hMCModified[isamp][ibin][icomp][iatt];
 }
-*/
 
+/*
 //////////////////////////////////////////////////////////////////////////////
 // Returns the modified histogram based on the parameters in atmfitpars
 TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
@@ -437,6 +436,8 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   return hMCModified[isamp][ibin][icomp][iatt];
   
 }
+*/
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Returns the modified histogram based on the parameters in atmfitpars

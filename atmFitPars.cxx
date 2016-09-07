@@ -113,7 +113,7 @@ void atmFitPars::resetDefaults(){
       for (int iatt=0;iatt<nAttributes;iatt++){
         histoPar[ibin][icomp][iatt][0]=1.0;
         pars[index]=1.0;
-        parUnc[index]=0.005; //rough estimate of uncertainty
+      //  parUnc[index]=0.005; //rough estimate of uncertainty
         binOfPar[index]=ibin;
         compOfPar[index]=icomp;
         attOfPar[index]=iatt;
@@ -124,7 +124,7 @@ void atmFitPars::resetDefaults(){
         histoPar[ibin][icomp][iatt][1]=0.0;
         parIndex[ibin][icomp][iatt][1]=index;
         pars[index]=0.0;
-        parUnc[index]=1.0;  //rough estimate of uncertainty
+     //   parUnc[index]=1.0;  //rough estimate of uncertainty
         binOfPar[index]=ibin;
         compOfPar[index]=icomp;
         attOfPar[index]=iatt;

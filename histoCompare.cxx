@@ -15,13 +15,10 @@ histoCompare* histoCompare::staticthis;
 //This should be run before running MCMC, since these
 //rough uncertainties are used to proposes MCMC steps
 void histoCompare::calcRoughParErr(){
-
    cout<<"histoCompare: "<<"calculating rough uncertainties"<<endl;  
-
   //print final results
   for (int ipar=0;ipar<thePars->nTotPars;ipar++){
     if (thePars->fixPar[ipar]) continue;
- //   thePars->setParameter(ipar,fit->GetParameter(ipar));
     errParLo[ipar]=getErrLo(ipar);
     errParHi[ipar]=getErrHi(ipar);
     thePars->parUnc[ipar]=(errParHi[ipar]-errParLo[ipar]);
@@ -351,7 +348,7 @@ double histoCompare::getErrHi(int ipar){
     thePars->setParameter(ipar,parval); //modify parameter
  //   double Lnew = getTotLnL();
  //   cout<<"Lnew: "<<Lnew<<endl;
-    Ldiff = TMath::Abs(Lbest-getTotLnL()); //check L difference
+    Ldiff = TMath::Abs(Lbest-getTotLnL()); //check L difference;
  //   cout<<"Ldiff: "<<Ldiff<<endl;
     ntry++;
     if (ntry>ntrymax) break;
@@ -838,7 +835,7 @@ void histoCompare::LnLPreFit(){
   //release and fit flux and xsec parameters
   parindex = thePars->nTotPars-thePars->nSysPars;
   for (int isyspar=0;isyspar<thePars->nSysPars;isyspar++){
-    fit->ReleaseParameter(parindex);
+    if ((thePars->fixPar[parindex])!=1)fit->ReleaseParameter(parindex);
     parindex++;
   }
   fit->ExecuteCommand("SIMPLEX",0,0);
@@ -898,7 +895,7 @@ void histoCompare::sysParFit(){
   }
   //fit that thang
   fit->ExecuteCommand("SIMPLEX",0,0); 
-  fit->ExecuteCommand("MIGRAD",0,0); 
+  fit->ExecuteCommand("SIMPLEX",0,0); 
   //print results
   for (int jpar=(thePars->nTotPars-thePars->nSysPars);jpar<thePars->nTotPars;jpar++){
     cout<<"PAR: "<<jpar<<" "<<fit->GetParameter(jpar)<<endl;
@@ -950,7 +947,7 @@ void histoCompare::singleParFit(int ipar){
   fit->ReleaseParameter(ipar);
   //fit that thang
   fit->ExecuteCommand("SIMPLEX",0,0); 
-  fit->ExecuteCommand("MIGRAD",0,0); 
+  fit->ExecuteCommand("SIMPLEX",0,0); 
   //print results
   cout<<"RESULT: "<<fit->GetParameter(ipar)<<endl;
  
@@ -982,7 +979,7 @@ void histoCompare::LnLFit(){
   staticthis = this;
 
   //sets the precision of the fits
-  double parerr = 0.001;  
+  double parerr = 0.0001;  
   
   //individually fit each parameter
   int parindex =0;
@@ -1032,20 +1029,25 @@ void histoCompare::LnLFit(){
   //do individual fits
   for (int jbin=0;jbin<nBin;jbin++){
     for (int jatt=0;jatt<nAtt;jatt++){
+
       //start of fit block//
+      //
       //fix all parameters
       for (int jpar=0;jpar<npars;jpar++){
         fit->FixParameter(jpar);
       }
-      //for bin 0, fit the xsec and flux parameters as well//
-      if (jbin==0){
+
+      //for bin 6, fit the xsec and flux parameters as well//
+      if (jbin==5){
         //release all flux and xsec pars
         for (int isyspar=(thePars->nTotPars-thePars->nSysPars);isyspar<thePars->nSysPars;isyspar++){
-          fit->ReleaseParameter(isyspar);
+          if ((thePars->fixPar[parindex])!=1)fit->ReleaseParameter(isyspar);  
+          //fit->ReleaseParameter(isyspar);
         }
         //fit these pars first
         fit->ExecuteCommand("SIMPLEX",0,0);
       }
+
       //release bias parameters
       for (int jcomp=0;jcomp<nComp;jcomp++){
         if (thePars->checkFixFlg(jbin,jcomp,jatt,1)!=1){
@@ -1063,6 +1065,7 @@ void histoCompare::LnLFit(){
           fit->ReleaseParameter(thePars->getParIndex(jbin,jcomp,jatt,0));
         }
       }
+
       fit->ExecuteCommand("SIMPLEX",0,0); //run the fit for ALL parameters
 
       //end of fit block//
@@ -1108,9 +1111,10 @@ double histoCompare::getTotLnL(){
 
   ////////////////////////////////////////
   //contribution from histogram comparison  
-  for (int isamp=0;isamp<nSamp;isamp++){
+ // for (int isamp=0;isamp<nSamp;isamp++){
+  for (int isamp=0;isamp<1;isamp++){
 
-    for (int ibin=0;ibin<nBin;ibin++){
+    for (int ibin=5;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
        	TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.
       	TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
@@ -1272,20 +1276,35 @@ TH2D* histoCompare::show2DLnL(int parx, double xmin, double xmax, int pary, doub
     for (int jbin=1; jbin<npts; jbin++){
       double xval = hL->GetXaxis()->GetBinLowEdge(ibin) + (xwidth/2.);
       double yval = hL->GetYaxis()->GetBinLowEdge(jbin) + (xwidth/2.);
-      thePars->setParameter(parx,xval);
-      thePars->setParameter(pary,yval);
-      double LnLval = getTotLnL();
-      double diff = LnLval - LnLcurrent;
-      if ((TMath::Abs(diff)>10) && (diff>0.)){ 
-//        hL->SetBinContent(ibin,jbin,-1e5);
-        continue;
+      if (!thePars->fixPar[parx]){ 
+       // cout<<"set par "<<parx<<"to "<<xval<<endl;
+        thePars->setParameter(parx,xval);
       }
+      if (!thePars->fixPar[pary]){
+     //   cout<<"set par "<<pary<<"to "<<yval<<endl;
+        thePars->setParameter(pary,yval);
+      }
+      double LnLval = getTotLnL();
+   //   double diff = LnLval - LnLcurrent;
+   //   if ((TMath::Abs(diff)>10) && (diff>0.)){ 
+//        hL->SetBinContent(ibin,jbin,-1e5);
+    //    continue;
+     // }
       if (LnLval>maxL) maxL = LnLval;
       if (LnLval<minL) minL = LnLval;
       hL->SetBinContent(ibin,jbin,LnLval);
     }
   }
-  hL->GetZaxis()->SetRangeUser(minL,maxL);
+  cout<<"Min lnL: "<<minL<<endl;
+  // fill diff 
+  for (int ibin=1; ibin<npts; ibin++){
+    for (int jbin=1; jbin<npts; jbin++){
+      double binc = hL->GetBinContent(ibin,jbin);
+      hL->SetBinContent(ibin,jbin,binc-minL);
+    }
+  }
+
+  hL->GetZaxis()->SetRangeUser(0,5);
   hL->Draw("colz");
   
   thePars->setParameter(parx, parxcurrent);
@@ -1293,6 +1312,74 @@ TH2D* histoCompare::show2DLnL(int parx, double xmin, double xmax, int pary, doub
 
   return hL;
 }
+
+
+
+TGraph2D* histoCompare::show2DLnLG(int parx, double xmin, double xmax, int pary, double ymin, double ymax, int npts){
+
+  // what are the current par values? reset to these later
+  float parxcurrent = thePars->getParameter(parx);
+  float parycurrent = thePars->getParameter(pary);
+  float LnLcurrent = getTotLnL();;
+
+  // make a graph 
+  const int NN = npts*npts;
+  TGraph2D* g2 = new TGraph2D(NN);
+  float X[NN];
+  float Y[NN];
+  float Z[NN];
+  float dX = (xmax-xmin)/(float)npts;
+  float dY = (ymax-ymin)/(float)npts;
+  float xx = xmin;
+  float yy = ymin;
+  int nn = 0;
+  float minL = 1e6;
+  float maxL = -1e5;
+
+  // fill arrays 
+  for (int ibin=0; ibin<npts; ibin++){
+    for (int jbin=0; jbin<npts; jbin++){
+      Y[nn] = yy; 
+      X[nn] = xx;
+      if (!thePars->fixPar[parx]){ 
+        thePars->setParameter(parx,X[nn]);
+      }
+      if (!thePars->fixPar[pary]){
+        thePars->setParameter(pary,Y[nn]);
+      }
+      float LnLval = getTotLnL();
+      if (LnLval>maxL) maxL = LnLval;
+      if (LnLval<minL) minL = LnLval;
+      Z[nn] = LnLval;
+ //     g2->SetPoint(nn,xx,yy,LnLval);
+      nn++;
+      yy+=dY;
+    }
+    yy = ymin;
+    xx+=dX;
+  }
+ 
+  // diff it
+  for (int ip=0; ip<NN; ip++){
+    g2->SetPoint(ip,X[ip],Y[ip],Z[ip] -minL);
+  }
+
+  // make it
+//  TGraph2D* g2 = new TGraph2D(NN,X,Y,Z);
+
+  cout<<"Min lnL: "<<minL<<endl;
+  // fill diff 
+  
+  g2->GetZaxis()->SetRangeUser(0,5);
+  g2->Draw("colz");
+  
+  thePars->setParameter(parx, parxcurrent);
+  thePars->setParameter(pary, parycurrent);
+
+  return g2;
+}
+
+
 
 
 ////////////////////////////////////////////////////////////////////
