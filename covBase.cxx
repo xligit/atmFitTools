@@ -19,17 +19,20 @@ covBase::covBase(std::string name, std::string file, unsigned int seed)
 
 covBase::~covBase()
 {
-  delete fParName;
-  delete fParInit;
-  delete fParSigma;
-  delete fParCurr;
-  delete fParProp;
-  delete fParUp;
-  delete fParLow;
-  delete fParEvalLikelihood;
-  delete fStepScale;
+  delete[] fParName;
+  delete[] fParInit;
+  delete[] fParSigma;
+  delete[] fParCurr;
+  delete[] fParProp;
+  delete[] fParUp;
+  delete[] fParLow;
+  delete[] fParEvalLikelihood;
+  delete[] fStepScale;
+  for (int i=0; i<size; ++i) {
+    delete fPropKernel[i];
+  }
   delete[] fPropKernel;
-
+  if (rnd) delete rnd;
 }
 
 void covBase::init(std::string name, std::string file)

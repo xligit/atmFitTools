@@ -181,12 +181,14 @@ void atmFitPars::proposeStep()
     if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
     while (pars[i+nTotPars-nSysPars]<0) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
   }
+  /*
   if (!fixPar[3+nTotPars-nSysPars]) {
     if (rnd->Uniform(0,2)>1) parsProp[3+nTotPars-nSysPars] = 0;
     else parsProp[3+nTotPars-nSysPars] = 1;
   }
+  */
   cov->proposeStep();
-  for (int i = 3; i < nSysPars; ++i) {
+  for (int i = 2/*3*/; i < nSysPars; ++i) {
     if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = cov->getProposed(i-3);
   }
 }
@@ -255,7 +257,6 @@ atmFitPars::atmFitPars(const char* parfilename){
 }
 
 
-
 void atmFitPars::printPars(int ipar){
   if (ipar>=0){
     cout<<"PAR: "<<ipar<<" = "<<pars[ipar]<<" +/- "<<parUnc[ipar]<<endl;
@@ -321,16 +322,19 @@ void atmFitPars::setRandSysPar(){
   }
 #else
   if (sysType=="t2k" || sysType=="banff") {
-    parval = rnd->Gaus(sysPar[0],sysParUnc[0]/2.);
-    if (parval < 0) parval = 0;
+    parval = rnd->Gaus(sysPar[0],sysParUnc[0]);
+    while (parval < 0) parval = rnd->Gaus(sysPar[0],sysParUnc[0]);
     setSysParameter(0, parval);
-    parval = rnd->Gaus(sysPar[1],sysParUnc[1]/2.);
-    if (parval < 0) parval = 0;
+    parval = rnd->Gaus(sysPar[1],sysParUnc[1]);
+    while (parval < 0) parval = rnd->Gaus(sysPar[1],sysParUnc[1]);
     setSysParameter(1, parval);
-    parval = rnd->Uniform(0,1);
-    if (parval > 0.5) setSysParameter(2, 0);
-    else setSysParameter(2, 1);
+    //parval = rnd->Uniform(0,1);
+    //if (parval > 0.5) setSysParameter(2, 0);
+    //else setSysParameter(2, 1);
     cov->proposeStep();
+    for (int i=0; i<nSysPars; ++i) {
+      setSysParameter(i+2, cov->getProposed(i));
+    }
   }
 #endif
 }
@@ -378,7 +382,7 @@ void atmFitPars::setParameter(int ipar, double value){
   if (ipar>=(nTotPars-nSysPars)) {
     sysPar[ipar-nTotPars+nSysPars] = value;
 #ifdef T2K
-    if (ipar-nTotPars+nSysPars>2) cov->setPar(ipar-nTotPars+nSysPars-3, value);
+    if (ipar-nTotPars+nSysPars>1) cov->setPar(ipar-nTotPars+nSysPars-2, value);
 #endif
   }
   else{
@@ -654,7 +658,7 @@ void atmFitPars::initPars(const char* systype){
   }
 
   if (!stype.CompareTo("t2k") || !stype.CompareTo("banff")) {
-    nSysPars = 3; // two flux errors + hadron multiplicity
+    nSysPars = 2; // two flux errors + hadron multiplicity
     // flux
     sysParNom[0] = 1.0; sysPar[0] = 1.0;    sysParUnc[0] = 0.25; // sub-GeV flux norm
     sysParNom[1] = 1.0; sysPar[1] = 1.0;    sysParUnc[1] = 0.15; // multi-GeV flux norm
@@ -662,13 +666,14 @@ void atmFitPars::initPars(const char* systype){
     sysParUp[1] = 9999.; sysParLow[1] = 0.;
     sysParDefault[0] = 1.0; sysParDefault[1] = 1.0;
     // hadron multiplicity
-    sysParNom[2] = 0; sysPar[2] = 0; sysParDefault[2] = 0;
+    //sysParNom[2] = 0; sysPar[2] = 0; sysParDefault[2] = 0;
     sysParName[0] = "FLUX_SUB";
     sysParName[1] = "FLUX_MUL";
-    sysParName[2] = "HAD_MULT";
+    //sysParName[2] = "HAD_MULT";
     // xsec errors
     std::cout<<"Please set covariance matrix by calling atmFitPars::setCov(covBase *)\n"
 	     <<"stype corresponds to "<<stype.Data()<<std::endl;
+    nTotPars += 2;
   }
 
   //add systematics to 1D parameter arrays
@@ -705,7 +710,7 @@ void atmFitPars::initPars(const char* systype){
        if (flgUseNormPars){
          nSysPars++;
          nNormPars++;
-	       index++;
+	 index++;
        }
     }
   }
@@ -719,11 +724,6 @@ void atmFitPars::initPars(const char* systype){
   for (int kpar=0;kpar<nTotPars;kpar++){
     cout<<"par "<<kpar<<" value: "<<pars[kpar]<<endl;
   }
-#endif
-
-
-
-
 
   ///////////////////////////////////////////////
   // initialize parameter prior sigmas (-1 -> no prior)
@@ -731,7 +731,7 @@ void atmFitPars::initPars(const char* systype){
     parPriorGausSig[ipar] = -1.;
   }
   ///////////////////////////////////////////////
-
+#endif
 
   return;
 }
@@ -766,20 +766,23 @@ void atmFitPars::setCov(covBase *covariance)
 {
   std::cout<<"setting covariance matrix"<<std::endl;
   cov = covariance;
-  int index = nTotPars + 3;
+  int index = nTotPars;
   nSysPars += cov->getNPar();
-  for (int i = 3; i < nSysPars; ++i) {
+  for (int i = 2; i < nSysPars; ++i) {
     //std::cout<<i<<std::endl;
-    sysPar[i] = cov->getNominal(i-3);
-    sysParNom[i] = cov->getNominal(i-3);
-    sysParUnc[i] = cov->getUncertainty(i-3);
-    sysParUp[i] = cov->getUp(i-3);
-    sysParLow[i] = cov->getLow(i-3);
-    sysParName[i] = cov->getParName(i-3);
-    pars[nTotPars+i-3] = sysPar[i];
-    parUnc[nTotPars+i-3] = sysParUnc[i];
-    parDefaultValue[nTotPars+i-3] = cov->getInit(i-3);
+    sysPar[i] = cov->getNominal(i-2);
+    sysParNom[i] = cov->getNominal(i-2);
+    sysParUnc[i] = cov->getUncertainty(i-2);
+    sysParUp[i] = cov->getUp(i-2);
+    sysParLow[i] = cov->getLow(i-2);
+    sysParName[i] = cov->getParName(i-2);
+    pars[nTotPars+i-2] = sysPar[i];
+    parUnc[nTotPars+i-2] = sysParUnc[i];
+    parDefaultValue[nTotPars+i-2] = cov->getInit(i-2);
     sysParIndex[i] = index;
+    TString parname = basename.Data();
+    parname.Append(Form("_syspar%d",i));
+    parName[index] = parname.Data();
     index++;
   }
   nTotPars = index;
@@ -796,6 +799,9 @@ void atmFitPars::setCov(covBase *covariance)
     for (int isamp=0; isamp<nSamples; isamp++){
        histoNorm[isamp][ibin] = 1.; //< default histo norm is one
        pars[normindex] = 1.0;
+       TString parname = basename.Data(); 
+       parname.Append(Form("_normpar%d",nNormPars)); 
+       parName[normindex] = parname.Data();  
        parDefaultValue[normindex] = 1.0;
        parUnc[normindex] = 0.1;
        sysParUnc[nSysPars] = 0.1;
@@ -806,7 +812,7 @@ void atmFitPars::setCov(covBase *covariance)
        if (flgUseNormPars){
          nSysPars++;
          nNormPars++;
-	       index++;
+	 index++;
        }
     }
   }
@@ -819,6 +825,10 @@ void atmFitPars::setCov(covBase *covariance)
   cout<<"Total number of fit parameters: "<<nTotPars<<endl;
   for (int kpar=0;kpar<nTotPars;kpar++){
     cout<<"par "<<kpar<<" value: "<<pars[kpar]<<endl;
+  }
+
+  for (int ipar=0; ipar<nTotPars-nSysPars; ipar++){
+    parPriorGausSig[ipar] = -1.;
   }
 
   cout<<"    - Total number of fit parameters now is: "<<nTotPars<<endl;

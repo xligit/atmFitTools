@@ -6,7 +6,7 @@
 #include "TChain.h"
 #include "TTree.h"
 
-//#define T2K // should be uncommented if using T2K xsec parametrization
+#define T2K // should be uncommented if using T2K xsec parametrization
 
 // uncomment this line if not using xiaoyue's skimmed atmospheric MC
 //#define USE_ATM_WEIGHTS 
