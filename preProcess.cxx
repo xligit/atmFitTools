@@ -651,7 +651,7 @@ int preProcess::preProcessIt(){
     if (fakeShiftFlg){
       if (ncomponent==0){
 //        attributeMap["fqelike"] = attributeMap["fqelike"] + 50.;
-        attribute[0] = attribute[0] +50;
+        attribute[0] = attribute[0] +50.;
       }
     }
     nsample=getSample();

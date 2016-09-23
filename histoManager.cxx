@@ -89,7 +89,8 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
 
   //////////////////////////////////////////
   // number of edge bins to ignore
-  int nbinbuffer = 4;
+  int nbinbuffer = 3;
+  nDOF = 0.;
 
   ///////////////////////////////////////////
   //add bin contents from all histograms
@@ -106,12 +107,15 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
           if ((jbin>nbinbuffer) && jbin<(tmppointer->GetNbinsX()-nbinbuffer)){
             histoLogL+=evalLnL(hData[isamp][ibin][iatt]->GetBinContent(jbin),
                                normFactor*hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin));
+            nDOF++;
           }
         }
       }        
     }
 
   }
+  //histoLogL;
+
 #ifdef T2K
   else {
     for (int icomp=0;icomp<nComponents;icomp++){
@@ -276,7 +280,7 @@ TH1D* histoManager::getSplineModifiedHisto(int isamp, int ibin, int icomp, int i
 // Fills gTmp a modifed GRAPH of the specified histogram
 TGraph* histoManager::getModGraph(int isamp, int ibin, int icomp, int iatt){
 
-  // integral of histogram (sum of bins)
+  // goal integral of graph (sum of bins)
   gTotIntegral = 0.;
 
   // get modification parameters
@@ -290,8 +294,16 @@ TGraph* histoManager::getModGraph(int isamp, int ibin, int icomp, int iatt){
   TGraph* gr = new TGraph(nbins+1); 
  
   // fill graph
-  double binc = 0;
-  for (int ipt=0; ipt<=nbins; ipt++){
+  double binc = 0; //< bin contens
+  double binw = hMC[isamp][ibin][icomp][iatt]->GetBinWidth(1); //< bin width
+
+  // shift from smear par
+  double maxx = hMCMean[isamp][ibin][icomp][iatt];
+  double smearshift = (maxx*smear) - maxx;
+ 
+  gr->SetPoint(0,hMC[isamp][ibin][icomp][iatt]->GetBinLowEdge(1),0);
+
+  for (int ipt=1; ipt<=nbins; ipt++){
     
     // get spline modified contents if necessary
     if (useSplineFlg){
@@ -300,22 +312,30 @@ TGraph* histoManager::getModGraph(int isamp, int ibin, int icomp, int iatt){
     else{
       binc = hMC[isamp][ibin][icomp][iatt]->GetBinContent(ipt);
     }
-    
+
     // add to total integral
     gTotIntegral+= binc;
 
+    // scale bin contents by scaling parameter to keep graph integral the same
+    binc/=smear;
+
+    // scale by bin width for normalization
+    binc/=binw;
+
     // fill modified graph
     gr->SetPoint(ipt,
-                 ((smear*hMC[isamp][ibin][icomp][iatt]->GetBinCenter(ipt)) + bias),
+                 ((smear*hMC[isamp][ibin][icomp][iatt]->GetBinCenter(ipt)) + bias - smearshift),
                  binc);
   }
-
+ 
+  // smooth it?
+//  smoothGraph(gr);
 
   return gr;
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// NEW test method using graphs
+// NEW method using graphs
 // Returns the modified histogram based on the parameters in atmfitpars
 TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
 
@@ -323,20 +343,51 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   TGraph* gr = getModGraph(isamp, ibin, icomp, iatt);
  
   // get norm factor
-//  double histonorm = gTotIntegral;
-  double histonorm = 1.0;
+  double histonorm = gTotIntegral;
 
   // convert to to histogram 
-  graph2histo(gr,hMCModified[isamp][ibin][icomp][iatt],histonorm);
-//  mcbinw = 
-  hMCModified[isamp][ibin][icomp][iatt]->
-            Scale(1./(hMC[isamp][ibin][icomp][iatt]->GetBinWidth(1)*fitPars->getHistoParameter(ibin,icomp,iatt,0)));
-            //Scale(1./(hMCModified[isamp][ibin][icomp][iatt]->GetBinWidth(1)*fitPars->getHistoParameter(ibin,icomp,iatt,0)));
-//  hMCModified[isamp][ibin][icomp][iatt]->Scale(normFactor);
-  //
+  double loss = graph2histo(gr,hMCModified[isamp][ibin][icomp][iatt]);
+
+  // scale to sum of bin contents
+ // hMCModified[isamp][ibin][icomp][iatt]->Scale(gTotIntegral/
+  //                                             hMCModified[isamp][ibin][icomp][iatt]->Integral());
+
+ // hMCModified[isamp][ibin][icomp][iatt]->Scale((gTotIntegral - loss)/
+ //                                              hMCModified[isamp][ibin][icomp][iatt]->Integral());
+  
   gr->Delete();
   return hMCModified[isamp][ibin][icomp][iatt];
 }
+
+
+//////////////////////////////////////////////////////////////////////////////
+// NEW test method using graphs 
+// Returns the modified histogram based on the parameters in atmfitpars
+// This function return the mod histogram in original binning
+TH1D* histoManager::getModHistogramMC(int isamp, int ibin, int icomp, int iatt){
+
+  // get the modified graph and calculate gTotIntegral
+  TGraph* gr = getModGraph(isamp, ibin, icomp, iatt);
+ 
+  // get norm factor
+//  double histonorm = gTotIntegral;
+ // double histonorm = 1.0;
+
+  // convert to to histogram 
+  TH1D* htmp = (TH1D*)hMC[isamp][ibin][icomp][iatt]->Clone("htmp");
+  graph2histo(gr,htmp);
+
+
+  //scale
+  htmp->Scale(gTotIntegral/htmp->Integral());
+  
+//  htmp->Scale(1./(hMC[isamp][ibin][icomp][iatt]->GetBinWidth(1)*fitPars->getHistoParameter(ibin,icomp,iatt,0)));
+
+  gr->Delete();
+  return htmp;
+}
+
+
 
 /*
 //////////////////////////////////////////////////////////////////////////////
@@ -792,16 +843,16 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
 
   ///////////////////////////////////////////////
   //get normalization factor between data and MC
-  TH1D* htmp = (TH1D*)fin->Get("hnorm");
+  //TH1D* htmp = (TH1D*)fin->Get("hnorm");
 
   ///////////////////////////////////////////////////
   //Set default sumw2 so errors are handled correctly
-  htmp->SetDefaultSumw2();
+ // htmp->SetDefaultSumw2();
 
 #ifdef T2K
   normFactor = SCALING;
 #else
-  normFactor=htmp->GetBinContent(1);
+  //normFactor=htmp->GetBinContent(1);
 #endif
 
   //////////////////////////////////////////////
@@ -830,7 +881,9 @@ void histoManager::readFromFile(const char* rootname,int nsamp,int nbin,int ncom
 	          cout<<"Getting histogram: "<<hname.Data()<<endl;
 	          hMC[isamp][ibin][icomp][iatt] = (TH1D*)fin->Get(hname.Data());
 	          //set histogram mean array
-	          hMCMean[isamp][ibin][icomp][iatt] = hMC[isamp][ibin][icomp][iatt]->GetMean();
+//	          hMCMean[isamp][ibin][icomp][iatt] = hMC[isamp][ibin][icomp][iatt]->GetMean();
+	          hMCMean[isamp][ibin][icomp][iatt] = hMC[isamp][ibin][icomp][iatt]->GetBinCenter(
+                                                hMC[isamp][ibin][icomp][iatt]->GetMaximumBin());
 	        }
       	}
       }

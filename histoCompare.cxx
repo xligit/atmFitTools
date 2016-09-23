@@ -670,7 +670,7 @@ void histoCompare::showFitHisto(int isamp,int ibin,int icomp,int iatt){
   double bias  = thePars->getHistoParameter(ibin,icomp,iatt,1);
   cout<<"SMEAR: "<<smear<<endl;
   cout<<"BIAS:  "<<bias<<endl;
-  hMod = hManager->getModHistogram(isamp,ibin,icomp,iatt);
+  hMod = hManager->getModHistogramMC(isamp,ibin,icomp,iatt);
   hMod->SetLineColor(kBlue);
   hMod->Draw("eh");
   hTmp = hManager->getHistogram(isamp,ibin,icomp,iatt);
@@ -702,7 +702,7 @@ void histoCompare::LnLPreFit(){
   double nthresh = 100.;
 
   //sets the precision of the fits
-  double parerr = 0.005;  
+  double parerr = 0.05;  
   
   //individually fit each parameter
   int parindex =0;
@@ -787,7 +787,8 @@ void histoCompare::LnLPreFit(){
   for (int jpar=0;jpar<npars;jpar++){
     fit->FixParameter(jpar);
   }
- 
+  
+  parindex=0;
   //run individual bias fits
   for (int jbin=0;jbin<nBin;jbin++){
     for (int jatt=0;jatt<nAtt;jatt++){
@@ -800,7 +801,7 @@ void histoCompare::LnLPreFit(){
           }
           fit->ReleaseParameter(parindex);
           cout<<"fitting "<<jbin<<jcomp<<jatt<<1<<" # "<<thePars->getParIndex(jbin,jcomp,jatt,1)<<endl;
-          fit->ExecuteCommand("SIMPLEX",0,0);
+          fit->ExecuteCommand("MIGRAD",0,0);
           fit->FixParameter(parindex);
           parindex++;
       }
@@ -1108,19 +1109,18 @@ double histoCompare::getTotLnL(){
 
   double totL = 0.;
 
-
+  nDOF = 0.;
   ////////////////////////////////////////
   //contribution from histogram comparison  
- // for (int isamp=0;isamp<nSamp;isamp++){
+//  for (int isamp=0;isamp<nSamp;isamp++){
   for (int isamp=0;isamp<1;isamp++){
-
     for (int ibin=5;ibin<nBin;ibin++){
       for (int iatt=0;iatt<nAtt;iatt++){
        	TH1D* hPrediction = (TH1D*)hManager->getSumHistogramMod(isamp,ibin,iatt,1); //< get normalized histogram.
       	TH1D* hDataTmp = (TH1D*)hManager->getHistogramData(isamp,ibin,iatt);
         double partialLnL = hManager->histoLogL;
-//	      double partialLnL = getLnL(hPrediction,hDataTmp);
 	      totL+=partialLnL;
+        nDOF+=hManager->nDOF;
       }
     }
   }
@@ -1599,5 +1599,24 @@ histoCompare::histoCompare(const char* parfile, bool sep)
 
 
 }
+
+
+void histoCompare::useFakeData(){
+ return; 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #endif
