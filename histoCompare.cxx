@@ -694,7 +694,7 @@ void histoCompare::LnLPreFit(){
   double nthresh = 100.;
 
   //sets the precision of the fits
-  double parerr = 0.05;  
+  double parerr = 0.1;  
   
   //individually fit each parameter
   int parindex =0;
@@ -761,7 +761,8 @@ void histoCompare::LnLPreFit(){
 
   //shut fitter up
   {
-    double pp = -1;
+//    double pp = -1;
+    double pp = 0;
     fit->ExecuteCommand("SET PRINTOUT",&pp,1);
   }
 
@@ -808,7 +809,7 @@ void histoCompare::LnLPreFit(){
           //starts on even parameter (smear only)
           //release smear parameter to be fit
           if (thePars->checkFixFlg(jbin,jcomp,jatt,0)==1){
-            parindex++; //<do nothing if parameter is fixed
+            parindex+=2; //<do nothing if parameter is fixed
             continue;
           }
           fit->ReleaseParameter(parindex);

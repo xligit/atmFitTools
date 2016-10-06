@@ -138,7 +138,7 @@ void splineFactory::buildTheSplines(){
 
   //loop over each systematic parameter specified in the parameter file
   cout<<"creating spines"<<endl; 
-  int N = fitPars->nSysPars;
+  int N = fitPars->nSysPars - fitPars->nNormPars;
   for (int isyst=0;isyst<N;isyst++){
 
     // loop over MC events, fill histograms, and save bin weights to TTree 
