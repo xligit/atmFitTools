@@ -58,6 +58,8 @@ histoFactory::histoFactory(const char* parfile){
   //histogram manager setup
   hManager = new histoManager(nSamples,nBins,nComponents,nameTag.Data()); 
 
+  // nominally use full data sample
+  flgUseSample = 0;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -86,7 +88,10 @@ void histoFactory::runHistoFactory(){
 
   //loop over events and fill histograms
   cout<<"histoFactory: Filling all histograms"<<endl;
-  fillHistos();
+  if (flgUseSample>0) fillHistosSample(flgUseSample);
+  else{
+    fillHistos();
+  }
 
   //normalize all of the histograms
   normalizeHistos();
@@ -112,6 +117,9 @@ histoFactory::histoFactory(int nsampl,int nbins,int ncomp,const char* name){
 
   //create an empty histogram manager
   hManager = new histoManager(nsampl,nbins,ncomp,name); 
+  
+
+   
   return;
 }
 
@@ -155,6 +163,8 @@ void histoFactory::init(){
       }
     }
   }
+
+
   return;
 }
 
@@ -253,6 +263,51 @@ void histoFactory::fillHistos(){
   //fill data histos
   for (int i=0;i<nevdata;i++){
     dataTree->GetEntry(i);
+    for (int iatt=0;iatt<nAttributes;iatt++){
+      hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,
+                                  fqData->attribute[iatt],fqData->evtweight);
+      totDataEvents+=fqData->evtweight; 
+   }
+  }
+
+  //fill MC histos
+  for (int j=0;j<nevmc;j++){
+    mcTree->GetEntry(j);
+    //fillAttributesMC();
+    for (int jatt=0;jatt<nAttributes;jatt++){
+      hManager->fillHistogram(fqMC->nsample,fqMC->nbin,fqMC->ncomponent,
+                              jatt,fqMC->attribute[jatt],fqMC->evtweight);
+      totMCEvents+=fqMC->evtweight;
+    }
+  } 
+
+  //
+  return;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////
+// This will fill all of the histrograms built by init()
+// This method will use ar random sample of size "nsampsize" when filling
+// the data histograms.  This is usefull for making fake data sets
+void histoFactory::fillHistosSample(int nsampsize){
+
+  // get total numbers of data and MC events
+  int nevdata = dataTree->GetEntries();
+  int nevmc   = mcTree->GetEntries();
+  cout<<"histoFactory: Number of Data entries: "<<nevdata<<endl;
+  cout<<"histoFactory: Number of MC entries: "<<nevmc<<endl;
+
+
+  //sample randomly from the data
+  if (nevdata<nsampsize) nsampsize = nevdata;
+
+  //fill data histos
+  for (int i=0;i<nsampsize;i++){
+    // get a random event
+    int ievent = randy->Integer(nevdata);
+    dataTree->GetEntry(ievent);
     for (int iatt=0;iatt<nAttributes;iatt++){
       hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,
                                   fqData->attribute[iatt],fqData->evtweight);

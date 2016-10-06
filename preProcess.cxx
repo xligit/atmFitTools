@@ -194,18 +194,27 @@ void preProcess::makeTestFiles(const char* outdir, int testtype, int nmc, int nd
 //Usefull for making fake data sets
 float preProcess::getWeight(){
   evtweight = 1.0;
-;
   if (useWeights){
     evtweight = gWeight->Eval(fq->fq1rmom[0][2],0,"s");
   }
 
 // if using skimmed tree from Xiaoyue, calculate event weight
 // based on these variables in the ntuples
-#ifdef USE_ATM_WEIGHTS
+#ifdef USE_Xl_WEIGHTS
 
 
-  evtweight *= fq->wgtosc1[3];
-  evtweight *= fq->wgtflx[3];
+  evtweight *= fq->wgtosc1[3]; // for Xiaoyue MC
+  evtweight *= fq->wgtflx[3]; // for Xiaoyue MC
+
+#endif
+#ifdef USE_ST_WEIGHTS
+
+  //////////////////////////////////////////////
+  // For Shimpei MC
+  double w_maxsolact =0.35;
+  evtweight *= ((1. - w_maxsolact)*fq->flxh11[0]+w_maxsolact*fq->flxh11[2])/fq->flxh06[1];
+  evtweight *= fq->oscwgt; // for Shimpei MC
+
 #endif
 
   // fake normalization bump
@@ -713,7 +722,6 @@ void preProcess::fillAttributeMap(fqEvent* fqevent){
   // PID e vs. mu ratio of first subevent
   attributeMap["fqelike"] = fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1];
 
-
   // Ring Counting (RC) parameter
   int ibest = getBest2RFitID();
   double best1Rnglnl = fmin(fqevent->fq1rnll[0][1],fqevent->fq1rnll[0][2]);
@@ -728,6 +736,14 @@ void preProcess::fillAttributeMap(fqEvent* fqevent){
 
   // Reconstructed momentum (electron)
   attributeMap["fq1remom"] = fqevent->fq1rmom[0][1];
+
+  // Reconstructed momentum (best 1R)
+  if ((fqevent->fq1rnll[0][2]-fqevent->fq1rnll[0][1])>0.){
+    attributeMap["fq1rmom"] = fqevent->fq1rmom[0][1];
+  }
+  else{
+    attributeMap["fq1rmom"] = fqevent->fq1rmom[0][2];
+  }
 
   // pi0 likelihood
   attributeMap["fqpi0like"] = fqevent->fq1rnll[0][1] - fqevent->fqpi0nll[0];
@@ -778,8 +794,13 @@ void preProcess::setupNewTree(){
   tr->SetBranchStatus("nchilds",1);
   tr->SetBranchStatus("ichildidx",1);
   tr->SetBranchStatus("iflgscnd",1);
-#ifdef USE_ATM_WEIGHTS
+#ifdef USE_XL_WEIGHTS
   tr->SetBranchStatus("wgt*",1);
+#endif
+#ifdef USE_ST_WEIGHTS
+  tr->SetBranchStatus("oscwgt",1);
+  tr->SetBranchStatus("flxh11",1);
+  tr->SetBranchStatus("flxh06",1);
 #endif
   tr->SetBranchStatus("*vc",1);
 

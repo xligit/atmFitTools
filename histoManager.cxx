@@ -101,6 +101,7 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
       	double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
        	content+=tmppointer->GetBinContent(jbin);
         double normpar = fitPars->getNormParameter(isamp,ibin);
+//        double normpar = 1.;
       	hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,normpar*content);
         if (icomp==(nComponents-1)){
         //  double normpar = fitPars->getNormParameter(isamp,ibin);
@@ -184,15 +185,18 @@ double histoManager::getSplineModifiedBin(int isamp, int ibin, int icomp, int ia
 
  // originial bin contents
  double bincontent = hMC[isamp][ibin][icomp][iatt]->GetBinContent(ihistobin);
-
+// cout<<"content: "<<bincontent<<endl;
  // sum of weights from splines
  double weightsum=0.;
- for (int isyspar=0;isyspar<fitPars->nSysPars;isyspar++){
-    weightsum+=getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(ihistobin,isyspar,fitPars->sysPar[isyspar]);
+ for (int isyspar=0;isyspar<(fitPars->nSysPars-fitPars->nNormPars);isyspar++){
+//    cout<<"weight: "<<weightsum<<endl;
+    weightsum+= getSplines(isamp,ibin,icomp,iatt)->evaluateSpline(ihistobin,isyspar,fitPars->sysPar[isyspar]);
+//    weightsum+= theSplines[isamp][ibin][icomp][iatt]->evaluateSpline(ihistobin,isyspar,fitPars->sysPar[isyspar]);
   }
   //this formula gives the total weight to assign to this bin 
   weightsum = weightsum -(double)fitPars->nSysPars + (double)fitPars->nNormPars + 1.; 
-  bincontent*=weightsum;
+//  cout<<"weight final: "<<weightsum<<endl;
+  if (weightsum>0.) bincontent*=weightsum;
  
   //
   return  bincontent;
@@ -591,8 +595,8 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   color[3] = 6;
   color[4] = 5;
   color[5] = 8;
-  color[6] = 15;
-  color[7] = 1;
+  //color[6] = 15;
+//  color[7] = 1;
   int style[NCOMPMAX];
   style[0] = 1001;
   style[1] = 1001;
@@ -600,8 +604,8 @@ void histoManager::showMCBreakdown(int isample,int ibin,int iatt){
   style[3] = 1001;
   style[4] = 1001;
   style[5] = 1001;
-  style[6] = 1001;
-  style[7] = 1001;
+//  style[6] = 1001;
+//  style[7] = 1001;
   double size[NCOMPMAX];
   int hitolo[NCOMPMAX];
 
@@ -653,8 +657,8 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
   color[3] = 6;
   color[4] = 5;
   color[5] = 5;
-  color[6] = 15;
-  color[7] = 1;
+ // color[6] = 15;
+ // color[7] = 1;
   int style[NCOMPMAX];
   style[0] = 1001;
   style[1] = 1001;
@@ -662,8 +666,8 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
   style[3] = 1001;
   style[4] = 1001;
   style[5] = 1001;
-  style[6] = 1001;
-  style[7] = 1001;
+//  style[6] = 1001;
+ // style[7] = 1001;
   double size[NCOMPMAX];
   int hitolo[NCOMPMAX];
   for (int i=0;i<nComponents;i++){
@@ -704,8 +708,8 @@ THStack* histoManager::showMCBreakdownStack(int isample,int ibin,int iatt){
   Leg->AddEntry(hMC[isample][ibin][2][iatt],"CCeOth","F");
   Leg->AddEntry(hMC[isample][ibin][3][iatt],"CC#muOth","F");
   Leg->AddEntry(hMC[isample][ibin][4][iatt],"Single #pi^{0}","F");
-  Leg->AddEntry(hMC[isample][ibin][5][iatt],"Single #pi^{+}","F");
-  Leg->AddEntry(hMC[isample][ibin][6][iatt],"Other","F");
+//  Leg->AddEntry(hMC[isample][ibin][5][iatt],"Single #pi^{+}","F");
+ // Leg->AddEntry(hMC[isample][ibin][6][iatt],"Other","F");
   Leg->AddEntry(hData[isample][ibin][iatt],"Data","P");
   Leg->Draw("same");
   return hstack;

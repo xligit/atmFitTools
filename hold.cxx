@@ -336,7 +336,7 @@ double histoCompare::getErrHi(int ipar){
  // cout<<"lbest: "<<Lbest<<endl;
   double parbest = thePars->pars[ipar];
   double parval = thePars->pars[ipar]; 
-  double dpar = thePars->parUnc[ipar]*2.;
+  double dpar = thePars->parUnc[ipar]/10.;
   double hierr;
   int ntry = 0;
   int ntrymax=5000;
@@ -372,6 +372,14 @@ double histoCompare::getErrHi(int ipar){
   Ldiff = 0;
   dpar*=0.10;
   ntry=0;
+  //very fine search
+//  while ((Ldiff<1)&&(ntry<ntrymax)){
+//    parval+=dpar;
+//    thePars->setParameter(ipar,parval); //modify paramete
+//    Ldiff = fabs(Lbest-getTotLnL()); //check L difference
+//    ntry++;
+//  }
+//  cout<<"ntry: "<<ntry<<endl;
   hierr = thePars->pars[ipar];
   thePars->setParameter(ipar,parbest);
   return hierr; 
@@ -386,7 +394,7 @@ double histoCompare::getErrLo(int ipar){
   double Lbest = getTotLnL(); //current likelihood value
   double parbest = thePars->pars[ipar]; //current parameter value
   double parval = thePars->pars[ipar]; //floating value for estimation 
-  double dpar = thePars->parUnc[ipar]*2.; //how much parameter should change between steps
+  double dpar = thePars->parUnc[ipar]/10.; //how much parameter should change between steps
 //  cout<<"dpar: "<<dpar<<endl;
   double loerr;
   int ntry = 0;
@@ -793,7 +801,7 @@ void histoCompare::LnLPreFit(){
           }
           fit->ReleaseParameter(parindex);
           cout<<"fitting "<<jbin<<jcomp<<jatt<<1<<" # "<<thePars->getParIndex(jbin,jcomp,jatt,1)<<endl;
-          fit->ExecuteCommand("SIMPLEX",0,0);
+          fit->ExecuteCommand("MIGRAD",0,0);
           fit->FixParameter(parindex);
           parindex++;
       }
@@ -1600,25 +1608,7 @@ void histoCompare::useFakeData(){
 
 
 
-TH2FV* histoCompare::showResidualError(){
- 
- TH2FV* hfv = new TH2FV("hfv",0);
- 
- for (int ibin=1; ibin<=hfv->GetNumberOfBins(); ibin++){
-   TH1D* hmc = hManager->getSumHistogramMod(0,ibin-1,0,0);
-   TH1D* hdata = hManager->hData[0][ibin-1][0];
-   double res = calcResError(hmc,hdata);
-   hfv->SetBinContent(ibin,res);
- }
- 
- hfv->GetXaxis()->SetRangeUser(0,1000);
- hfv->GetYaxis()->SetRangeUser(0,700);
- hfv->Draw("colz");
- hfv->GetZaxis()->SetRangeUser(0,0.6);
- hfv->Draw("colz");
- return hfv;
 
-}
 
 
 
