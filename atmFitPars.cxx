@@ -288,16 +288,21 @@ void atmFitPars::readPars(const char* filename){
   //open parameter file
   TFile* fpars = new TFile(filename);
   //get parameter tree
+  double tmpars[4000];
+  double tmpunc[4000];
+  int    tmpnpars;
+  int    tmpnsys;
   TTree* parTree = (TTree*)fpars->Get("parTree");
-  parTree->SetBranchAddress("nTotPars",&nTotPars);
-  parTree->SetBranchAddress("nSysPars",&nSysPars);
-  parTree->SetBranchAddress("pars",pars);
-  parTree->SetBranchAddress("parUnc",parUnc);
+  parTree->SetBranchAddress("nTotPars",&tmpnpars);
+  parTree->SetBranchAddress("nSysPars",&tmpnsys);
+  parTree->SetBranchAddress("pars",tmpars);
+  parTree->SetBranchAddress("parUnc",tmpunc);
   parTree->GetEntry(0);
   //set parameter explicitly to make sure arrays are filled as well
   for (int ipar=0;ipar<nTotPars;ipar++){
-    cout<<"setting parameter # "<<ipar<<" to "<<pars[ipar]<<endl;
-    setParameter(ipar,pars[ipar]);
+    cout<<"setting parameter # "<<ipar<<" to "<<tmpars[ipar]<<endl;
+    setParameter(ipar,tmpars[ipar]);
+    parUnc[ipar] = tmpunc[ipar];
   }
   return;
 }
@@ -768,6 +773,20 @@ double atmFitPars::calcLogPriors(){
 // sets the sigma of a gaussian prior. 
 void atmFitPars::setGausPrior(int ipar, double sigma){
   parPriorGausSig[ipar] = sigma;
+  return;
+}
+
+/////////////////////////////////////////////////////
+// Fix all the parameters associated with a particulart attribute
+void atmFitPars::fixAllAttPars(int iatt){
+
+  for (int jpar=0; jpar<nTotPars; jpar++){
+    if (attOfPar[jpar]==iatt){
+      fixPar[jpar] = 1;
+    }
+  }
+
+  //
   return;
 }
 

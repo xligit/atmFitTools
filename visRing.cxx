@@ -404,7 +404,6 @@ void visRing::countprimaryvc(){
   // loop over primary particles
   for (int i=2;i<fq->Npvc;i++){ //< outgoing particle index starts at 2
    
- //   cout<<"check part: "<<i<<endl;
     // make sure particle escapes
     if (fq->Ichvc[i]!=1) continue;
 
@@ -560,9 +559,6 @@ void visRing::testevent(int iev){
 }
 
 void visRing::fillVisVar(){
-  
-  // count rings in primary stack
-  //  countprimary();
 
   // count rings in primaryc VCWORK stack
   countprimaryvc();
