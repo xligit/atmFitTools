@@ -4,6 +4,16 @@
 #include "atmFitPars.h"
 
 //////////////////////////////////////////////////
+// print all parameter values
+void atmFitPars::printParValues(){
+  cout<<"----------------------------"<<endl;
+  for (int i=0; i<nTotPars; i++){
+    cout<<"Parameter "<<i<<": "<<pars[i]<<endl;
+  }
+  return;
+}
+
+//////////////////////////////////////////////////
 // get specific parameters
 double atmFitPars::getHistoParameter(int ibin, int icomp, int iatt, int imod){
   int theindex = parIndex[ibin][icomp][iatt][imod];
@@ -113,7 +123,7 @@ void atmFitPars::resetDefaults(){
       for (int iatt=0;iatt<nAttributes;iatt++){
         histoPar[ibin][icomp][iatt][0]=1.0;
         pars[index]=1.0;
-        parUnc[index]=0.005; //rough estimate of uncertainty
+      //  parUnc[index]=0.005; //rough estimate of uncertainty
         binOfPar[index]=ibin;
         compOfPar[index]=icomp;
         attOfPar[index]=iatt;
@@ -124,7 +134,7 @@ void atmFitPars::resetDefaults(){
         histoPar[ibin][icomp][iatt][1]=0.0;
         parIndex[ibin][icomp][iatt][1]=index;
         pars[index]=0.0;
-        parUnc[index]=1.0;  //rough estimate of uncertainty
+     //   parUnc[index]=1.0;  //rough estimate of uncertainty
         binOfPar[index]=ibin;
         compOfPar[index]=icomp;
         attOfPar[index]=iatt;
@@ -789,7 +799,6 @@ void atmFitPars::setCov(covBase *covariance)
 
   // initialize normalization parameters
   // and add to 1D array
-  // this should be changed when performing a T2K-SK joint analysis
   // to account for the higher energy portion of SK events 
   // whose xsec systematics are not properly constrained by T2K ND280 measurements
   // i.e. different energy range should have different systematic parameter

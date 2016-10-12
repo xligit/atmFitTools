@@ -36,6 +36,43 @@ void smearThisGraph(TGraph* gr, double smear, double bias){
 }
 
 ////////////////////////////////////////////////////
+// Smooth over a graph
+void smoothGraph(TGraph* gr){
+
+  // smooth weights
+  double ww0 = 1.0;
+  double ww1 = 6.06530659712633424e-01;
+  double ww2 = 1.35335283236612702e-01;
+//  double ww1  = 3.246524e-01;
+//  double ww2 = 1.110899e-02;
+
+//  double ww0 = 1.0;
+//  double ww1  = 0.5;
+//  double ww2 = 0.1;
+  double wsum = ww0 + (2*ww1) + (2.*ww2);
+  // contents
+  double* X = gr->GetX();
+  double* Y = gr->GetY();
+  int N = gr->GetN();
+
+  // first point remians same
+  // second point is avg
+  double yy = (ww0*Y[1] + ww1*Y[0] + ww1*Y[2])/(ww0+ww1+ww1);
+  gr->SetPoint(1,X[1],yy);
+  // begin loop on third point
+  for (int ipoint=2; ipoint<=(N-2); ipoint++){
+    yy = ((ww0*Y[ipoint]) + (ww1*Y[ipoint-1]) + (ww1*Y[ipoint+1]) + (ww2*Y[ipoint-2]) + (ww2*Y[ipoint+2]) )
+         / wsum; 
+    gr->SetPoint(ipoint,X[ipoint],yy);
+  }
+  // avg. 2nd last point
+  yy = (ww0*Y[N-1] + ww1*Y[N-2] + ww1*Y[N])/(ww0+ww1+ww1);
+  gr->SetPoint(1,X[1],yy);
+  
+  return;
+}
+
+////////////////////////////////////////////////////
 // Integrate a graph
 double gIntegral(TGraph* gr, double xmin, double xmax, int sampling=5){
 
@@ -49,8 +86,7 @@ double gIntegral(TGraph* gr, double xmin, double xmax, int sampling=5){
   // get X boundaries
   double* X = gr->GetX();
   double loBound = X[0];
-  double xdiff = (X[1]-X[0])/2.;
-  double hiBound = X[gr->GetN()-1]+xdiff;
+  double hiBound = X[gr->GetN()-1];
 
   for (int i=0; i<sampling; i++){
     // rectangles
@@ -59,6 +95,7 @@ double gIntegral(TGraph* gr, double xmin, double xmax, int sampling=5){
     if ((xvalue<loBound)||(xvalue>hiBound)) continue;
     //rectangles
     //area += dx*gr->Eval( xvalue,0,"s" ); 
+    //area += dx*gr->Eval( xvalue ); 
     area += dx*gr->Eval( xvalue ); 
     xx+=dx;
   }
@@ -67,24 +104,81 @@ double gIntegral(TGraph* gr, double xmin, double xmax, int sampling=5){
 
 }
 
+void shiftGraph(TGraph* gr, double smear, double bias){
+  int N = gr->GetN();
+  double* X = gr->GetX();
+  double* Y = gr->GetY();
+  for (int i=0; i<N; i++){
+     gr->SetPoint(i,smear*X[i] + bias,Y[i]/smear); 
+  }
+
+  return;
+}
+
 ////////////////////////////////////////////////////
 // converts graph to histogram
-void graph2histo(TGraph* gr, TH1D* h, double scale = 1.0){
+// histogram bin contents will be re-written
+double graph2histo(TGraph* gr, TH1D* h){
   
   // clear bin contents
   h->Reset();
 
-  // fill bin contents from graph
+  // calc loss
+  double loss = 0.;
+  double *X = gr->GetX();
+  double gxmin = X[0];
+  double gxmax = X[gr->GetN()-1];
   double binw = h->GetBinWidth(1);
-  for (int ibin=1; ibin<=h->GetNbinsX(); ibin++){
+  int    nbins = h->GetNbinsX();
+  double hxmin = h->GetBinLowEdge(0);
+  double hxmax = h->GetBinLowEdge(nbins) + binw;
+  loss+=gIntegral(gr,gxmin,hxmin,10);
+  loss+=gIntegral(gr,hxmax,gxmax,10);
+
+  // fill bin contents from graph
+  for (int ibin=1; ibin<=nbins; ibin++){
     double xmin = h->GetBinLowEdge(ibin);
     double xmax = xmin + binw;
     double area = gIntegral(gr,xmin,xmax);
     h->SetBinContent(ibin,area);
+    h->SetBinError(ibin,TMath::Sqrt(area));
+  }
+ 
+  
+
+//  h->Scale(scale/h->Integral());
+  //
+//  return 1.0;
+  return loss;
+}
+
+
+TGraph* histo2graph(TH1D*h){
+  
+  // graph paramters
+  int nbins =  h->GetNbinsX();
+  double binw = h->GetBinWidth(1);
+  const int N = nbins + 2;
+  double X[N];
+  double Y[N];
+
+  // set first point
+  X[0] = h->GetBinLowEdge(1);
+  Y[0] = 0.;
+
+  // set last point
+  X[N-1] = h->GetBinLowEdge(nbins)+binw;
+  Y[N-1] = 0.;
+  
+  // set other points
+  for (int i=1; i<=nbins; i++){
+    X[i] = h->GetBinCenter(i);
+    Y[i] = h->GetBinContent(i);
   }
 
-  //
-  return;
+  TGraph* g = new TGraph(N,X,Y);
+
+  return g;
 }
 
 /////////////////////////////////////////////////////

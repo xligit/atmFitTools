@@ -77,9 +77,17 @@ void splineFactory::fillBranches(int isamp,int ibin,int icomp,int iatt,int isyst
          binWeight[ipt][jhistobin] = 0.;
        }
        else{
-         binWeight[ipt][jhistobin] =
-           ((double)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
-           (double)hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin);
+//          divide by nominal value content (ipt==2)
+         if ((hMC[isamp][ibin][icomp][iatt][2]->GetBinContent(jhistobin))>0.){
+           binWeight[ipt][jhistobin] =
+             ((double)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
+             (double)hMC[isamp][ibin][icomp][iatt][2]->GetBinContent(jhistobin);
+         }
+//          binWeight[ipt][jhistobin] =
+//           ((double)hMC[isamp][ibin][icomp][iatt][ipt]->GetBinContent(jhistobin))/
+//           (double)hManager->getHistogram(isamp,ibin,icomp,iatt)->GetBinContent(jhistobin);
+          cout<<"binweight: "<<binWeight[ipt][jhistobin]<<endl;
+
        }
      }
    }
@@ -153,7 +161,7 @@ void splineFactory::buildTheSplines(){
 // Build splines while modifying an individual systematic parameter
 void splineFactory::buildSplineForPar(int isyspar){
 
-    // set all bin contents to zer
+    // set all bin contents to zer0
     resetModHistos(); 
 
     // talk about it
@@ -161,6 +169,11 @@ void splineFactory::buildSplineForPar(int isyspar){
 
     //loop over the MC events and re-fill all histograms
     int Nevts = mcTree->GetEntries();
+    cout<<"splineFactory: Number of MC events: "<<Nevts<<endl;
+    Nevts = 50000;
+    double scalefactor = (double) mcTree->GetEntries()/(double)Nevts;
+    cout<<"splineFactory: scalefactor: "<<scalefactor<<endl;
+
     for (int iev=0;iev<Nevts;iev++){
 
       // talk about it
@@ -181,7 +194,7 @@ void splineFactory::buildSplineForPar(int isyspar){
         //loop over fiTQun attributes and fill histogram for each one
         for (int iatt=0;iatt<nAtt;iatt++){
           hMC[mcEvt->nsample][mcEvt->nbin][mcEvt->ncomponent][iatt][ipt]
-            ->Fill(mcEvt->attribute[iatt],eventWeight);
+            ->Fill(mcEvt->attribute[iatt],eventWeight*scalefactor);
         } 
       }  
     }
@@ -313,11 +326,11 @@ splineFactory::splineFactory(const char*  parfile){
   setMCTree((TTree*)chmc);
 
   //define sigma values
-  sigmaValues[0] = -4.;
+  sigmaValues[0] = -5.;
   sigmaValues[1] = -2.;;
   sigmaValues[2] = 0.;
   sigmaValues[3] = 2.;
-  sigmaValues[4] = 4.;
+  sigmaValues[4] = 5.;
 
 
   return;

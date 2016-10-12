@@ -9,6 +9,7 @@
 #include "TCanvas.h"
 #include "TGraphAsymmErrors.h"
 #include "likelihood.cxx"
+#include "TGraph2D.h"
 #include "TRandom3.h"
 #include "shared.h"
 
@@ -79,6 +80,7 @@ class histoCompare{
   void setPar(int ipar, double value){thePars->setParameter(ipar,value);}
   void showModHiso(int isamp,int ibin, int icomp, int iatt, double smear, double bias);
   TH2D* show2DLnL(int parx, double xmin, double xmax, int pary, double ymin, double ymax, int npts=100);
+  TGraph2D* show2DLnLG(int parx, double xmin, double xmax, int pary, double ymin, double ymax, int npts=100);
   void runMCMC(int nsteps);
   void runDEMCMC(int nstep);
   void runDiffMCMC(int nsteps); //< fill with differential steps

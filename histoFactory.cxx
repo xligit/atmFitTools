@@ -3,7 +3,41 @@
 
 
 #include "histoFactory.h"
-;
+
+void histoFactory::runFakeFactory(int nmc, double mcmean, double mcwidth,
+                                  int ndata, double datamean, double datawidth,
+                                  double datashift,int flgstat){
+
+  cout<<"histoFactory: Initializing histograms..."<<endl;  
+
+  //Initialize  histograms
+  init();
+
+  //loop over events and fill histograms
+  cout<<"histoFactory: Filling all histograms"<<endl;
+
+  // set running totals to zer0
+  totDataEvents = 0.;
+  totMCEvents= 0.;
+  if (flgstat)fillFakeHistos(nmc, mcmean, mcwidth,
+                                  ndata, datamean, datawidth,
+                                  datashift);
+  else{
+    fillFakeHistosNoStat(nmc, mcmean, mcwidth,
+                                  ndata, datamean, datawidth,
+                                  datashift);
+  }
+
+  //normalize all of the histograms
+  //normalizeHistos();
+
+  //save all filled histograms
+  cout<<"histoFactory: Saving histograms"<<endl;
+  saveToFile();
+
+  /////////////////// 
+  return;
+}
 
 /////////////////////////////////////////////////
 //construct from parameter file
@@ -24,6 +58,8 @@ histoFactory::histoFactory(const char* parfile){
   //histogram manager setup
   hManager = new histoManager(nSamples,nBins,nComponents,nameTag.Data()); 
 
+  // nominally use full data sample
+  flgUseSample = 0;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -46,9 +82,16 @@ void histoFactory::runHistoFactory(){
   //Initialize  histograms
   init();
 
+  // set running totals to zer0
+  totDataEvents = 0.;
+  totMCEvents= 0.;
+
   //loop over events and fill histograms
   cout<<"histoFactory: Filling all histograms"<<endl;
-  fillHistos();
+  if (flgUseSample>0) fillHistosSample(flgUseSample);
+  else{
+    fillHistos();
+  }
 
   //normalize all of the histograms
   normalizeHistos();
@@ -74,6 +117,9 @@ histoFactory::histoFactory(int nsampl,int nbins,int ncomp,const char* name){
 
   //create an empty histogram manager
   hManager = new histoManager(nsampl,nbins,ncomp,name); 
+  
+
+   
   return;
 }
 
@@ -117,6 +163,8 @@ void histoFactory::init(){
       }
     }
   }
+
+
   return;
 }
 
@@ -177,21 +225,23 @@ void histoFactory::normalizeHistos(double scale){
   //scale all MC histograms by some scaling factor
   if (scale < 0.){
     cout<<"histoFactory: Finding MC normalization"<<endl;
-    double mcsumweights = 0.;
-    double datasum = (double)nDataEvents;
-    for (int ievt=0;ievt<nMCEvents;ievt++){
-      mcTree->GetEntry(ievt);
-      mcsumweights += fqMC->evtweight; 
-    }
-    double datsumweights = 0;
-    for (int iev=0; iev<nDataEvents; iev++){
+
+    //double mcsumweights = 0.;
+   // double datasum = (double)nDataEvents;
+   // for (int ievt=0;ievt<nMCEvents;ievt++){
+   //   mcTree->GetEntry(ievt);
+    //  mcsumweights += fqMC->evtweight; 
+   // }
+   // double datsumweights = 0;
+  //  for (int iev=0; iev<nDataEvents; iev++){
     //  cout<<"evt: "<<iev<<endl;
-      dataTree->GetEntry(iev);
+    //  dataTree->GetEntry(iev);
     //  cout<<"wgt: "<<fqData->evtweight;
-      datsumweights += fqData->evtweight;
-    }
-    scale = datsumweights/mcsumweights;
-    cout<<"   ..norm = "<<datsumweights<<"/"<<mcsumweights<<" = "<<scale<<endl;
+    //  datsumweights += fqData->evtweight;
+    //}
+    //scale = datsumweights/mcsumweights;
+    scale = totDataEvents/totMCEvents;
+    cout<<"   ..norm = "<<totDataEvents<<"/"<<totMCEvents<<" = "<<scale<<endl;
   }
   
   hnorm = new TH1D("hnorm","hnorm",1,0,1);
@@ -216,6 +266,7 @@ void histoFactory::fillHistos(){
     for (int iatt=0;iatt<nAttributes;iatt++){
       hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,
                                   fqData->attribute[iatt],fqData->evtweight);
+      totDataEvents+=fqData->evtweight; 
    }
   }
 
@@ -226,12 +277,158 @@ void histoFactory::fillHistos(){
     for (int jatt=0;jatt<nAttributes;jatt++){
       hManager->fillHistogram(fqMC->nsample,fqMC->nbin,fqMC->ncomponent,
                               jatt,fqMC->attribute[jatt],fqMC->evtweight);
+      totMCEvents+=fqMC->evtweight;
     }
   } 
 
   //
   return;
 }
+
+
+
+///////////////////////////////////////////////////////////////////////
+// This will fill all of the histrograms built by init()
+// This method will use ar random sample of size "nsampsize" when filling
+// the data histograms.  This is usefull for making fake data sets
+void histoFactory::fillHistosSample(int nsampsize){
+
+  // get total numbers of data and MC events
+  int nevdata = dataTree->GetEntries();
+  int nevmc   = mcTree->GetEntries();
+  cout<<"histoFactory: Number of Data entries: "<<nevdata<<endl;
+  cout<<"histoFactory: Number of MC entries: "<<nevmc<<endl;
+
+
+  //sample randomly from the data
+  if (nevdata<nsampsize) nsampsize = nevdata;
+
+  //fill data histos
+  for (int i=0;i<nsampsize;i++){
+    // get a random event
+    int ievent = randy->Integer(nevdata);
+    dataTree->GetEntry(ievent);
+    for (int iatt=0;iatt<nAttributes;iatt++){
+      hManager->fillHistogramData(fqData->nsample,fqData->nbin,iatt,
+                                  fqData->attribute[iatt],fqData->evtweight);
+      totDataEvents+=fqData->evtweight; 
+   }
+  }
+
+  //fill MC histos
+  for (int j=0;j<nevmc;j++){
+    mcTree->GetEntry(j);
+    //fillAttributesMC();
+    for (int jatt=0;jatt<nAttributes;jatt++){
+      hManager->fillHistogram(fqMC->nsample,fqMC->nbin,fqMC->ncomponent,
+                              jatt,fqMC->attribute[jatt],fqMC->evtweight);
+      totMCEvents+=fqMC->evtweight;
+    }
+  } 
+
+  //
+  return;
+}
+
+
+
+
+///////////////////////////////////////////////////////////////////////
+// This will fill all of the histrograms built by init() with FAKE bumps
+void histoFactory::fillFakeHistos(int nmc, double mcmean, double mcwidth,
+                                  int ndata, double datamean, double datawidth,
+                                  double datashift){
+
+  // bump parameters
+//  double mcmean = 500.;
+//  double datamean = 500.;
+//  double mcwidth = 200.;
+//  double datawidth = 200.;
+//  double datashift = 50.;
+//  int nmc = 20000;
+//  int ndata = 5000;
+
+  // random nums
+  randy2 = new TRandom2(nmc);
+
+  // get total numbers of data and MC events
+  int nevdata = ndata;
+  int nevmc   = nmc;
+
+  cout<<"histoFactory: Number of Data entries: "<<nevdata<<endl;
+  cout<<"histoFactory: Number of MC entries: "<<nevmc<<endl;
+
+  //fill data histos
+  for (int i=0;i<nevdata;i++){
+    for (int iatt=0;iatt<nAttributes;iatt++){
+      double fakevalue = randy2->Gaus(datamean,datawidth) + datashift;
+      hManager->fillHistogramData(0,0,iatt,
+                                   fakevalue,1.);
+   }
+  }
+
+  //fill MC histos
+  for (int j=0;j<nevmc;j++){
+    for (int jatt=0;jatt<nAttributes;jatt++){
+      double fakevalue = randy2->Gaus(mcmean,mcwidth);
+      hManager->fillHistogram(0,0,0,
+                              jatt,fakevalue,1.);
+    }
+  } 
+
+  //
+  return;
+}
+
+
+
+
+///////////////////////////////////////////////////////////////////////
+// This will fill all of the histrograms built by init() with FAKE bumps
+void histoFactory::fillFakeHistosNoStat(int nmc, double mcmean, double mcwidth,
+                                  int ndata, double datamean, double datawidth,
+                                  double datashift){
+
+  // bump parameters
+//  double mcmean = 500.;
+//  double datamean = 500.;
+//  double mcwidth = 200.;
+//  double datawidth = 200.;
+//  double datashift = 50.;
+//  int nmc = 20000;
+//  int ndata = 5000;
+
+  // random nums
+  randy2 = new TRandom2(nmc);
+
+  // get total numbers of data and MC events
+  int nevdata = nmc;
+  int nevmc   = nmc;
+
+  cout<<"histoFactory: Number of Data entries: "<<nevdata<<endl;
+  cout<<"histoFactory: Number of MC entries: "<<nevmc<<endl;
+
+  //fill data histos
+  for (int i=0;i<nevdata;i++){
+    for (int iatt=0;iatt<nAttributes;iatt++){
+      double fakevalue = randy2->Gaus(datamean,datawidth);
+      hManager->fillHistogramData(0,0,iatt,
+                                   fakevalue+datashift,1.);
+      hManager->fillHistogram(0,0,0,
+                              iatt,fakevalue,1.);
+   }
+  }
+
+  //
+  return;
+}
+
+
+
+
+
+
+
 
 void histoFactory::setDataTree(TChain* ch){
   dataTree=(TTree*)ch;
