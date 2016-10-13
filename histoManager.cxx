@@ -71,13 +71,10 @@ void histoManager::showSysParVariation(int isamp, int ibin, int icomp, int iatt,
    return;
 }
 
-
-
-
-
+/*
 //////////////////////////////////////////////////////////////////////////
 //calculate sum of all modified components to compare to data
-TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFlg){
+TH1D* histoManager::getSumHistogramNominal(int isamp, int ibin, int iatt, int normFlg){
  
   /////////////////////////////////////////
   //erase previous calculation
@@ -154,14 +151,144 @@ TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFl
 
 }
 
-TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt, int normFlg){
-  hSumHisto[isamp][ibin][iatt]->Reset();
-  hSumHisto[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
+*/
+
+
+
+//////////////////////////////////////////////////////////////////////////
+//calculate sum of all modified components to compare to data
+TH1D* histoManager::getSumHistogramMod(int isamp, int ibin, int iatt, int normFlg){
+ 
+  /////////////////////////////////////////
+  //erase previous calculation
+  hSumHistoMod[isamp][ibin][iatt]->Reset();
+
+  //////////////////////////////////////////
+  // set log likelihood to zero
+  histoLogL=0.;
+
+  //////////////////////////////////////////
+  // number of edge bins to ignore
+  int nbinbuffer = 3;
+  nDOF = 0.;
+
+  ///////////////////////////////////////////
+  //add bin contents from all histograms
   if (!separateNeutMode) {
     for (int icomp=0;icomp<nComponents;icomp++){
-      hSumHisto[isamp][ibin][iatt]->Add(hMC[isamp][ibin][icomp][iatt]);
+      TH1D* tmppointer=getModHistogram(isamp,ibin,icomp,iatt);
+      for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
+      	double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
+       	content+=tmppointer->GetBinContent(jbin);
+        double normpar = 1.;
+        if (useNormFlg) normpar = fitPars->getNormParameter(isamp,ibin);
+      	hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,normpar*content);
+        if (icomp==(nComponents-1)){
+          if ((jbin>nbinbuffer) && jbin<(tmppointer->GetNbinsX()-nbinbuffer)){
+            histoLogL+=evalLnL(hData[isamp][ibin][iatt]->GetBinContent(jbin),
+                               normFactor*hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin));
+            nDOF++;
+          }
+        }
+      }        
+    }
+
+  }
+  //histoLogL;
+
+#ifdef T2K
+  else {
+    for (int icomp=0;icomp<nComponents;icomp++){
+      for (int imode=0;imode<nModes;++imode) {
+        // get the modified histogram
+      	TH1D* tmppointer=getModHistogram(isamp,ibin,icomp,imode,iatt);
+      	for (int jbin=1;jbin<=tmppointer->GetNbinsX();jbin++){
+      	  double content =  hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin);
+	        //     content*=normFactor; //< scale the bin content
+       	  content+=tmppointer->GetBinContent(jbin);
+      	  double err1 = tmppointer->GetBinError(jbin);
+      	  double err2 = hSumHistoMod[isamp][ibin][iatt]->GetBinError(jbin);
+      	  hSumHistoMod[isamp][ibin][iatt]->SetBinContent(jbin,content);
+       	  hSumHistoMod[isamp][ibin][iatt]->SetBinError(jbin,TMath::Sqrt((err1*err1) + (err2*err2))); //<sum of squares weights
+      	  //std::cout<<"comp "<<icomp<<", mode "<<imode<<", jbin "<<jbin<<", "<<hSumHistoMod[isamp][ibin][iatt]->Integral()<<std::endl;
+	      } 
+      }
+      // calculate likelihood after last component has been added
+      if (icomp==(nComponents-1)){
+        if ((jbin>nbinbuffer) && jbin<(tmppointer->GetNbinsX()-nbinbuffer)){
+          histoLogL+=evalLnL(hData[isamp][ibin][iatt]->GetBinContent(jbin),
+                               normFactor*hSumHistoMod[isamp][ibin][iatt]->GetBinContent(jbin));
+        }
+      }
     }
   }
+#endif
+
+  ////////////////////////////////////
+  //return pointer to modified sum of componenets
+  if (normFlg) hSumHistoMod[isamp][ibin][iatt]->Scale(normFactor); //< normalize the histo
+
+
+  return hSumHistoMod[isamp][ibin][iatt];
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+// Returns NOMINAL summed histogram
+TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt, int normFlg){
+
+    // reset sum histogram
+    hSumHisto[isamp][ibin][iatt]->Reset();
+    hSumHisto[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
+  
+    // loop over components and add them
+    for (int icomp=0;icomp<nComponents;icomp++){
+
+      // get current parameters
+      double tmpsmear = fitPars->getHistoParameter(ibin,icomp,iatt,0);
+      double tmpbias = fitPars->getHistoParameter(ibin,icomp,iatt,1);
+      int tmpsplineflg = useSplineFlg;
+      int tmpnormflg   = useNormFlg; 
+
+      // find which parameter effect this histo
+      int smearindex = fitPars->getParIndex(ibin,icomp,iatt,0);
+      int biasindex = fitPars->getParIndex(ibin,icomp,iatt,1);
+
+      // reset these pars to nominal values
+      fitPars->setParameter(smearindex,1.0);
+      fitPars->setParameter(biasindex,0.0);
+      useSplineFlg = 0;
+      useNormFlg = 0;
+
+      // get temporary pointer to histogra
+      // (this does not create a new histogram)
+      TH1D* tmppointer=getModHistogram(isamp,ibin,icomp,iatt);
+
+      // add histogram to total
+      hSumHisto[isamp][ibin][iatt]->Add(tmppointer);
+      
+      // restore current parameters
+      fitPars->setParameter(smearindex,tmpsmear);
+      fitPars->setParameter(biasindex,tmpbias);
+      useSplineFlg = tmpsplineflg;
+      useNormFlg = tmpnormflg;
+  }
+
+  if (normFlg) hSumHisto[isamp][ibin][iatt]->Scale(normFactor);
+  return hSumHisto[isamp][ibin][iatt];
+
+  /*
+  hSumHisto[isamp][ibin][iatt]->Reset();
+  hSumHisto[isamp][ibin][iatt]->SetDefaultSumw2(kTRUE);
+  TH1D* htmp = (TH1D*)hSumHisto[isamp][ibin][iatt]->Clone("htmp_sumhisto");
+  if (!separateNeutMode) {
+    for (int icomp=0;icomp<nComponents;icomp++){
+      rebinHisto( hMC[isamp][ibin][icomp][iatt],htmp);
+      hSumHisto[isamp][ibin][iatt]->Add(htmp);
+
+    }
+  }
+  htmp->Delete();
 #ifdef T2K
   else {
     for (int icomp=0;icomp<nComponents;icomp++) {
@@ -174,6 +301,7 @@ TH1D* histoManager::getSumHistogram(int isamp, int ibin, int iatt, int normFlg){
 
   if (normFlg) hSumHisto[isamp][ibin][iatt]->Scale(normFactor);
   return hSumHisto[isamp][ibin][iatt];
+  */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,23 +418,23 @@ TGraph* histoManager::getModGraph(int isamp, int ibin, int icomp, int iatt){
   // get modification parameters
   double bias = fitPars->getHistoParameter(ibin,icomp,iatt,1);
   double smear = fitPars->getHistoParameter(ibin,icomp,iatt,0);
+  if (smear<0.) smear*=-1.0;
 
   // number of bins in this graph
   int nbins = hMC[isamp][ibin][icomp][iatt]->GetNbinsX();
 
   // make graph 
-  TGraph* gr = new TGraph(nbins+1); 
+  TGraph* gr = new TGraph(nbins+2); 
  
   // fill graph
   double binc = 0; //< bin contens
   double binw = hMC[isamp][ibin][icomp][iatt]->GetBinWidth(1); //< bin width
 
   // shift from smear par
-  double maxx = hMCMean[isamp][ibin][icomp][iatt];
-  double smearshift = (maxx*smear) - maxx;
+  //double maxx = hMCMean[isamp][ibin][icomp][iatt];
+ // double smearshift = (maxx*smear) - maxx;
  
   gr->SetPoint(0,hMC[isamp][ibin][icomp][iatt]->GetBinLowEdge(1),0);
-
   for (int ipt=1; ipt<=nbins; ipt++){
     
     // get spline modified contents if necessary
@@ -327,15 +455,37 @@ TGraph* histoManager::getModGraph(int isamp, int ibin, int icomp, int iatt){
     binc/=binw;
 
     // fill modified graph
-    gr->SetPoint(ipt,
-                 ((smear*hMC[isamp][ibin][icomp][iatt]->GetBinCenter(ipt)) + bias - smearshift),
-                 binc);
+    double xpt =  ((smear*hMC[isamp][ibin][icomp][iatt]->GetBinCenter(ipt)) + bias);
+//    double xpt =  ((smear*hMC[isamp][ibin][icomp][iatt]->GetBinLowEdge(ipt)+binw) + bias);
+    double ypt = binc;
+    gr->SetPoint(ipt,xpt,ypt);
+
+//    gr->SetPoint(ipt,
+//                 ((smear*hMC[isamp][ibin][icomp][iatt]->GetBinCenter(ipt)) + bias),
+//                 binc);
   }
+
+  gr->SetPoint(nbins+1,
+              (hMC[isamp][ibin][icomp][iatt]->GetBinLowEdge(nbins)+hMC[isamp][ibin][icomp][iatt]->GetBinWidth(nbins))*smear + bias,0);
  
   // smooth it?
 //  smoothGraph(gr);
 
   return gr;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Apply a lower bound to some attribute
+void histoManager::setLoBound(int iatt, double bound){
+
+  // make changes
+  applyPhysicalBound[iatt] = 1;
+  physicalLoBound[iatt] = bound;
+ 
+  // talk about it
+  cout<<"histoManager: Adding lower bound of "<<bound<<"to parameter "<<iatt<<endl;
+  return;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -350,14 +500,13 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
   double histonorm = gTotIntegral;
 
   // convert to to histogram 
-  double loss = graph2histo(gr,hMCModified[isamp][ibin][icomp][iatt]);
+  graph2histo(gr,hMCModified[isamp][ibin][icomp][iatt]);
 
-  // scale to sum of bin contents
- // hMCModified[isamp][ibin][icomp][iatt]->Scale(gTotIntegral/
-  //                                             hMCModified[isamp][ibin][icomp][iatt]->Integral());
+  // apply any physical bounds
+  if (applyPhysicalBound[iatt]){
+    applyLoBound(gr,hMCModified[isamp][ibin][icomp][iatt]);
+  }
 
- // hMCModified[isamp][ibin][icomp][iatt]->Scale((gTotIntegral - loss)/
- //                                              hMCModified[isamp][ibin][icomp][iatt]->Integral());
   
   gr->Delete();
   return hMCModified[isamp][ibin][icomp][iatt];
@@ -365,7 +514,7 @@ TH1D* histoManager::getModHistogram(int isamp, int ibin, int icomp, int iatt){
 
 
 //////////////////////////////////////////////////////////////////////////////
-// NEW test method using graphs 
+// NEW method using graphs 
 // Returns the modified histogram based on the parameters in atmfitpars
 // This function return the mod histogram in original binning
 TH1D* histoManager::getModHistogramMC(int isamp, int ibin, int icomp, int iatt){
@@ -373,19 +522,14 @@ TH1D* histoManager::getModHistogramMC(int isamp, int ibin, int icomp, int iatt){
   // get the modified graph and calculate gTotIntegral
   TGraph* gr = getModGraph(isamp, ibin, icomp, iatt);
  
-  // get norm factor
-//  double histonorm = gTotIntegral;
- // double histonorm = 1.0;
-
   // convert to to histogram 
   TH1D* htmp = (TH1D*)hMC[isamp][ibin][icomp][iatt]->Clone("htmp");
   graph2histo(gr,htmp);
 
-
-  //scale
-  htmp->Scale(gTotIntegral/htmp->Integral());
-  
-//  htmp->Scale(1./(hMC[isamp][ibin][icomp][iatt]->GetBinWidth(1)*fitPars->getHistoParameter(ibin,icomp,iatt,0)));
+  // apply physical bounds if any
+  if (applyPhysicalBound[iatt]){
+    applyLoBound(gr,htmp);
+  }
 
   gr->Delete();
   return htmp;
@@ -724,6 +868,7 @@ histoManager::histoManager(const char* rootname,int nsamp,int nbin,int ncomp,int
   nameTag = "histManager_For_";
   nameTag.Append(rootname);
   useSplineFlg=0;
+  useNormFlg=1;
   return;
 }
 
@@ -758,7 +903,9 @@ histoManager::histoManager(const char* parfile, int nmode, bool separateneutmode
   if (runPars->useSplinesFlg){
     readSplinesFromFile(runPars->splineFactoryOutput.Data());
   }
-
+  
+  // use norm pars by default
+  useNormFlg =1.;
   return;
 }
 

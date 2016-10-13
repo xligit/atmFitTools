@@ -43,14 +43,7 @@ void smoothGraph(TGraph* gr){
   double ww0 = 1.0;
   double ww1 = 6.06530659712633424e-01;
   double ww2 = 1.35335283236612702e-01;
-//  double ww1  = 3.246524e-01;
-//  double ww2 = 1.110899e-02;
-
-//  double ww0 = 1.0;
-//  double ww1  = 0.5;
-//  double ww2 = 0.1;
   double wsum = ww0 + (2*ww1) + (2.*ww2);
-  // contents
   double* X = gr->GetX();
   double* Y = gr->GetY();
   int N = gr->GetN();
@@ -124,16 +117,16 @@ double graph2histo(TGraph* gr, TH1D* h){
   h->Reset();
 
   // calc loss
-  double loss = 0.;
+//  double loss = 0.;
   double *X = gr->GetX();
-  double gxmin = X[0];
-  double gxmax = X[gr->GetN()-1];
+//  double gxmin = X[0];
+//  double gxmax = X[gr->GetN()-1];
   double binw = h->GetBinWidth(1);
   int    nbins = h->GetNbinsX();
   double hxmin = h->GetBinLowEdge(0);
   double hxmax = h->GetBinLowEdge(nbins) + binw;
-  loss+=gIntegral(gr,gxmin,hxmin,10);
-  loss+=gIntegral(gr,hxmax,gxmax,10);
+//  loss+=gIntegral(gr,gxmin,hxmin,10);
+//  loss+=gIntegral(gr,hxmax,gxmax,10);
 
   // fill bin contents from graph
   for (int ibin=1; ibin<=nbins; ibin++){
@@ -144,14 +137,76 @@ double graph2histo(TGraph* gr, TH1D* h){
     h->SetBinError(ibin,TMath::Sqrt(area));
   }
  
-  
-
-//  h->Scale(scale/h->Integral());
-  //
-//  return 1.0;
-  return loss;
+  return 1.;
 }
 
+/*
+////////////////////////////////////////////////////
+// converts graph to histogram with physical boundary
+// histogram bin contents will be re-written
+double graph2histo(TGraph* gr, TH1D* h, double physbound = -1){
+  
+  // clear bin contents
+  h->Reset();
+
+  // set some variables
+  double *X = gr->GetX();
+  double binw = h->GetBinWidth(1);
+  int    nbins = h->GetNbinsX();
+  double hxmin = h->GetBinLowEdge(0);
+  double hxmax = h->GetBinLowEdge(nbins) + binw;
+
+  // fill bin contents from graph
+  for (int ibin=1; ibin<=nbins; ibin++){
+    double xmin = h->GetBinLowEdge(ibin);
+    double xmax = xmin + binw;
+    double area = gIntegral(gr,xmin,xmax);
+    h->SetBinContent(ibin,area);
+    h->SetBinError(ibin,TMath::Sqrt(area));
+  }
+ 
+  return 1.;
+}
+*/
+
+
+/////////////////////////////////////////////////////////////
+// Modify histogram filled by graph with physical lower bound
+// Can be used as a template for enforcing an upper bound as well
+void applyLoBound(TGraph* gr, TH1D* h, double lobound=0.){
+  
+  // get bin width (assume constant);
+  double binw = h->GetBinWidth(1);
+
+  // identify the critical bin
+  int critbin = -1;
+  for (int ibin=0; ibin<=h->GetNbinsX(); ibin++){
+     double centerval = h->GetBinCenter(ibin);
+     if (centerval>lobound){
+       critbin = ibin;
+       break;
+     }
+  }
+
+
+  // reflect density on lower bound
+  for (int ibin=critbin; ibin<=h->GetNbinsX(); ibin++){
+    double distance1 = h->GetBinLowEdge(ibin) - lobound;
+    double distance2 = distance1 + binw;
+    if (distance1<0.) distance1 = 0.;
+    double density = gIntegral(gr, (lobound-distance2), (lobound-distance1));
+    h->SetBinContent(ibin,h->GetBinContent(ibin)+density);
+    h->SetBinError(ibin,TMath::Sqrt(h->GetBinContent(ibin)));
+  }
+
+  // clear un-physical bins
+  for (int ibin=(critbin-1); ibin>=0; ibin--){
+    h->SetBinContent(ibin,0.);
+  }
+  
+  //
+  return;
+}
 
 TGraph* histo2graph(TH1D*h){
   
@@ -198,6 +253,25 @@ double getNoiseFactor(TH1D* hh){
   if (B==0) return 0;
   S/=B;
   return 1./TMath::Sqrt(S);
+}
+
+
+
+
+///////////////////////////////////////////////////
+// Rebin using intermediate TGraph
+void rebinHisto(TH1D* holdbin, TH1D* hnewbin){
+  
+  // make tgraph using old bins
+  TGraph* gr = histo2graph(holdbin);
+
+  // integrate into new bins
+  graph2histo(gr,hnewbin);
+
+  gr->Delete();
+
+  // done
+  return;
 }
 
 

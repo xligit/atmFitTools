@@ -8,7 +8,7 @@
 #include "TFile.h"
 #include "atmFitPars.cxx"
 
-#define NMCMCPARS 200
+#define NMCMCPARS 500
 
 using namespace std;
 
@@ -285,7 +285,6 @@ int markovTools::acceptStepLnL(double newL){
   double alpha = (oldL-newL); //< get difference in LnL
   double rand = randy->Rndm(); //< throw a random number
   int iaccept = 0; //< acceptance flag
-
   /////////////////////////////
   //chekc if we should accept
   if (alpha>TMath::Log(rand)){
@@ -304,13 +303,13 @@ int markovTools::acceptStepLnL(double newL){
     pathTree->Fill();
     iaccept = 1;
   } 
+
   else{
     for (int i=0;i<nPars;i++){
       //rejected, reset to old parameters
       atmPars->setParameter(i,oldPars[i]);
     }
   }
-
   iStep++; //< increment global step  count
   if ((iStep%100)==0) cout<<"step: "<<iStep<<endl;
 
@@ -506,14 +505,14 @@ void markovTools::Init(int npars){
   //branch setup
   pathTree->Branch("npars",&nParsEffective,"npars/I");
   pathTree->Branch("step",&iStep,"step/I");
-  pathTree->Branch("par",effectivePars,"par[200]/D");
-  pathTree->Branch("pardiff",parDiff,"pardiff[200]/D");
-  pathTree->Branch("parnominal",nominalPars,"parnominal[200]/D");
-  pathTree->Branch("parbin",parBin,"parbin[200]/I");
+  pathTree->Branch("par",effectivePars,"par[500]/D");
+  pathTree->Branch("pardiff",parDiff,"pardiff[500]/D");
+  pathTree->Branch("parnominal",nominalPars,"parnominal[500]/D");
+  pathTree->Branch("parbin",parBin,"parbin[500]/I");
   pathTree->Branch("parcomp",parComp,"parcomp[200]/I");
-  pathTree->Branch("paratt",parAtt,"paratt[200]/I");
-  pathTree->Branch("parindex",effectiveIndex,"parindex[200]/I");
-  pathTree->Branch("parsyst",parIsSyst,"parsyst[200]/I");
+  pathTree->Branch("paratt",parAtt,"paratt[500]/I");
+  pathTree->Branch("parindex",effectiveIndex,"parindex[500]/I");
+  pathTree->Branch("parsyst",parIsSyst,"parsyst[500]/I");
   pathTree->Branch("logL",&oldL,"logL/D");
 
 

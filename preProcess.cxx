@@ -682,19 +682,13 @@ int preProcess::getBest2RFitID(){
 
   for (int ifit=0;ifit<nfits;ifit++){
     int fitID = TMath::Abs(fq->fqmrifit[ifit]); //< fit fit ID code
-//    int diff = (TMath::Abs(fitID-20000000));
-//    cout<<"diff: "<<diff<<endl;
-//    cout<<"ifit: "<<ifit<<endl;
     if ((TMath::Abs(fitID-20000000))>100) continue; //< we want best 2R fits
-//    cout<<"fitID: "<<fq->fqmrifit[ifit]<<endl;
     if (fq->fqmrnll[ifit]<ngLnLBest){
       bestindex = ifit;
       ngLnLBest=fq->fqmrnll[ifit];
     }
   }
   best2RID = fq->fqmrifit[bestindex];
-//  if (best2RID<0) return 0;
- // cout<<"best: "<<best2RID<<endl;
   return bestindex;
 }
 
