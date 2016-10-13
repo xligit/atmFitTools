@@ -7,10 +7,12 @@
 #include <iostream>
 #include "TFile.h"
 
-#define NMCMCPARS 200
+#define NMCMCPARS 500
 
 using namespace std;
 
+/////////////////////////////////////////////////////
+// Class to fill a TTree of MCMC step differences
 class markovDiff{
   public:
 
@@ -23,14 +25,15 @@ class markovDiff{
   TTree* mcmcpars;
   TTree* diffpars;
   int nburn;
-  double par[NMCMCPARS];
-  double par1[NMCMCPARS];
-  double par2[NMCMCPARS];
-  double pardiff[NMCMCPARS];
+  double par[NMCMCPARS]; 
+  double par1[NMCMCPARS]; //< vector of pars at point 1
+  double par2[NMCMCPARS]; //< vector of pars at point 2
+  double pardiff[NMCMCPARS]; //< difference vector between points
+  int    parindex[NMCMCPARS]; //< atmFitPars index of each parameter
   int npars;
 
   // methods
-  void fillDiffPars(int npairs);
+  void fillDiffPars(int npairs); // fill the TTree of parameter difference vectors
   void setaddresses();
   void setouttree();
 
@@ -40,21 +43,31 @@ void markovDiff::setouttree(){
   outfile = new TFile("mcmcdiff.root","RECREATE");
   diffpars = new TTree("MCMCdiff","MCMCdiff");
   diffpars->Branch("npars",&npars,"npars/I");
-  diffpars->Branch("par1",par1,"par1[200]/D");
-  diffpars->Branch("par2",par1,"par2[200]/D");
-  diffpars->Branch("pardiff",pardiff,"pardiff[200]/D");
+  diffpars->Branch("par1",par1,"par1[500]/D");
+  diffpars->Branch("par2",par1,"par2[500]/D");
+  diffpars->Branch("parindex",parindex,"parindex[500]/I");
+  diffpars->Branch("pardiff",pardiff,"pardiff[500]/D");
   return;
 }
 
 void markovDiff::setaddresses(){
+ 
+  // only turn on the important mcmc branches
   mcmcpars->SetBranchStatus("*",0);
   mcmcpars->SetBranchStatus("npars",1);
   mcmcpars->SetBranchStatus("par",1);
+  mcmcpars->SetBranchStatus("parindex",1);
+
+  // set branch address
   mcmcpars->SetBranchAddress("par",par);
+  mcmcpars->SetBranchAddress("parindex",parindex);
+
+  // read in number of pars
   int nparstmp;
   mcmcpars->SetBranchAddress("npars",&nparstmp);
   mcmcpars->GetEntry(0);
   npars = nparstmp;
+
   cout<<"Number of mcmc pars: "<<npars<<endl;
   return; 
 }

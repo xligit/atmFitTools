@@ -29,7 +29,8 @@ class markovTools{
    ///////////////////
    //constructors
    markovTools(int npars);
-   markovTools(atmFitPars* atmpars, const char* outfilename="");;
+   // This is the main constructor that is called by histoCompare
+   markovTools(atmFitPars* atmpars, const char* outfilename="");
    void Init(int pars);
 
    ///////////////////////////
@@ -38,7 +39,7 @@ class markovTools{
    TFile* fDiffChain;
    int nDiffSteps; //< number of events in diffChain
    TTree* diffChain;
-   int nPars;  //< totla number of parameters
+   int nPars;  //< total number of parameters
    int nParsEffective; //< total number of non-fixed parameters;
    double effectivePars[NMCMCPARS]; //< array of non-fixed parameters
    double nominalPars[NMCMCPARS]; //< array of nominal parameters
@@ -48,13 +49,16 @@ class markovTools{
    int  parComp[NMCMCPARS]; //< MC component of given effective parameter
    int  parAtt[NMCMCPARS]; //< attribute modified by given effective parameter
    int  parIsSyst[NMCMCPARS]; //< flag = 1 if parameter is systematic (flux or xsec) parameter
+   int  useDiffProposal[NMCMCPARS]; //< flag = 1 if we're using a differential MCMC to propose parameter
    int iStep;  //< counter for total step number
    double oldPars[NMCMCPARS]; //< array of parameters from previous step
    int fixPar[NMCMCPARS]; //< array of fix flags for each parameter
-   double oldL; //< likelihood value of previous step
+   double oldL; //< likelihood value of previous step;
    double tuneParameter; //< tunes the size of MCMC steps
    double varPar[NMCMCPARS]; //< stores parameter standard deviations
    double parDiff[NMCMCPARS]; //< saves the difference between mcmc steps
+   int    parDiffIndex[NMCMCPARS]; //< atmFitPars index of the differential parameters
+   int    ndiffpars; //< number of parameters in differential step chain
 
    // output tree
    TTree* pathTree;
@@ -78,6 +82,7 @@ class markovTools{
    void proposeStep(double* par);  //< proposes a new step from the given parameter set
    void proposeStep(); //< propose a step from the parameters in atmFitPars
    void proposeDifferentialStep(); //< use differential chain to propose a step
+   void proposePartialDiffStep(); //< use differential steps for some parameters, flat proposal for others
    int  acceptStepLnL(double newL); //< decide if step is accepted given new LnL
    int  acceptStepLnLDiff(double newL); //< decide if step is accepted given new LnL
    int acceptStep(double newL,double* par);  
@@ -100,18 +105,54 @@ class markovTools{
 };
 
 
-
+/////////////////////////////////////////////////////
+// does some initial setup for differentail step tree
 void markovTools::setDiffChain(const char* fname){
 
   // setup chain of par differences
   fDiffChain = new TFile(fname);
   diffChain = (TTree*)fDiffChain->Get("MCMCdiff"); 
+
+  // turn on relevant branches
   diffChain->SetBranchStatus("*",0);
   diffChain->SetBranchStatus("pardiff",1);
+  diffChain->SetBranchStatus("npars",1);
+  diffChain->SetBranchStatus("parindex",1);
+
+  // set addresses
   diffChain->SetBranchAddress("pardiff",parDiff);
+  diffChain->SetBranchAddress("npars",&ndiffpars);
+  int atmDiffIndex[NMCMCPARS]; //< temporary array for atmFitPars indicies
+  diffChain->SetBranchAddress("parindex",atmDiffIndex);
+
+  // get number of steps
   nDiffSteps = diffChain->GetEntries();
+
+  // set ndiffpars variable and atmDiffIndex
+  diffChain->GetEntry(0);
+
+  // loop over the list of differential parameters
+  for (int idiffpar = 0; idiffpar<ndiffpars; idiffpar++){
+    int atmindex = atmDiffIndex[idiffpar]; //< index in full list
+    // try to find a matching parameter in effective par list
+    for (int imcmcpar=0; imcmcpar<nParsEffective; imcmcpar++){
+      int atmindex_mcmc = parIndex[imcmcpar];
+      // if a match is found, use differential chain for that parameter
+      if (atmindex==atmindex_mcmc){
+         useDiffProposal[imcmcpar] = 1;
+         parDiffIndex[imcmcpar] = idiffpar;
+      }
+    }
+  }
+
+  // ignore all but pardiff branch
+  diffChain->SetBranchStatus("*",0);
+  diffChain->SetBranchStatus("pardiff",1);;
+
+  // talk about it
   cout<<"markovTools::setDiffChain(): Added chain of "<<nDiffSteps<<" differential steps "<<endl;
-  
+
+  // cd back to output file 
   fout->cd();
   return;
 }
@@ -403,27 +444,84 @@ void markovTools::proposeStep(double* par){
 }
 
 
-/////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
 //takes a poiter to atmFitPars and suggests new parameters
-//
+//this method uses a TTree filled with differential steps
+void markovTools::proposePartialDiffStep(){  
+
+//  cout<<"break1"<<endl;
+
+  // get a random point in the differential chain;
+  int randpoint = randy->Integer(nDiffSteps);
+//  cout<<"randpoint: "<<randpoint<<endl;
+//  cout<<diffChain<<randpoint<<endl;
+  diffChain->GetEntry(randpoint);
+//  diffChain->GetEntry(1);
+//  diffChain->GetEntries();
+
+  // determins how much randomness to add
+  double perturb = 0.01;
+
+//  cout<<"break2"<<endl;
+#ifndef T2K
+  // loop over non-fixed pars and suggest step from chain if using it, otherwise just guess
+  for (int i=0; i<nParsEffective;i++){
+    // old pars are the current (stale) parameters
+    int atmindex = parIndex[i];
+    oldPars[atmindex] = atmPars->getParameter(atmindex);
+    
+//    cout<<"break3"<<endl;
+    if (useDiffProposal[i]){
+       int diffindex = parDiffIndex[i]; //< get index of par i in differential par list
+//       cout<<"mcmc index: "<<i<<endl;
+//       cout<<"atm index: "<<atmindex<<endl;
+//       cout<<"diff index: "<<diffindex<<endl;
+       double epsilon = randy->Gaus(0.,varPar[atmindex])*perturb; //< random perturbation;
+       epsilon = 0.;
+       double newvalue = oldPars[atmindex] + (parDiff[diffindex]*tuneParameter) + epsilon;
+//       cout<<"par "<<atmindex<<" "<<oldPars[atmindex]<<"->"<<newvalue<<endl;
+       atmPars->setParameter(atmindex,newvalue);
+    }
+    else{
+      // propose from gaussian
+//      cout<<"--non differential--"<<endl;
+//      cout<<"mcmc index: "<<i<<endl;
+//      cout<<"atm index: "<<atmindex<<endl;
+      double newvalue = randy->Gaus(oldPars[atmindex],varPar[atmindex]*tuneParameter);
+      atmPars->setParameter(atmindex,newvalue);
+    }
+  }
+#else
+  // need to add differential step here
+  atmPars->proposeStep();
+  for (int i = 0; i < nPars; ++i) {
+    oldPars[i] = atmPars->getParameter(i);
+  }
+#endif
+  return;
+}
+
+
+
+///////////////////////////////////////////////////////////
+//takes a poiter to atmFitPars and suggests new parameters
+//this method uses a TTree filled with differential steps
 void markovTools::proposeDifferentialStep(){  
 
   // get a random point in the differential chain;
   int randpoint = randy->Integer(nDiffSteps);
-//  cout<<"random point: "<<randpoint<<endl;
   diffChain->GetEntry(randpoint);
 
   // determins how much randomness to add
-  double perturb = 0.02;
+  double perturb = 0.01;
 
 #ifndef T2K
+  // set atmFitPars to new values
   for (int i=0;i<nPars;i++){
     oldPars[i] = atmPars->getParameter(i);
-    // if parameter is not fixed, suggest a new value
     if (atmPars->fixPar[i]!=1){
       double epsilon = randy->Gaus(0.,varPar[i]*perturb);
       double newvalue = oldPars[i] + (parDiff[i]*tuneParameter) + perturb*randy->Gaus(0.,varPar[i]);
-//      cout<<"par "<<i<<": "<<oldPars[i]<<" -> "<<newvalue<<endl;
       atmPars->setParameter(i,newvalue);
     }
   }
@@ -463,7 +561,7 @@ void markovTools::proposeStep(){
 
 
 /////////////////////////////////////////////
-//initialization
+// initialization
 void markovTools::Init(int npars){
 
   // output tree with parameters
@@ -484,19 +582,22 @@ void markovTools::Init(int npars){
   //count all non-fixed parameters
   nParsEffective = 0;
   for (int i=0; i<nPars; i++){
+    // initialize parameter list with current params
+    oldPars[i] = atmPars->getParameter(i);
     if (atmPars->fixPar[i]) continue;
     else{
-      effectiveIndex[i] = nParsEffective;
-      parIndex[nParsEffective] = i;
+      effectiveIndex[i] = nParsEffective;//< index used by markovTools 
+      parIndex[nParsEffective] = i; //< atmFitPars index
+      cout<<"parindex "<<nParsEffective<<" is "<< parIndex[nParsEffective]<<endl;
       nominalPars[nParsEffective] = atmPars->parDefaultValue[i]; //< nominal parameter value
-      parBin[nParsEffective] = atmPars->getParBin(i);
-      parComp[nParsEffective] = atmPars->getParComp(i);
-      parAtt[nParsEffective] = atmPars->getParAtt(i);
+      parBin[nParsEffective] = atmPars->getParBin(i); //< FV bin corresponding to this param
+      parComp[nParsEffective] = atmPars->getParComp(i); //< MC component corresponding to this param
+      parAtt[nParsEffective] = atmPars->getParAtt(i); //< fQ attribute corresponding to this param
       if (parBin[nParsEffective]>0){
         parIsSyst[nParsEffective] = 0; //< assume systematic unless changed in next block
       }
       else{
-        parIsSyst[nParsEffective] = 1; //< assume systematic unless changed in next block
+        parIsSyst[nParsEffective] = 1;
       }
       nParsEffective++;
     }
@@ -511,7 +612,7 @@ void markovTools::Init(int npars){
   pathTree->Branch("parbin",parBin,"parbin[500]/I");
   pathTree->Branch("parcomp",parComp,"parcomp[200]/I");
   pathTree->Branch("paratt",parAtt,"paratt[500]/I");
-  pathTree->Branch("parindex",effectiveIndex,"parindex[500]/I");
+  pathTree->Branch("parindex",parIndex,"parindex[500]/I");
   pathTree->Branch("parsyst",parIsSyst,"parsyst[500]/I");
   pathTree->Branch("logL",&oldL,"logL/D");
 

@@ -92,7 +92,8 @@ void histoCompare::tuneDEMCMC(int ncycles,int nsteps, double goal){
     int   istep=0;
     while (istep<nsteps){
       cout<<"----------"<<"step : "<<istep<<"---------------"<<endl;;
-      mcmc->proposeDifferentialStep(); //< propose a new step using differential mcmc
+//      mcmc->proposeDifferentialStep(); //< propose a new step using differential mcmc
+      mcmc->proposePartialDiffStep(); //< propose a new step using differential mcmc
       result = getTotLnL();
       cout<<"hc: Likelihood "<<Linit<<" -> "<<result<<" diff: "<<result-Linit<<endl;
       if (mcmc->acceptStepLnL(result)){ //< check if new step is accepted
@@ -265,7 +266,9 @@ void histoCompare::runDEMCMC(int nsteps){
   int currentstep=0;
   while (currentstep<nsteps){
     currentstep = mc->iStep;
-    mc->proposeDifferentialStep();
+//    mc->proposeDifferentialStep();
+    mc->proposePartialDiffStep();
+
     result = getTotLnL();
     mc->acceptStepLnL(result);
   }
