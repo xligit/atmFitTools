@@ -62,7 +62,6 @@ class markovTools{
 
    // output tree
    TTree* pathTree;
-
    atmFitPars* atmPars;
 
    /////////////////////////
@@ -131,6 +130,11 @@ void markovTools::setDiffChain(const char* fname){
   // set ndiffpars variable and atmDiffIndex
   diffChain->GetEntry(0);
 
+  // by default, do not use differential proposal
+  for (int ipar=0; ipar<nParsEffective; ipar++){
+    useDiffProposal[ipar] = 0.;
+  }
+
   // loop over the list of differential parameters
   for (int idiffpar = 0; idiffpar<ndiffpars; idiffpar++){
     int atmindex = atmDiffIndex[idiffpar]; //< index in full list
@@ -186,13 +190,6 @@ void markovTools::setMeans(histoManager* hmanager){
 
 void markovTools::savePath(){
   pathTree->Write();
- // fout->Close();
-//  if (filename){
-//    pathTree->SaveAs(filename);
-//  }
-//  else{
-//    pathTree->SaveAs("mcmcpath.root");
-//  }
   fout->Close();
   return;
 }
@@ -478,6 +475,8 @@ void markovTools::proposePartialDiffStep(){
 //       cout<<"diff index: "<<diffindex<<endl;
        double epsilon = randy->Gaus(0.,varPar[atmindex])*perturb; //< random perturbation;
        epsilon = 0.;
+       double diffval = parDiff[diffindex];
+//       cout<<"diffval"<<diffval<<endl;
        double newvalue = oldPars[atmindex] + (parDiff[diffindex]*tuneParameter) + epsilon;
 //       cout<<"par "<<atmindex<<" "<<oldPars[atmindex]<<"->"<<newvalue<<endl;
        atmPars->setParameter(atmindex,newvalue);

@@ -24,14 +24,24 @@ class markovDiff{
   TFile* outfile;
   TTree* mcmcpars;
   TTree* diffpars;
+
+  // standard
+//  int nburn;
+//  double par[NMCMCPARS]; 
+//  double par1[NMCMCPARS]; //< vector of pars at point 1
+//  double par2[NMCMCPARS]; //< vector of pars at point 2
+//  double pardiff[NMCMCPARS]; //< difference vector between points
+//  int    parindex[NMCMCPARS]; //< atmFitPars index of each parameter
+//  int npars;
+
   int nburn;
-  double par[NMCMCPARS]; 
-  double par1[NMCMCPARS]; //< vector of pars at point 1
-  double par2[NMCMCPARS]; //< vector of pars at point 2
-  double pardiff[NMCMCPARS]; //< difference vector between points
+  float par[NMCMCPARS]; 
+  float par1[NMCMCPARS]; //< vector of pars at point 1
+  float par2[NMCMCPARS]; //< vector of pars at point 2
+  float pardiff[NMCMCPARS]; //< difference vector between points
   int    parindex[NMCMCPARS]; //< atmFitPars index of each parameter
   int npars;
-
+ 
   // methods
   void fillDiffPars(int npairs); // fill the TTree of parameter difference vectors
   void setaddresses();
@@ -87,6 +97,8 @@ void markovDiff::fillDiffPars(int npairs){
   // Loop over mcmc points and select random pairs of points after
   // some burn-in.  For these pairs, find the difference between the parameters and 
   // save this difference to the new difference tree
+  
+
   for (int i=0; i<npairs; i++){
     if ((i%500)==0) cout<<i<<endl;
     // get a pair of randoms
@@ -101,7 +113,7 @@ void markovDiff::fillDiffPars(int npairs){
       par2[ipar] = par[ipar];
       pardiff[ipar] = par2[ipar]-par1[ipar];
     }
-    diffpars->Fill(); 
+ //   diffpars->Fill(); 
   }
 
   diffpars->Write();
