@@ -94,13 +94,14 @@ class atmFitPars{
   void fixParameter(int ibin,int icomp,int iatt, int imod);
   void fixAllSmearPars(int isfixed=1);
   void fixAllPars(int isfixed=1);
+  void fixAllAttPars(int);
   void setRandSysPar(); //sets systematic parameters to random values
   int  checkFixFlg(int ibin,int icomp,int iatt, int imod);
   void resetDefaults();
   //priors
   void setGausPrior(int ipar, double sigma); //< sets a gaussian prior for a parameter
   double calcLogPriors(); //< calculates log of parameter prob.
-  //void printParValues();
+  void printParValues();
   int binOfPar[4000];
   int compOfPar[4000];
   int attOfPar[4000];

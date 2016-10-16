@@ -186,10 +186,13 @@ void atmFitPars::proposeStep()
 {
   for (int i = 0; i < nTotPars - nSysPars; ++i) {
     if (!fixPar[i]) parsProp[i] = rnd->Gaus(pars[i], parUnc[i]*fScale); // random walk
+    if (i%2==0) {
+      while (parsProp[i]<0) parsProp[i] = rnd->Gaus(pars[i], parUnc[i]*fScale);
+    }
   }
   for (int i = 0; i < 2; ++i) {
-    if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
-    while (pars[i+nTotPars-nSysPars]<0) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysParNom[i], sysParUnc[i]*fScale);
+    if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysPar[i], sysParUnc[i]*fScale*0.1);
+    while (pars[i+nTotPars-nSysPars]<0) parsProp[i+nTotPars-nSysPars] = rnd->Gaus(sysPar[i], sysParUnc[i]*fScale*0.1);
   }
   /*
   if (!fixPar[3+nTotPars-nSysPars]) {
@@ -199,7 +202,7 @@ void atmFitPars::proposeStep()
   */
   cov->proposeStep();
   for (int i = 2/*3*/; i < nSysPars; ++i) {
-    if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = cov->getProposed(i-3);
+    if (!fixPar[i+nTotPars-nSysPars]) parsProp[i+nTotPars-nSysPars] = cov->getProposed(i-2);
   }
 }
 
@@ -207,6 +210,7 @@ void atmFitPars::acceptStep()
 {
   cov->acceptStep();
   for (int i = 0; i < nTotPars; ++i) pars[i] = parsProp[i];
+  for (int i = 0; i < nSysPars; ++i) sysPar[i] = parsProp[i+nTotPars-nSysPars];
 }
 
 atmFitPars::atmFitPars(const std::string parfilename, covBase *covm){
@@ -257,13 +261,13 @@ atmFitPars::atmFitPars(const char* parfilename){
   cout<<"MC normalization: "<<normFactor<<endl;
   flgUseNormPars = runpars->flgUseNormPars;
   if (flgUseNormPars) cout<<"atmFitPars: Using normalization pars"<<endl;
-  TString sysType = runpars->sysParType;
+  sysType = runpars->sysParType;
   int flgFixAllSmearPars = runpars->flgFixAllSmearPars;
   if (flgFixAllSmearPars){
     fixAllSmearPars(1);
   }
   //fill all initial parameter values and count number of pars
-  initPars(sysType.Data());
+  initPars(sysType.data());
 }
 
 
@@ -688,7 +692,6 @@ void atmFitPars::initPars(const char* systype){
     // xsec errors
     std::cout<<"Please set covariance matrix by calling atmFitPars::setCov(covBase *)\n"
 	     <<"stype corresponds to "<<stype.Data()<<std::endl;
-    nTotPars += 2;
   }
 
   //add systematics to 1D parameter arrays
@@ -746,6 +749,8 @@ void atmFitPars::initPars(const char* systype){
     parPriorGausSig[ipar] = -1.;
   }
   ///////////////////////////////////////////////
+#else
+  nTotPars = index;
 #endif
 
   return;
@@ -759,9 +764,24 @@ double atmFitPars::calcLogPriors(){
   for (int ipar=0; ipar<nTotPars; ipar++){
     if (parPriorGausSig[ipar]<0.) continue;
     else{
+#ifndef T2K
       double pull = pars[ipar] - parDefaultValue[ipar];
       pull/=(parPriorGausSig[ipar]);
       ngLnL += 0.5*pull*pull;
+#else
+      double pull = pars[ipar] - parDefaultValue[ipar];
+      //std::cout<<ipar<<" "<<pull<<" "<<parPriorGausSig[ipar]<<std::endl;
+      if (ipar<nTotPars-nSysPars+2) {
+	pull/=(parPriorGausSig[ipar]);
+	ngLnL += 0.5*pull*pull;
+      } else {
+	std::cout<<ngLnL<<" ";
+	pull = cov->getLikelihood();
+	std::cout<<pull<<std::endl;
+	ngLnL += pull;
+	break;
+      }
+#endif
     }
   }
 
@@ -794,20 +814,22 @@ void atmFitPars::fixAllAttPars(int iatt){
 void atmFitPars::setCov(covBase *covariance)
 {
   std::cout<<"setting covariance matrix"<<std::endl;
+  TString basename = "parameter_";
   cov = covariance;
   int index = nTotPars;
   nSysPars += cov->getNPar();
   for (int i = 2; i < nSysPars; ++i) {
     //std::cout<<i<<std::endl;
-    sysPar[i] = cov->getNominal(i-2);
+    sysPar[i] = cov->getPrior(i-2);
     sysParNom[i] = cov->getNominal(i-2);
     sysParUnc[i] = cov->getUncertainty(i-2);
     sysParUp[i] = cov->getUp(i-2);
     sysParLow[i] = cov->getLow(i-2);
     sysParName[i] = cov->getParName(i-2);
+    sysParDefault[i] = cov->getPrior(i-2);
     pars[nTotPars+i-2] = sysPar[i];
     parUnc[nTotPars+i-2] = sysParUnc[i];
-    parDefaultValue[nTotPars+i-2] = cov->getInit(i-2);
+    parDefaultValue[nTotPars+i-2] = cov->getPrior(i-2);
     sysParIndex[i] = index;
     TString parname = basename.Data();
     parname.Append(Form("_syspar%d",i));
@@ -859,6 +881,10 @@ void atmFitPars::setCov(covBase *covariance)
     parPriorGausSig[ipar] = -1.;
   }
 
+  parPriorGausSig[nTotPars-nSysPars+1] = sysParUnc[1];
+  for(int ipar = 0; ipar<nSysPars; ++ipar) {
+    parPriorGausSig[nTotPars-nSysPars+ipar] = sysParUnc[ipar];
+  }
   cout<<"    - Total number of fit parameters now is: "<<nTotPars<<endl;
   cout<<"    - Total number of systematic parameters: "<<nSysPars<<endl;
 

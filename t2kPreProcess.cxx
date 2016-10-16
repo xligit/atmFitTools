@@ -95,10 +95,10 @@ void t2kPreProcess::processFile(const char* fname,const char* outname){
   preProcessIt();
 
   //clean up
-  //if (trout->GetEntries()>0) {
-  fout->cd();
-  trout->Write();
-  //}
+  if (trout->GetEntries()>0) {
+    fout->cd();
+    trout->Write();
+  }
   fin->Close();
   fout->Close();
   
@@ -240,19 +240,19 @@ int t2kPreProcess::getBin(){
 
 
   //cosmic binning
-//  if (FVBinning==1){
-//    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
-//    double Zrec = fq->fq1rpos[0][2][2];
-//    double Zcut = 1410;
-//    double Rcut = 1290;
-//    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
-//    if ((Zrec<Zcut)) return 1; //< side entering
- //   if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
-//  }
+  if (FVBinning==1){
+    double Rrec = TMath::Sqrt(pow(fq->fq1rpos[0][2][0],2)+pow(fq->fq1rpos[0][2][1],2));
+    double Zrec = fq->fq1rpos[0][2][2];
+    double Zcut = 1410;
+    double Rcut = 1290;
+    if ((Zrec>Zcut)&&(Rrec<Rcut)) return 0; //< top entering
+    if ((Zrec<Zcut)) return 1; //< side entering
+    if ((Zrec>Zcut)&&(Rrec>Rcut)) return 2; //< corner entering
+  }
 
 
   //no binning
-//  if (FVBinning==2){return 0;}
+  if (FVBinning==2){return 0;}
 
   //towall binning
   if (FVBinning==3){
@@ -263,8 +263,9 @@ int t2kPreProcess::getBin(){
 
   if (FVBinning == 4) {
     int fvbin = hFVBins->FindBin(towall, wall) - 1;
-    if (fq->fq1rmom[0][1]<1330) return fvbin;
-    else return (hFVBins->GetNcells() + fvbin);
+    return fvbin;
+    //if (fq->fq1rmom[0][1]<1330) return fvbin;
+    //else return (hFVBins->GetNcells() + fvbin);
   }
 
   return -1;
@@ -339,6 +340,20 @@ int t2kPreProcess::getSample(){
     if (fq->fqnse>2)  return 2;
   }
   
+  //atmospheric selection with energy
+  if (MCSamples==3){
+    double evis = fq->fq1rmom[0][1];
+    if (evis<1000.){
+      if (fq->fqnse==1) return 0;
+      if (fq->fqnse==2) return 1;
+      if (fq->fqnse>2)  return 2;
+    }
+    else{
+      if (fq->fqnse==1) return 3;
+      if (fq->fqnse==2) return 4;
+      if (fq->fqnse>2)  return 5;
+    }
+  }
   
   //cosmic selection
   if (MCComponents==1 || MCComponents==2 ){
@@ -354,7 +369,7 @@ int t2kPreProcess::getComponent(){
   ////////////////////////////
   // useful for cuts
   absmode = TMath::Abs(fq->mode);
-  int absnu   = TMath::Abs(fq->ipnu[0]);
+  //  int absnu   = TMath::Abs(fq->ipnu[0]);
  
   /////////////////////////////////////////
   // visible + NEUT event selection for atm
@@ -376,18 +391,62 @@ int t2kPreProcess::getComponent(){
   // visible only components for atm
   if (MCComponents==2){
 
-    // single electron
-    if ((vis->nve==1)&&(vis->nvp==0)&&(vis->nvmu==0)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 0;
-    // single muon
-    if ((vis->nve==0)&&(vis->nvp==0)&&(vis->nvmu==1)&&(vis->nvpi0==0)&&(vis->nvpip==0)) return 1;
-    // electron + other
-    if (vis->nve==1) return 2;
-    // muon + other
-    if (vis->nvmu==1) return 3;
-    // pi0 with no other
-    if ((vis->nvpi0==1)&&(vis->nvpip==0)) return 4;
-    // other
-    return 5;
+    ///////////////////////////////////////////
+    // 0 -> Single Shower
+    // 1 -> Single MIP
+    // 2 -> Shower + other (not single pi0)
+    // 3 -> MIP + other
+    // 4 -> Single Pi0
+    // 5 -> Other (should be zero events)
+    //////////////////////////////////////////
+
+    double showerthresh = 15.;
+    double nonshowerthresh = 45.;
+
+    // no visible (decay e)
+    if (vis->nvis==0){
+      return 0;
+    }
+   
+    // weak 1R (decay e)
+    if (vis->nvis==1 && vis->visbrightness[0]<nonshowerthresh) return 0;
+
+    // single pi0
+    if (vis->nvis<=2){
+       // all visible rings are gammas and there is single pi0
+       if ((vis->nvis-vis->nvgam==0) && (vis->nvpi0==1)) return 4;
+    }
+
+    // select single ring events 
+    if (vis->nvis==1){
+      if (vis->nve==1) return 0;
+      if (vis->nvgam==1) return 0;
+      if (vis->nvmu==1) return 1;
+      if (vis->nvpip==1) return 1;
+      if (vis->nvp==1)   return 1;
+    }
+
+    // select weak MR events
+    if (vis->nvis>1 &&
+       ( (vis->vismrbrightness<showerthresh && vis->vismrtype2==1) ||
+         (vis->vismrbrightness<nonshowerthresh && vis->vismrtype2==0) )){
+      if (vis->vismrtype1==0) return 1; //< count as non-showering ring
+      if (vis->vismrtype1==1) return 0; //< count as showering ring
+    }
+
+    // select MR events
+    if (vis->nvis>1){
+      // showering most visible ring
+      if (vis->vismrtype1 == 1) return 2;
+      // non-showering most visible ring;
+      if (vis->vismrtype1 == 0) return 3;
+    }
+
+    // should be nothing?
+    else{
+      return 5;
+    }
+
   }
  
   //////////////////////////////////////////
@@ -411,7 +470,7 @@ int t2kPreProcess::getComponent(){
 int t2kPreProcess::getMode()
 {
   // atm selections
-  if (MCComponents==0){
+  if (MCComponents==0 || MCComponents==2){
     if (abs(fq->mode)==1)                          return 0; // CCQE
     else if (abs(fq->mode)>10 && abs(fq->mode)<14) return 1; // CC1pi
     else if (abs(fq->mode)==16)                    return 2; // CCCoherent
@@ -438,14 +497,16 @@ void t2kPreProcess::preProcessIt(){
   //std::cout<<"nev = "<<nev<<std::endl;
   for (int i=0;i<nev;i++){
     //get info for event
+    if ((i%1000)==0) cout<<i<<endl;
     tr->GetEntry(i);
     if (!isData) {
       if (existSpline) trspline->GetEntry(i);
     }
-    if ((i%1000)==0) cout<<i<<endl;
     nbin=getBin();
+    if (nbin<0.) continue;
     if (!passCuts()) continue;
-    vis->fillVisVar(); //get visible ring information
+    if (MCComponents!=3) // hybrid pi0s don't have the right banks for VR counting 
+      vis->fillVisVar(); //get visible ring information
     fillAttributes(fq);
     ncomponent=getComponent();
     nsample=getSample();
@@ -558,6 +619,16 @@ void t2kPreProcess::setupNewTree(){
   tr->SetBranchStatus("wgtflx",1);
   tr->SetBranchStatus("fWeight",1);
   tr->SetBranchStatus("rfgWeight",1);
+  tr->SetBranchStatus("*scnd*",1);
+  tr->SetBranchStatus("nscndprt",1);
+  tr->SetBranchStatus("iprnttrk",1);
+  tr->SetBranchStatus("iprntprt",1);
+  tr->SetBranchStatus("iorgprt",1);
+  tr->SetBranchStatus("iprntidx",1);
+  tr->SetBranchStatus("nchilds",1);
+  tr->SetBranchStatus("ichildidx",1);
+  tr->SetBranchStatus("iflgscnd",1);
+  tr->SetBranchStatus("*vc",1);
   trout = tr->CloneTree(0); //clone but don't copy data
   trout->CopyAddresses(tr); //set addresses
   
@@ -581,6 +652,38 @@ void t2kPreProcess::setupNewTree(){
   trout->Branch("towall",&towall,"towall/F");
   trout->Branch("evtweight",&evtweight,"evtweight/F");
   trout->Branch("rfgweight",&rfgweight,"rfgweight/F");
+  trout->Branch("visbrightness",vis->visbrightness,"visbrightness[100]/D");
+  trout->Branch("viswall",vis->viswall,"viswall[100]/D");
+  trout->Branch("vistowall",vis->vistowall,"vistowall[100]/D");
+  trout->Branch("vismrwall1",&vis->vismrwall1,"vismrwall1/D");
+  trout->Branch("vismrwall2",&vis->vismrwall2,"vismrwall2/D");
+  trout->Branch("vismrtowall1",&vis->vismrtowall1,"vismrtowall1/D");
+  trout->Branch("vismrtowall2",&vis->vismrtowall2,"vismrtowall2/D");
+  trout->Branch("vismrwallmin",&vis->vismrwallmin,"vismrwallmin/D");
+  trout->Branch("vismrtowallmin",&vis->vismrtowallmin,"vismrtowallmin/D");
+  trout->Branch("nvisscnd",&vis->nvisscnd,"nvisscnd/I");
+  trout->Branch("vismrbrightness",&vis->vismrbrightness,"vismrbrightness/D");
+  trout->Branch("vismrpid1",&vis->vismrpid1,"vismrpid1/I");
+  trout->Branch("vismrpid2",&vis->vismrpid2,"vismrpid2/I");
+  trout->Branch("vismrt1",&vis->vismrt1,"vismrt1/D");
+  trout->Branch("vismrt2",&vis->vismrt2,"vismrt2/D");
+  trout->Branch("vismrtype1",&vis->vismrtype1,"vismrtype1/I");
+  trout->Branch("vismrtype2",&vis->vismrtype2,"vismrtype2/I");
+  trout->Branch("vistime",vis->vistime,"vistime[100]/D");
+  trout->Branch("vispid",vis->vispid,"vispid[100]/I");
+  trout->Branch("visscndpid",vis->visscndpid,"visscndpid[100]/I");
+  trout->Branch("visscndparentid",vis->visscndparentid,"visscndparentid[100]/I");
+  // fiTQun
+  trout->Branch("fqwall",&wall,"fqwall/F");
+  trout->Branch("fqtowall",&towall,"fqtowall/F");
+  trout->Branch("fq1rwall",fq1rwall,"fq1rwall[10][7]/F");
+  trout->Branch("fq1rtowall",fq1rtowall,"fq1rtowall[10][7]/F");
+  trout->Branch("towallv",towallv,"towallv[50]");
+  trout->Branch("wallv2",&wallv2,"wallv2");
+  trout->Branch("evtweight",&evtweight,"evtweight/F");
+  trout->Branch("best2RID",&best2RID,"best2RID/I");
+  trout->Branch("fq1rperim",fq1rperim,"fq1rperim[10][7]/F");
+  trout->Branch("fq1rmincone",fq1rmincone,"fq1rmincone[10][7]/F");
 
   if (!isData) {
     trout->Branch("byEv_maqe_ccqe_gr", "TGraph", &byEv_maqe_ccqe_gr, 1280000, 0);

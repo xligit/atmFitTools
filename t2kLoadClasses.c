@@ -19,8 +19,8 @@
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/t2kPreProcess.cxx%s", comlOption));
 
   // create histograms
-  /*
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/histoTransforms.cxx%s", comlOption));
+  /*
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/masktools.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/t2kfqReader.cxx%s", comlOption));
   gROOT->ProcessLine(Form(".L /home/xiaoyue/atmFitTools_xligit/hSplines.cxx%s", comlOption));

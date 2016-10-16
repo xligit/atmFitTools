@@ -71,6 +71,7 @@ void t2kfqEvent::Init(TTree *tree)
    fChain->SetBranchAddress("amomm", amomm, &b_amomm);
    fChain->SetBranchAddress("nmue", &nmue, &b_nmue);
    fChain->SetBranchAddress("npar", &npar, &b_npar);
+   fChain->SetBranchAddress("light_flag", light_flag, &b_light_flag);
    fChain->SetBranchAddress("wallv", &wallv, &b_wallv);
    fChain->SetBranchAddress("ipv", ipv, &b_ipv);
    fChain->SetBranchAddress("posv", posv, &b_posv);
@@ -87,6 +88,9 @@ void t2kfqEvent::Init(TTree *tree)
    fChain->SetBranchAddress("flxh11", flxh11, &b_flxh11);
    fChain->SetBranchAddress("nscndprt", &nscndprt, &b_nscndprt);
    fChain->SetBranchAddress("itrkscnd", itrkscnd, &b_itrkscnd);
+   fChain->SetBranchAddress("istakscnd", istakscnd, &b_istakscnd);
+   fChain->SetBranchAddress("iprntidx", iprntidx, &b_iprntidx);
+   fChain->SetBranchAddress("nchilds", nchilds, &b_nchilds);
    fChain->SetBranchAddress("vtxscnd", vtxscnd, &b_vtxscnd);
    fChain->SetBranchAddress("pscnd", pscnd, &b_pscnd);
    fChain->SetBranchAddress("iprtscnd", iprtscnd, &b_iprtscnd);

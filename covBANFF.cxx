@@ -11,14 +11,14 @@ covBANFF::covBANFF(std::string name, std::string file, unsigned seed, bool postf
   TFile infile(file.c_str(), "read"); 
 
   if (postfit) {
-    banff_param_nom = (TVectorD*)infile.Get("postfit_params");
-    banff_param_prior = (TVectorD*)infile.Get("postfit_params");
-    banff_param_pre = (TVectorD*)infile.Get("prefit_params");
+    banff_param_nom = (TVectorD*)infile.Get("postfit_params")->Clone();
+    banff_param_prior = (TVectorD*)infile.Get("postfit_params")->Clone();
+    banff_param_pre = (TVectorD*)infile.Get("prefit_params")->Clone();
     std::cout<<"Using post-fit parameters"<<std::endl;
   } else {
-    banff_param_nom = (TVectorD*)infile.Get("prefit_params");
-    banff_param_prior = (TVectorD*)infile.Get("prefit_params");
-    banff_param_pre = (TVectorD*)infile.Get("prefit_params");
+    banff_param_nom = (TVectorD*)infile.Get("prefit_params")->Clone();
+    banff_param_prior = (TVectorD*)infile.Get("prefit_params")->Clone();
+    banff_param_pre = (TVectorD*)infile.Get("prefit_params")->Clone();
     std::cout<<"Using pre-fit parameters"<<std::endl;
   }
   
@@ -187,6 +187,7 @@ covBANFF::covBANFF(std::string name, std::string file, unsigned seed, bool postf
     else nominal.at(i) = 1;
     fParType[i] = 0;
     fParPrior[i] = (*banff_param_prior)(i);
+    fParInit[i] = fParPrior[i];
   }
   /*  
   std::cout<<"----------- nominal (unscaled) ------------\n";
@@ -216,8 +217,8 @@ void covBANFF::InitPars(float stepScale, unsigned int seed)
   }
   genPropKernels();
   throwNominal(true, seed);
-  randomize();
-  correlateSteps();
+  //randomize();
+  //correlateSteps();
 }
 
 double covBANFF::getLikelihood()
@@ -232,6 +233,11 @@ double covBANFF::getLikelihood()
     }
   }
   return LogL;
+}
+
+double covBANFF::getPrior(int i)
+{
+  return fParPrior[i];
 }
 
 void covBANFF::proposeStep()

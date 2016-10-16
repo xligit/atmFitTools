@@ -59,6 +59,7 @@ class covBase
 
   virtual void throwNominal(bool nomValues = true, unsigned int seed = 0);
   virtual double getLikelihood();
+  virtual double getPrior(int i) = 0;
   virtual void proposeStep();
   virtual double GetWeightFrac(int i) {return fParCurr[i]-1;}
   virtual double GetWeight(int i) {return fParCurr[i];}

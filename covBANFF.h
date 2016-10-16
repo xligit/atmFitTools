@@ -17,6 +17,7 @@ class covBANFF : public covBase
   void throwNominal(bool nomValues = true, unsigned int seed = 0);
   double GetWeightFrac(int i);
   double GetWeight(int i);
+  double getPrior(int i);
 
  protected:
   void InitPars(float stepScale, unsigned int seed);

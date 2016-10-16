@@ -34,6 +34,7 @@ public :
    Float_t         posv[3];
    Float_t         dirv[50][3];   //[npar]
    Float_t         pmomv[50];   //[npar]
+   Int_t           light_flag[50]; //[npar]
    Int_t           npar2;
    UInt_t          ipv2[50];   //[npar2]
    Int_t           numnu;
@@ -46,6 +47,9 @@ public :
    Int_t           nscndprt;
    Int_t           itrkscnd[1000];   //[nscndprt]
    Float_t         vtxscnd[1000][3];   //[nscndprt]
+   Int_t           istakscnd[1000];   //[nscndprt]
+   Int_t           iprntidx[1000];   //[nscndprt]
+   Int_t           nchilds[1000];   //[nscndprt] 
    Float_t         pscnd[1000][3];   //[nscndprt]
    Int_t           iprtscnd[1000];   //[nscndprt]
    Float_t         tscnd[1000];   //[nscndprt]
@@ -166,6 +170,7 @@ public :
    TBranch        *b_amomm;   //!
    TBranch        *b_nmue;   //!
    TBranch        *b_npar;   //!
+   TBranch        *b_light_flag;
    TBranch        *b_wallv;   //!
    TBranch        *b_ipv;   //!
    TBranch        *b_posv;   //!
@@ -182,6 +187,9 @@ public :
    TBranch        *b_flxh11;   //!
    TBranch        *b_nscndprt;   //!
    TBranch        *b_itrkscnd;   //!
+   TBranch        *b_istakscnd;
+   TBranch        *b_iprntidx;
+   TBranch        *b_nchilds;
    TBranch        *b_vtxscnd;   //!
    TBranch        *b_pscnd;   //!
    TBranch        *b_iprtscnd;   //!
