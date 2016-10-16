@@ -2,8 +2,7 @@
 #define HISTOCOMPARE_C
 
 #include "histoCompare.h"
-#include "markovTools.cxx"
-#include <time.h>
+
 
 histoCompare* histoCompare::staticthis;
 
@@ -77,7 +76,9 @@ void histoCompare::timetest(int ntry){
 void histoCompare::tuneDEMCMC(int ncycles,int nsteps, double goal){
  
   double result = 0.;
-  markovTools* mcmc = new markovTools(thePars); //< create markovTools object
+//  markovTools* mcmc = new markovTools(thePars); //< create markovTools object
+  mcmctools = new markovTools(thePars); //< create markovTools object
+  markovTools* mcmc = mcmctools;
   mcmc->setTuneParameter(tunePar);
   mcmc->setDiffChain(diffChainFileName.Data());
 
@@ -92,7 +93,8 @@ void histoCompare::tuneDEMCMC(int ncycles,int nsteps, double goal){
     int   istep=0;
     while (istep<nsteps){
       cout<<"----------"<<"step : "<<istep<<"---------------"<<endl;;
-      mcmc->proposeDifferentialStep(); //< propose a new step using differential mcmc
+//      mcmc->proposeDifferentialStep(); //< propose a new step using differential mcmc
+      mcmc->proposePartialDiffStep(); //< propose a new step using differential mcmc
       result = getTotLnL();
       cout<<"hc: Likelihood "<<Linit<<" -> "<<result<<" diff: "<<result-Linit<<endl;
       if (mcmc->acceptStepLnL(result)){ //< check if new step is accepted
@@ -265,7 +267,9 @@ void histoCompare::runDEMCMC(int nsteps){
   int currentstep=0;
   while (currentstep<nsteps){
     currentstep = mc->iStep;
-    mc->proposeDifferentialStep();
+//    mc->proposeDifferentialStep();
+    mc->proposePartialDiffStep();
+
     result = getTotLnL();
     mc->acceptStepLnL(result);
   }
@@ -950,11 +954,34 @@ void histoCompare::LnLPreFit(){
   for (int jpar=0;jpar<npars;jpar++){
     fit->FixParameter(jpar);
   }
-  
-  
-   
+
+  //release and fit normalization parameters
+  for (int isyspar=(thePars->nTotPars-thePars->nNormPars);isyspar<thePars->nTotPars;isyspar++){
+    if ((thePars->fixPar[isyspar])!=1)fit->ReleaseParameter(isyspar);
+  }
+  fit->ExecuteCommand("SIMPLEX",0,0);
+
+
+  //fix all parameters
+  for (int jpar=0;jpar<npars;jpar++){
+    fit->FixParameter(jpar);
+  }
+
+  //release and fit flux and xsec parameters
+  parindex = thePars->nTotPars-thePars->nSysPars;
+  for (int isyspar=0;isyspar<(thePars->nSysPars-thePars->nNormPars);isyspar++){
+    if ((thePars->fixPar[parindex])!=1)fit->ReleaseParameter(parindex);
+    parindex++;
+  }
+  fit->ExecuteCommand("SIMPLEX",0,0);
+
+  //fix all parameters
+  for (int jpar=0;jpar<npars;jpar++){
+    fit->FixParameter(jpar);
+  }
+
+  //run individual bias fits     
   parindex=0;
-  //run individual bias fits
   for (int jbin=0;jbin<nBin;jbin++){
     for (int jatt=0;jatt<nAtt;jatt++){
       for (int jcomp=0;jcomp<nComp;jcomp++){
@@ -996,38 +1023,6 @@ void histoCompare::LnLPreFit(){
   }
   
   
-
-  //fix all parameters
-  for (int jpar=0;jpar<npars;jpar++){
-    fit->FixParameter(jpar);
-  }
-
-  //release and fit normalization parameters
-  for (int isyspar=(thePars->nTotPars-thePars->nNormPars);isyspar<thePars->nTotPars;isyspar++){
-    if ((thePars->fixPar[isyspar])!=1)fit->ReleaseParameter(isyspar);
-  }
-  fit->ExecuteCommand("SIMPLEX",0,0);
-
-
-  //fix all parameters
-  for (int jpar=0;jpar<npars;jpar++){
-    fit->FixParameter(jpar);
-  }
-
-  //release and fit flux and xsec parameters
-  parindex = thePars->nTotPars-thePars->nSysPars;
-  for (int isyspar=0;isyspar<(thePars->nSysPars-thePars->nNormPars);isyspar++){
-    if ((thePars->fixPar[parindex])!=1)fit->ReleaseParameter(parindex);
-    parindex++;
-  }
-  fit->ExecuteCommand("SIMPLEX",0,0);
-
-  //fix all parameters
-  for (int jpar=0;jpar<npars;jpar++){
-    fit->FixParameter(jpar);
-  }
-
-
   //print final results
   for (int ipar=0;ipar<npars;ipar++){
     thePars->setParameter(ipar,fit->GetParameter(ipar));

@@ -200,7 +200,7 @@ float preProcess::getWeight(){
 
 // if using skimmed tree from Xiaoyue, calculate event weight
 // based on these variables in the ntuples
-#ifdef USE_Xl_WEIGHTS
+#ifdef USE_XL_WEIGHTS
 
 
   evtweight *= fq->wgtosc1[3]; // for Xiaoyue MC
