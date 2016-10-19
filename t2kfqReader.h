@@ -119,10 +119,20 @@ public :
    Int_t           nvk;
    Int_t           nvoth;
    Int_t           vispid[100];
-   Float_t         wall;
-   Float_t         towall;
+   //   Float_t         wall;
+   //   Float_t         towall;
+   Float_t         fqwall;
+   Float_t         fqtowall;
+   Float_t         fq1rwall[10][7];
+   Float_t         fq1rtowall[10][7];
+   Float_t         towallv[50];
+   Float_t         wallv2;
    Float_t         evtweight;
    Float_t         rfgweight;
+   Int_t           best2RID;
+   Float_t         fq1rperim[10][7];
+   Float_t         fq1rmincone[10][7];
+
    TGraph          *byEv_maqe_ccqe_gr;
    TGraph          *byEv_pfo_ccqe_gr;
    TGraph          *byEv_ebo_ccqe_gr;
@@ -238,10 +248,20 @@ public :
    TBranch        *b_nvk;   //!
    TBranch        *b_nvoth;   //!
    TBranch        *b_vispid;   //!
-   TBranch        *b_wall;   //!
-   TBranch        *b_towall;   //!
+   //   TBranch        *b_wall;   //!
+   //   TBranch        *b_towall;   //!
    TBranch        *b_evtweight;   //!
    TBranch        *b_rfgweight;
+   TBranch        *b_fqwall;   //!
+   TBranch        *b_fqtowall;   //!
+   TBranch        *b_fq1rwall;   //!
+   TBranch        *b_fq1rtowall;   //!
+   TBranch        *b_towallv;   //!
+   TBranch        *b_wallv2;   //!
+   TBranch        *b_best2RID;   //!
+   TBranch        *b_fq1rperim;   //!
+   TBranch        *b_fq1rmincone;   //!
+
    TBranch        *byEv_maqe_ccqe_br;
    TBranch        *byEv_pfo_ccqe_br;
    TBranch        *byEv_ebo_ccqe_br;
@@ -440,10 +460,20 @@ void t2kfqReader::Init(TChain *tree)
    fChain->SetBranchAddress("nvk", &nvk, &b_nvk);
    fChain->SetBranchAddress("nvoth", &nvoth, &b_nvoth);
    fChain->SetBranchAddress("vispid", vispid, &b_vispid);
-   fChain->SetBranchAddress("wall", &wall, &b_wall);
-   fChain->SetBranchAddress("towall", &towall, &b_towall);
+   //   fChain->SetBranchAddress("wall", &wall, &b_wall);
+   //   fChain->SetBranchAddress("towall", &towall, &b_towall);
    fChain->SetBranchAddress("evtweight", &evtweight, &b_evtweight);
    fChain->SetBranchAddress("rfgweight", &rfgweight, &b_rfgweight);
+   fChain->SetBranchAddress("fqwall", &fqwall, &b_fqwall);
+   fChain->SetBranchAddress("fqtowall", &fqtowall, &b_fqtowall);
+   fChain->SetBranchAddress("fq1rwall", fq1rwall, &b_fq1rwall);
+   fChain->SetBranchAddress("fq1rtowall", fq1rtowall, &b_fq1rtowall);
+   fChain->SetBranchAddress("towallv", towallv, &b_towallv);
+   fChain->SetBranchAddress("wallv2", &wallv2, &b_wallv2);
+   fChain->SetBranchAddress("best2RID", &best2RID, &b_best2RID);
+   fChain->SetBranchAddress("fq1rperim", fq1rperim, &b_fq1rperim);
+   fChain->SetBranchAddress("fq1rmincone", fq1rmincone, &b_fq1rmincone);
+
    if (fChain->GetListOfBranches()->FindObject("byEv_maqe_ccqe_gr")) fChain->SetBranchAddress("byEv_maqe_ccqe_gr", &byEv_maqe_ccqe_gr, &byEv_maqe_ccqe_br);
    if (fChain->GetListOfBranches()->FindObject("byEv_pfo_ccqe_gr")) fChain->SetBranchAddress("byEv_pfo_ccqe_gr", &byEv_pfo_ccqe_gr, &byEv_pfo_ccqe_br);
    if (fChain->GetListOfBranches()->FindObject("byEv_ebo_ccqe_gr")) fChain->SetBranchAddress("byEv_ebo_ccqe_gr", &byEv_ebo_ccqe_gr, &byEv_ebo_ccqe_br);

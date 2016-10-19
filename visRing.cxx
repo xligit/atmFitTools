@@ -110,7 +110,7 @@ void visRing::countsecondary(){
      // convert to geant code :(
      ipid = pdg2geant(ipid);
      if (ipid<0) continue;
-    
+
      // calc momentum
      double pmom = TMath::Sqrt(fq->pscnd[i][0]*fq->pscnd[i][0]+
                                fq->pscnd[i][1]*fq->pscnd[i][1]+
@@ -338,8 +338,8 @@ void visRing::initconstants(){
   Cthresh = 0.7505; //Cherenkov threshold in c
   Tthresh = 10.; //cutoff time in ns to be counted in this event
   gamthresh = 10.; // min energy of gamma
-  flgverbprime = 0;
-  flgverbscnd= 0;
+  flgverbprime = 0; //!!!!!!!!!!!!!!!!!!!!
+  flgverbscnd= 0; //!!!!!!!!!!!!!!!!!!
 ;
   // particle masses in MeV
   massof[1] = 0;  //gamma

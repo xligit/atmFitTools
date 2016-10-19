@@ -89,7 +89,7 @@ void t2kPreProcess::processFile(const char* fname,const char* outname){
   //make new tree
   cout<<"create file: "<<outputName.Data()<<endl;
   fout = new TFile(outputName.Data(),"recreate");
-  setupNewTree(); 
+  setupNewTree(outputName.Data()); 
   std::cout<<"setup new tree"<<std::endl;
   //fill new tree
   preProcessIt();
@@ -134,17 +134,21 @@ void t2kPreProcess::processFile(const char* fname, const char *fsplinename, cons
 
   //make new tree
   cout<<"create file: "<<outputName.Data()<<endl;
-  fout = new TFile(outputName.Data(),"recreate");
-  setupNewTree(); 
+  setupNewTree(outputName.Data()); 
 
   //fill new tree
   preProcessIt();
 
   //clean up
-  if (trout->GetEntries()>0) fout->Write();
-  fin->Close();
-  fout->Close();
-  if (fsplinein) fsplinein->Close();
+  std::cout<<"to clean up"<<std::endl;
+  if (trout->GetEntries()>0) {
+    fout->cd();
+    trout->Write();
+    fout->Close();
+    std::cout<<"closed trout"<<std::endl;
+  }
+  if (fin) {fin->Close(); std::cout<<"Closed fin"<<std::endl;}
+  if (fsplinein) {fsplinein->Close(); std::cout<<"closed fsplinein"<<std::endl;}
   return;   
 }
 
@@ -298,8 +302,8 @@ int t2kPreProcess::passCuts(){
  //   if (towall<0.) return 0; 
 //  }
 
-  //std::cout<<fq->nhitac<<" "<<fq->fq1rmom[0][1]<<" "<<wall<<" "<<towall<<" "<<fq->fqnse<<"\n"
-  //	   <<NHITACMax<<" "<<EVisMin<<" "<<WallMin<<" "<<ToWallMin<<" "<<NSEMax<<" "<<NSEMin<<"\n"<<std::endl;
+//  std::cout<<fq->nhitac<<" "<<fq->fq1rmom[0][1]<<" "<<wall<<" "<<towall<<" "<<fq->fqnse<<"\n"
+//  	   <<NHITACMax<<" "<<EVisMin<<" "<<WallMin<<" "<<ToWallMin<<" "<<NSEMax<<" "<<NSEMin<<"\n"<<std::endl;
 
   //Fully Contained Cut
   if (fq->nhitac>NHITACMax) return 0;
@@ -313,7 +317,7 @@ int t2kPreProcess::passCuts(){
 
   //Number of subevent cuts
   if (fq->fqnse>NSEMax) return 0;
-  if (fq->fqnse<NSEMin) return 0;
+  //  if (fq->fqnse<NSEMin) return 0;
  
   // in-gate cut
   if (InGateMin>0){
@@ -497,12 +501,13 @@ void t2kPreProcess::preProcessIt(){
   //std::cout<<"nev = "<<nev<<std::endl;
   for (int i=0;i<nev;i++){
     //get info for event
-    if ((i%1000)==0) cout<<i<<endl;
     tr->GetEntry(i);
     if (!isData) {
-      if (existSpline) trspline->GetEntry(i);
+      if (trspline) {
+	trspline->GetEntry(i);
+      }
     }
-    nbin=getBin();
+    nbin=getBin();    
     if (nbin<0.) continue;
     if (!passCuts()) continue;
     if (MCComponents!=3) // hybrid pi0s don't have the right banks for VR counting 
@@ -513,6 +518,7 @@ void t2kPreProcess::preProcessIt(){
     nmode=getMode();
     evtweight = getBANFFWeight();
     rfgweight = getFixedWeight();
+    if ((i%1000)==0) cout<<i<<endl;
     trout->Fill();
     //if(isData) std::cout<<i<<" filling data "<<std::endl;
   }
@@ -605,7 +611,7 @@ void t2kPreProcess::fillAttributeMap(t2kfqEvent* fqevent){
 }
 
 
-void t2kPreProcess::setupNewTree(){
+void t2kPreProcess::setupNewTree(TString outputName){
   tr->SetBranchStatus("*",0);
   tr->SetBranchStatus("fq*",1);
   tr->SetBranchStatus("*v",1);
@@ -626,9 +632,10 @@ void t2kPreProcess::setupNewTree(){
   tr->SetBranchStatus("iorgprt",1);
   tr->SetBranchStatus("iprntidx",1);
   tr->SetBranchStatus("nchilds",1);
-  tr->SetBranchStatus("ichildidx",1);
+  //tr->SetBranchStatus("ichildidx",1);
   tr->SetBranchStatus("iflgscnd",1);
   tr->SetBranchStatus("*vc",1);
+  fout = new TFile(outputName.Data(),"recreate");
   trout = tr->CloneTree(0); //clone but don't copy data
   trout->CopyAddresses(tr); //set addresses
   
@@ -762,7 +769,7 @@ t2kPreProcess::t2kPreProcess(TTree* trin,const char* name){
   tr=trin;
   fq = new t2kfqEvent(tr);
   vis = new visRing(fq);
-  setupNewTree();
+  setupNewTree(name);
   nameTag=name;
   return;
 }
@@ -774,7 +781,7 @@ t2kPreProcess::t2kPreProcess(TChain* chin,const char* name){
   nameTag=name;
   fq = new t2kfqEvent(tr);
   vis = new visRing(fq);
-  setupNewTree();
+  setupNewTree(name);
   return;
 }
 
@@ -786,7 +793,7 @@ t2kPreProcess::t2kPreProcess(TChain *mc, TChain *spline, const std::string name)
   nameTag = name.c_str();
   fq = new t2kfqEvent(tr);
   vis = new visRing(fq);
-  setupNewTree();
+  setupNewTree(name);
 }
 
 //////////////////////////////////////////
@@ -801,6 +808,7 @@ void t2kPreProcess::runPreProcessing(){
   cout<<"nametag: "<<nameTag.Data()<<endl;
   FVBinning = runpars->preProcessFVBinning; //< flag for FV binning type in getBin()
   MCComponents = runpars->preProcessMCComponents; //< flag for MC component definitions in getComponent()
+  if (FVBinning==4) setFVBinHisto();
   MCSamples = runpars->preProcessMCSamples;
   NHITACMax = runpars->preProcFCCut;
   EVisMin = runpars->preProcEVisCut;

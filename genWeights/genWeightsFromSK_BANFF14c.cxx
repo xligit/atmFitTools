@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 
     // Set uncertainties
     if(dial>=0&&dial<=20){
-      maqedial = prefit[0] - nominal[0] + (dial - 14)*0.5*sigma[0];
+      maqedial = (dial - 14)*0.5*sigma[0];
     }else if(dial>=21&&dial<=33){
       if (dial < 27) pfodial = (dial-21-6)*0.5*0.11/3.0;
       else           pfodial = (dial-21-6)*0.5*0.22/3.0;

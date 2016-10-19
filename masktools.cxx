@@ -6,6 +6,7 @@
 #include "TH1D.h"
 #include <iostream>
 #include "FVCalculators.cxx"
+#include "shared.h"
 #ifndef T2K
 #include "fqEvent.h"
 #else

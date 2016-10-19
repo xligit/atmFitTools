@@ -147,10 +147,10 @@ class t2kPreProcess{
   void setTree(TChain* trin);
   void setTree(TTree*, TTree*);
   void setupSplineTree(TTree *h);
-  void setParFileName(const char* filename){parFileName=filename;}
+  void setParFileName(const char* filename) { parFileName=filename; }
   void runPreProcessing();
   void setFVBinHisto();
-  void setupNewTree();
+  void setupNewTree(TString);
   void preProcessIt();
   int passCuts();
   void fillAttributes(t2kfqEvent *fqevent);
